@@ -1,26 +1,21 @@
 import cwlgen
 
-cwl_tool = cwlgen.CommandLineTool(tool_id='grep', label='print lines matching a pattern', base_command='grep');
+cwl_tool = cwlgen.CommandLineTool(tool_id='knime', label='execute a knime workflow', base_command='/usr/share/java/knime-desktop/knime');
 
-file_binding = cwlgen.CommandLineBinding(position=2);
+cwl_tool.arguments = ['-reset', '-nosplash', '-application', 'org.knime.product.KNIME_BATCH_APPLICATION'];
 
-input_file = cwlgen.CommandInputParameter('input_file', param_type='File', input_binding=file_binding, doc='input file from which you want to look for the pattern');
+file_binding = cwlgen.CommandLineBinding(prefix="-workflowFile=", separate=False);
 
+input_file = cwlgen.CommandInputParameter('workflowFile', param_type='File', input_binding=file_binding, doc='workflow file');
 cwl_tool.inputs.append(input_file)
 
-pattern_binding = cwlgen.CommandLineBinding(position=1)
-
-pattern = cwlgen.CommandInputParameter('pattern', param_type='string', input_binding=pattern_binding, doc='pattern to find in the input file')
-cwl_tool.inputs.append(pattern)
-
-output = cwlgen.CommandOutputParameter('output', param_type='stdout', doc='lines found with the pattern')
+# Slight output hack:
+output = cwlgen.CommandOutputParameter('output', output_binding=cwlgen.CommandOutputBinding(output_eval=""), doc='output of workflow run', param_type="string")
 cwl_tool.outputs.append(output)
 
-cwl_tool.stdout = "grep.txt"
-
-cwl_tool.doc = "grep searches for a pattern in a file."
-metadata = {'name': 'grep', 'about' : 'grep searches for a pattern in a file.'}
+cwl_tool.doc = "execute a knime workflow"
+metadata = {'name': 'knime', 'about' : 'executre a knime workflow'}
 cwl_tool.metadata = cwlgen.Metadata(**metadata)
 
 cwl_tool.export();
-cwl_tool.export(outfile="output/grep.cwl");
+cwl_tool.export(outfile="output/knime.cwl");
