@@ -18,4 +18,4 @@ metadata = {'name': 'knime', 'about' : 'executre a knime workflow'}
 cwl_tool.metadata = cwlgen.Metadata(**metadata)
 
 cwl_tool.export();
-cwl_tool.export(outfile="output/knime.cwl");
+cwl_tool.export(outfile="output/knime-clt.cwl");
