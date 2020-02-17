@@ -9,8 +9,7 @@ file_binding = cwlgen.CommandLineBinding(prefix="-workflowFile=", separate=False
 input_file = cwlgen.CommandInputParameter('workflowFile', param_type='File', input_binding=file_binding, doc='workflow file');
 cwl_tool.inputs.append(input_file)
 
-# Slight output hack:
-output = cwlgen.CommandOutputParameter('output', output_binding=cwlgen.CommandOutputBinding(output_eval=""), doc='output of workflow run', param_type="string")
+output = cwlgen.CommandOutputParameter('output', doc='output of workflow run', param_type="stdout")
 cwl_tool.outputs.append(output)
 
 cwl_tool.doc = "execute a knime workflow"
