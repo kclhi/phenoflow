@@ -1,20 +1,30 @@
 import cwlgen
 
-cwl_tool = cwlgen.CommandLineTool(tool_id='knime', label='execute a knime workflow', base_command='/usr/share/java/knime-desktop/knime');
+def createKnimeModule(label, inputEdge):
 
-cwl_tool.arguments = ['-reset', '-nosplash', '-application', 'org.knime.product.KNIME_BATCH_APPLICATION'];
+    cwl_tool = cwlgen.CommandLineTool(tool_id=label.lower().replace(" ", "-"), label=label.lower().replace(" ", "-"), base_command='knime');
 
-file_binding = cwlgen.CommandLineBinding(prefix="-workflowFile=", separate=False);
+    # cwl_tool_docker = cwlgen.DockerRequirement(docker_pull = "knime:latest");
+    # Assume run in Docker
+    # cwl_tool.hints = cwl_tool_docker;
 
-input_file = cwlgen.CommandInputParameter('workflowFile', param_type='File', input_binding=file_binding, doc='workflow file');
-cwl_tool.inputs.append(input_file)
+    cwl_tool.arguments = ['-reset', '-nosplash', '-application', 'org.knime.product.KNIME_BATCH_APPLICATION'];
 
-output = cwlgen.CommandOutputParameter('output', doc='output of workflow run', param_type="stdout")
-cwl_tool.outputs.append(output)
+    file_binding = cwlgen.CommandLineBinding(prefix="-" + inputEdge + "=", separate=False);
 
-cwl_tool.doc = "execute a knime workflow"
-metadata = {'name': 'knime', 'about' : 'executre a knime workflow'}
-cwl_tool.metadata = cwlgen.Metadata(**metadata)
+    input_file = cwlgen.CommandInputParameter(inputEdge, param_type='File', input_binding=file_binding, doc=inputEdge);
+    cwl_tool.inputs.append(input_file)
 
-cwl_tool.export();
-cwl_tool.export(outfile="output/knime-clt.cwl");
+    output = cwlgen.CommandOutputParameter('output', doc='output of workflow run', param_type="stdout")
+    cwl_tool.outputs.append(output)
+
+    cwl_tool.doc = label
+    metadata = {'name': 'knime', 'about' : label}
+    cwl_tool.metadata = cwlgen.Metadata(**metadata)
+
+    cwl_tool.export(outfile="output/" + label.lower().replace(" ", "-") + ".cwl");
+
+createKnimeModule("Read potential cases", "knimeModule");
+createKnimeModule("Abnormal lab", "knimeModule");
+createKnimeModule("Medication prescribed and abnormal lab", "knimeModule");
+createKnimeModule("TBC", "knimeModule");
