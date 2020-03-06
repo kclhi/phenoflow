@@ -1,3 +1,5 @@
+*.tex
+*.dot
 *.txt
 examples/
 output/

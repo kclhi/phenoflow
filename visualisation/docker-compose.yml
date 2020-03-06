@@ -3,7 +3,7 @@ version: '3.2'
 services:
 
   git-server:
-    build: visualisation/git-server
+    build: git-server
     ports:
       - '7005:7005'
 
