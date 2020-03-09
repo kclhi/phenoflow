@@ -1,6 +1,7 @@
 *.tex
 *.dot
 *.txt
+*.csv
 examples/
 output/
 

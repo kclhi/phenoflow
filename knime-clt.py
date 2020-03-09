@@ -36,5 +36,9 @@ def createKnimeModule(label, workflowInputEdge, dataInputEdge, type):
 
 createKnimeModule("Read potential cases", "knimeModule", "potentialCases", "load");
 createKnimeModule("Abnormal lab", "knimeModule", "potentialCases", "logic");
-#createKnimeModule("Medication prescribed and abnormal lab", "knimeModule", "potentialCases", "logic");
-#createKnimeModule("TBC", "knimeModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 1", "knimeModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 2", "knimeModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 3", "knimeModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 4", "knimeModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 5", "knimeModule", "potentialCases", "logic");
+createKnimeModule("Output cases", "knimeModule", "potentialCases", "logic");
