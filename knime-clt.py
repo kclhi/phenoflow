@@ -34,11 +34,11 @@ def createKnimeModule(label, workflowInputEdge, dataInputEdge, type):
 
     cwl_tool.export(outfile="output/" + label.lower().replace(" ", "-") + ".cwl");
 
-createKnimeModule("Read potential cases", "knimeModule", "potentialCases", "load");
-createKnimeModule("Abnormal lab", "knimeModule", "potentialCases", "logic");
-createKnimeModule("Case assignment 1", "knimeModule", "potentialCases", "logic");
-createKnimeModule("Case assignment 2", "knimeModule", "potentialCases", "logic");
-createKnimeModule("Case assignment 3", "knimeModule", "potentialCases", "logic");
-createKnimeModule("Case assignment 4", "knimeModule", "potentialCases", "logic");
-createKnimeModule("Case assignment 5", "knimeModule", "potentialCases", "logic");
-createKnimeModule("Output cases", "knimeModule", "potentialCases", "logic");
+createKnimeModule("Read potential cases", "inputModule", "potentialCases", "load");
+createKnimeModule("Abnormal lab", "inputModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 1", "inputModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 2", "inputModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 3", "inputModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 4", "inputModule", "potentialCases", "logic");
+createKnimeModule("Case assignment 5", "inputModule", "potentialCases", "logic");
+createKnimeModule("Output cases", "inputModule", "potentialCases", "logic");
