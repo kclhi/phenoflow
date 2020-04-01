@@ -21,4 +21,37 @@ router.post('/new', function(req, res, next) {
 
 });
 
+router.post("/generate/:workflowId", async function(req, res, next) {
+
+  let steps = await models.step.findAll({
+    where: {
+      workflowId: req.params.workflowId
+    }
+  });
+
+  for ( const step in steps ) {
+    let inputs = await models.input.findAll({
+      where: {
+        stepId: steps[step].id
+      }
+    });
+    let outputs = await models.output.findAll({
+      where: {
+        stepId: steps[step].id
+      }
+    });
+    let implementations = await models.implementation.findAll({
+      where: {
+        stepId: steps[step].id
+      }
+    });
+    logger.info(steps);
+    logger.info(inputs);
+    logger.info(outputs);
+    logger.info(implementations);
+    res.sendStatus(200);
+  }
+
+});
+
 module.exports = router;

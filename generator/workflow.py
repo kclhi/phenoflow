@@ -25,7 +25,7 @@ def createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_fil
 
     return cwl_tool;
 
-def createKNIMEStep(id, type, doc, input_doc, extension, output_doc, language="KNIME"):
+def createKNIMEStep(id, type, doc, input_doc, extension, output_doc):
 
     cwl_tool = cwlgen.CommandLineTool(tool_id=id, base_command='/home/kclhi/knime_4.1.1/knime');
 
@@ -53,19 +53,19 @@ def createPythonStep(id, type, doc, input_doc, extension, output_doc):
 
     return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, "python");
 
-def createWorkflowStep(workflow, step, id, language="KNIME", extension=None):
+def createWorkflowStep(workflow, position, id, language="KNIME", extension=None):
 
     file_binding = cwlgen.CommandLineBinding();
 
     # Individual step input
 
-    workflow_step = cwlgen.WorkflowStep(step, id + ".cwl");
-    workflow_step.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule" + str(step)));
+    workflow_step = cwlgen.WorkflowStep(position, id + ".cwl");
+    workflow_step.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule" + str(position)));
 
-    if ( step == 1 ):
+    if ( position == 1 ):
         workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", "potentialCases"))
     else:
-        workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=str(step - 1) + "/output"))
+        workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=str(position - 1) + "/output"))
 
     # Individual step output
 
@@ -74,17 +74,17 @@ def createWorkflowStep(workflow, step, id, language="KNIME", extension=None):
 
     # Overall workflow input
 
-    if ( step == 1 ):
+    if ( position == 1 ):
         workflow_input = cwlgen.InputParameter("potentialCases", param_type='File', input_binding=file_binding, doc="Input of potential cases for processing");
         workflow.inputs.append(workflow_input);
 
-    workflow_input = cwlgen.InputParameter("inputModule" + str(step), param_type='File', input_binding=file_binding, doc=language[0].upper() + language[1:] + " implementation unit");
+    workflow_input = cwlgen.InputParameter("inputModule" + str(position), param_type='File', input_binding=file_binding, doc=language[0].upper() + language[1:] + " implementation unit");
     workflow.inputs.append(workflow_input);
 
     # Overall workflow output
 
     if ( extension ):
-        workflow_output = cwlgen.WorkflowOutputParameter(param_id='cases', param_type="File", output_source=str(step) + "/output", output_binding=cwlgen.CommandOutputBinding(glob="*." + extension));
+        workflow_output = cwlgen.WorkflowOutputParameter(param_id='cases', param_type="File", output_source=str(position) + "/output", output_binding=cwlgen.CommandOutputBinding(glob="*." + extension));
         workflow.outputs.append(workflow_output);
 
     return workflow;

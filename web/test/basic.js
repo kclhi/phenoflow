@@ -78,11 +78,21 @@ describe('basic', () => {
 
 		it('Implementation endpoint should be reachable.', (done) => {
 			models.implementation.sync({force:true}).then(function() {
-				chai.request(server).post('/implementation/new').attach('implementation', 'test/hello-world.py', 'hello-world.py').end((err, res) => {
+				chai.request(server).post('/implementation/new').attach('implementation', 'test/hello-world.py', 'hello-world.py').field(
+					'stepId', stepId
+				).end((err, res) => {
 					res.should.have.status(200);
 					res.body.should.be.a('object');
 					done();
 				});
+			});
+		});
+
+		it('Generate endpoint should be reachable.', (done) => {
+			chai.request(server).post('/workflow/generate/' + workflowId).end((err, res) => {
+				res.should.have.status(200);
+				res.body.should.be.a('object');
+				done();
 			});
 		});
 

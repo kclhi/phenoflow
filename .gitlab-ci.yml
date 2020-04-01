@@ -1,8 +1,9 @@
 stages:
-  - build_generator
-  - test_generator
   - build_web
   - test_web
+  - build_generator
+  - test_generator
+
 
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
@@ -20,6 +21,25 @@ cache:
     - generator/.cache/pip
     - generator/venv/
 
+install_node_dependencies:
+  image: node:latest
+  stage: build_web
+  before_script:
+    - cd web
+  script:
+    - npm install
+  artifacts:
+    paths:
+      - web/node_modules/
+
+test_web:
+  image: node:latest
+  stage: test_web
+  before_script:
+    - cd web
+    - mkdir uploads
+  script: npm test
+  
 install_python_dependencies:
   image: "python:3.7"
   stage: build_generator
@@ -43,22 +63,3 @@ test_generator:
     - cd generator
     - source venv/bin/activate
   script: nosetests -v
-
-install_node_dependencies:
-  image: node:latest
-  stage: build_web
-  before_script:
-    - cd web
-  script:
-    - npm install
-  artifacts:
-    paths:
-      - web/node_modules/
-
-test_web:
-  image: node:latest
-  stage: test_web
-  before_script:
-    - cd web
-    - mkdir uploads
-  script: npm test

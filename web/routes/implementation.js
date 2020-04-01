@@ -12,7 +12,15 @@ router.post('/new', function(req, res, next) {
   uploadedFile.mv("uploads/" + uploadedFile.name, function(err) {
 
     if (err) return res.status(500).send(err);
-    res.sendStatus(200);
+
+    models.implementation.create({
+      fileName: uploadedFile.name,
+      stepId: req.body.stepId
+    }).then(
+      (created)=>logger.info("Created upload.")
+    ).then(
+      ()=>res.sendStatus(200)
+    );
 
   });
 

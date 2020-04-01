@@ -8,7 +8,6 @@ module.exports = function(sequelize, DataTypes) {
 		 autoIncrement: true,
 		 primaryKey: true
 		},
-		inputId: DataTypes.STRING,
 		doc: DataTypes.STRING
 
 	});
