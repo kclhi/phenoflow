@@ -89,11 +89,11 @@ def createWorkflowStep(workflow, step, id, language="KNIME", extension=None):
 
     return workflow;
 
-workflow = cwlgen.Workflow()
-workflow.requirements.append(cwlgen.SubworkflowFeatureRequirement());
+def initWorkflow():
+    workflow = cwlgen.Workflow()
+    workflow.requirements.append(cwlgen.SubworkflowFeatureRequirement());
+    return workflow;
 
-createPythonStep("read-potential-cases", "load", "Read potential cases", "Potential cases of this type of diabetes.", "csv", "Initial potential cases, read from disc.").export();
-createWorkflowStep(workflow, 1, "read-potential-cases").export();
 
 def commitPushWorkflowRepo():
 
