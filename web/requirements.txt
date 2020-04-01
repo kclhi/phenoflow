@@ -1,0 +1,10 @@
+cookie-parser
+debug
+express
+http-errors
+morgan
+pug
+sequelize
+config
+winston
+body-parser

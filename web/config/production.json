@@ -1,0 +1,11 @@
+{
+
+  "dbConfig": {
+    "username": "user",
+    "password": "password",
+    "database": "database",
+    "host": "",
+    "dialect": "mysql"
+  }
+
+}

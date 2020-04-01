@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+
+  webapp:
+    build:
+      context: .
+      network: host
+    ports:
+      - ":"
+    restart: unless-stopped
+
+  migration:
+    image: :latest
+    command: ["./wait-for-it.sh", "--timeout=0", ":3306", "--", "npm", "run", "migrate"]
+    depends_on:
+      - webapp
+      - mariadb
+
+  mariadb:
+    build: db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - _volume:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  _volume:
+
+networks:
+  default:
+    external:
+      name:

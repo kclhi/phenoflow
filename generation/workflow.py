@@ -2,148 +2,98 @@ import cwlgen, requests, uuid, time
 from datetime import datetime
 from git import Repo
 
-def createWorkflowStep(step, tool, input, source, moduleId=None):
+def createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, language="KNIME"):
 
-    if ( moduleId == None ): moduleId = step;
+    cwl_tool.namespaces.s = "https://phekb.org/";
+    metadata = {'type': type}
+    cwl_tool.metadata = cwlgen.Metadata(**metadata)
 
-    workflow_step = cwlgen.WorkflowStep(step, tool);
-    workflow_step.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule" + moduleId))
-    workflow_step.inputs.append(cwlgen.WorkflowStepInput(input, source=source))
+    cwl_tool.doc = doc
+
+    # Assume run in Docker
+    cwl_tool.requirements.append(cwl_tool_docker);
+
+    implementation_input_file = cwlgen.CommandInputParameter("inputModule", param_type='File', input_binding=implementation_file_binding, doc=language[0].upper() + language[1:] + " implementation unit");
+    cwl_tool.inputs.append(implementation_input_file)
+
+    data_input_file = cwlgen.CommandInputParameter("potentialCases", param_type='File', input_binding=cases_file_binding, doc=input_doc);
+    cwl_tool.inputs.append(data_input_file)
+
+    workflow_output_binding = cwlgen.CommandOutputBinding(glob="*." + extension);
+    output = cwlgen.CommandOutputParameter('output', doc=output_doc, param_type="File", output_binding=workflow_output_binding)
+    cwl_tool.outputs.append(output)
+
+    return cwl_tool;
+
+def createKNIMEStep(id, type, doc, input_doc, extension, output_doc, language="KNIME"):
+
+    cwl_tool = cwlgen.CommandLineTool(tool_id=id, base_command='/home/kclhi/knime_4.1.1/knime');
+
+    # ~MDC Below not supported by visualiser?
+    cwl_tool_docker = cwlgen.DockerRequirement(docker_pull="kclhi/knime:amia", docker_output_dir="/home/kclhi/.eclipse");
+
+    cwl_tool.arguments = ['-data', '/home/kclhi/.eclipse', '-reset', '-nosplash', '-nosave', '-application', 'org.knime.product.KNIME_BATCH_APPLICATION'];
+
+    implementation_file_binding = cwlgen.CommandLineBinding(prefix="-workflowFile=", separate=False);
+
+    cases_file_binding = cwlgen.CommandLineBinding(prefix="-workflow.variable=dm_potential_cases,file://", separate=False, value_from=" $(inputs.potentialCases.path),String");
+
+    return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, "KNIME");
+
+def createPythonStep(id, type, doc, input_doc, extension, output_doc):
+
+    cwl_tool = cwlgen.CommandLineTool(tool_id=id, base_command='python');
+
+    # ~MDC Below not supported by visualiser?
+    cwl_tool_docker = cwlgen.DockerRequirement(docker_pull = "python:latest");
+
+    implementation_file_binding = cwlgen.CommandLineBinding(position=1);
+
+    cases_file_binding = cwlgen.CommandLineBinding(position=2);
+
+    return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, "python");
+
+def createWorkflowStep(workflow, step, id, language="KNIME", extension=None):
+
+    file_binding = cwlgen.CommandLineBinding();
+
+    # Individual step input
+
+    workflow_step = cwlgen.WorkflowStep(step, id + ".cwl");
+    workflow_step.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule" + str(step)));
+
+    if ( step == 1 ):
+        workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", "potentialCases"))
+    else:
+        workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=str(step - 1) + "/output"))
+
+    # Individual step output
+
     workflow_step.out.append(cwlgen.WorkflowStepOutput("output"));
-    return workflow_step;
+    workflow.steps = workflow.steps + [ workflow_step ];
 
-def createSubWorkflow():
+    # Overall workflow input
 
-    workflow = cwlgen.Workflow()
+    if ( step == 1 ):
+        workflow_input = cwlgen.InputParameter("potentialCases", param_type='File', input_binding=file_binding, doc="Input of potential cases for processing");
+        workflow.inputs.append(workflow_input);
 
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('abnormalLab1', param_type='File', input_binding=file_binding, doc='potential cases marked with abnormal lab');
+    workflow_input = cwlgen.InputParameter("inputModule" + str(step), param_type='File', input_binding=file_binding, doc=language[0].upper() + language[1:] + " implementation unit");
     workflow.inputs.append(workflow_input);
 
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule3', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
+    # Overall workflow output
 
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule4', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
+    if ( extension ):
+        workflow_output = cwlgen.WorkflowOutputParameter(param_id='cases', param_type="File", output_source=str(step) + "/output", output_binding=cwlgen.CommandOutputBinding(glob="*." + extension));
+        workflow.outputs.append(workflow_output);
 
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule5', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
+    return workflow;
 
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule6', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
+workflow = cwlgen.Workflow()
+workflow.requirements.append(cwlgen.SubworkflowFeatureRequirement());
 
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule7', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
-
-    ##
-
-    workflow_output = cwlgen.WorkflowOutputParameter(param_id='case-assignment', param_type="File", output_source="5/output", output_binding=cwlgen.CommandOutputBinding(glob="*.csv"));
-    workflow.outputs.append(workflow_output);
-
-    ##
-
-    workflow_step_1 = cwlgen.WorkflowStep("1", "case-assignment-1.cwl");
-    workflow_step_1.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule3"))
-    workflow_step_1.inputs.append(cwlgen.WorkflowStepInput("potentialCases", "abnormalLab1"))
-    workflow_step_1.out.append(cwlgen.WorkflowStepOutput("output"));
-
-    workflow.steps = workflow.steps + [ \
-        workflow_step_1, \
-        createWorkflowStep("2", "case-assignment-2.cwl", "potentialCases", "1/output", "4"), \
-        createWorkflowStep("3", "case-assignment-3.cwl", "potentialCases", "2/output", "5"), \
-        createWorkflowStep("4", "case-assignment-4.cwl", "potentialCases", "3/output", "6"), \
-        createWorkflowStep("5", "case-assignment-5.cwl", "potentialCases", "4/output", "7"), \
-    ];
-
-    workflowId = "w" + str(uuid.uuid1());
-
-    workflow.export(outfile="output/" + workflowId + ".cwl");
-
-    return workflowId;
-
-def createWorkflow(subworkflowId):
-
-    workflow = cwlgen.Workflow()
-
-    workflow.requirements.append(cwlgen.SubworkflowFeatureRequirement());
-
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule1', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
-
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('potentialCases1', param_type='File', input_binding=file_binding, doc='potential cases file');
-    workflow.inputs.append(workflow_input);
-
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule2', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
-
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule3', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
-
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule4', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
-
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule5', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
-
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule6', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
-
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule7', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
-
-    file_binding = cwlgen.CommandLineBinding();
-    workflow_input = cwlgen.InputParameter('inputModule8', param_type='File', input_binding=file_binding, doc='data pipeline file');
-    workflow.inputs.append(workflow_input);
-
-    workflow_output = cwlgen.WorkflowOutputParameter(param_id='dm_cases', param_type="File", output_source="4/output", output_binding=cwlgen.CommandOutputBinding(glob="*.csv"));
-    workflow.outputs.append(workflow_output);
-
-    ##
-
-    workflow_step_1 = cwlgen.WorkflowStep("1", "read-potential-cases.cwl");
-    workflow_step_1.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule1"))
-    workflow_step_1.inputs.append(cwlgen.WorkflowStepInput("potentialCases", "potentialCases1"))
-    workflow_step_1.out.append(cwlgen.WorkflowStepOutput("output"));
-
-    workflow_step_3 = cwlgen.WorkflowStep("3", subworkflowId + ".cwl");
-    workflow_step_3.inputs.append(cwlgen.WorkflowStepInput("inputModule3", "inputModule3"))
-    workflow_step_3.inputs.append(cwlgen.WorkflowStepInput("inputModule4", "inputModule4"))
-    workflow_step_3.inputs.append(cwlgen.WorkflowStepInput("inputModule5", "inputModule5"))
-    workflow_step_3.inputs.append(cwlgen.WorkflowStepInput("inputModule6", "inputModule6"))
-    workflow_step_3.inputs.append(cwlgen.WorkflowStepInput("inputModule7", "inputModule7"))
-    workflow_step_3.inputs.append(cwlgen.WorkflowStepInput("abnormalLab1", source="2/output"))
-    workflow_step_3.out.append(cwlgen.WorkflowStepOutput("case-assignment"));
-
-    workflow_step_4 = cwlgen.WorkflowStep("4", "output-cases.cwl");
-    workflow_step_4.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule8"))
-    workflow_step_4.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source="3/case-assignment"))
-    workflow_step_4.out.append(cwlgen.WorkflowStepOutput("output"));
-
-    workflow.steps = workflow.steps + [ \
-        workflow_step_1, \
-        createWorkflowStep("2", "abnormal-lab.cwl", "potentialCases", "1/output"), \
-        workflow_step_3, \
-        workflow_step_4
-    ];
-
-    workflowId = "w" + str(uuid.uuid1());
-
-    workflow.export(outfile="output/" + workflowId + ".cwl");
-
-    return workflowId;
+createPythonStep("read-potential-cases", "load", "Read potential cases", "Potential cases of this type of diabetes.", "csv", "Initial potential cases, read from disc.").export();
+createWorkflowStep(workflow, 1, "read-potential-cases").export();
 
 def commitPushWorkflowRepo():
 
@@ -164,7 +114,3 @@ def addWorkflowToViewer(workflowFile):
     }
     r = requests.post("http://localhost:8080/workflows", headers=headers, data=payload)
     print("Response: " + r.text)
-
-workflowId = createWorkflow(createSubWorkflow());
-#commitPushWorkflowRepo();
-#addWorkflowToViewer(workflowId + ".cwl");

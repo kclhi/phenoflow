@@ -1,0 +1,137 @@
+{
+    "tables": {
+        "inputs": {
+            "tableName": "inputs",
+            "schema": {
+                "id": {
+                    "autoIncrement": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "inputId": {
+                    "field": "inputId",
+                    "seqType": "Sequelize.STRING"
+                },
+                "doc": {
+                    "field": "doc",
+                    "seqType": "Sequelize.STRING"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "stepId": {
+                    "allowNull": false,
+                    "references": {
+                        "model": "steps",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "stepId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": []
+        },
+        "outputs": {
+            "tableName": "outputs",
+            "schema": {
+                "id": {
+                    "autoIncrement": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "outputId": {
+                    "field": "outputId",
+                    "seqType": "Sequelize.STRING"
+                },
+                "doc": {
+                    "field": "doc",
+                    "seqType": "Sequelize.STRING"
+                },
+                "extension": {
+                    "field": "extension",
+                    "seqType": "Sequelize.STRING"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "stepId": {
+                    "allowNull": false,
+                    "references": {
+                        "model": "steps",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "stepId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": []
+        },
+        "steps": {
+            "tableName": "steps",
+            "schema": {
+                "id": {
+                    "autoIncrement": true,
+                    "primaryKey": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "workflowId": {
+                    "field": "workflowId",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "stepId": {
+                    "field": "stepId",
+                    "seqType": "Sequelize.STRING"
+                },
+                "doc": {
+                    "field": "doc",
+                    "seqType": "Sequelize.STRING"
+                },
+                "type": {
+                    "field": "type",
+                    "seqType": "Sequelize.STRING"
+                },
+                "language": {
+                    "field": "language",
+                    "seqType": "Sequelize.STRING"
+                },
+                "position": {
+                    "field": "position",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": []
+        }
+    },
+    "revision": 1
+}

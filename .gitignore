@@ -1,6 +1,6 @@
 
-# Created by https://www.gitignore.io/api/git,node,python,dropbox,archlinuxpackages
-# Edit at https://www.gitignore.io/?templates=git,node,python,dropbox,archlinuxpackages
+# Created by https://www.gitignore.io/api/git,node,python,dropbox,certificates,archlinuxpackages
+# Edit at https://www.gitignore.io/?templates=git,node,python,dropbox,certificates,archlinuxpackages
 
 ### ArchLinuxPackages ###
 *.tar
@@ -16,6 +16,12 @@
 
 pkg/
 src/
+
+### certificates ###
+*.pem
+*.key
+*.crt
+*.priv
 
 ### Dropbox ###
 # Dropbox settings and caches
@@ -245,12 +251,15 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# End of https://www.gitignore.io/api/git,node,python,dropbox,archlinuxpackages
+# End of https://www.gitignore.io/api/git,node,python,dropbox,certificates,archlinuxpackages
 
 *.tex
 *.dot
 *.txt
+!requirements.txt
 *.csv
 *.png
 examples/
 output/
+*.enc
+*.sqlite
