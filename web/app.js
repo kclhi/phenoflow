@@ -5,9 +5,13 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const logger = require('./config/winston');
+const fileUpload = require('express-fileupload');
 
-const indexRouter = require('./routes/index');
-const usersRouter = require('./routes/users');
+const workflow = require('./routes/workflow');
+const step = require('./routes/step');
+const input = require('./routes/input');
+const output = require('./routes/output');
+const implementation = require('./routes/implementation');
 
 var app = express();
 
@@ -21,8 +25,14 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/workflow', workflow);
+app.use('/step', step);
+app.use('/input', input);
+app.use('/output', output);
+
+// default options
+app.use(fileUpload());
+app.use('/implementation', implementation);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

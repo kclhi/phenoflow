@@ -263,3 +263,4 @@ examples/
 output/
 *.enc
 *.sqlite
+web/uploads/

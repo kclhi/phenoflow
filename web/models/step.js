@@ -8,7 +8,6 @@ module.exports = function(sequelize, DataTypes) {
 		 autoIncrement: true,
 		 primaryKey: true
 		},
-		workflowId: DataTypes.INTEGER,
 		stepId: DataTypes.STRING,
 		doc: DataTypes.STRING,
 		type: DataTypes.STRING,
@@ -16,6 +15,19 @@ module.exports = function(sequelize, DataTypes) {
 		position: DataTypes.INTEGER
 
 	});
+
+	step.associate = function(models) {
+
+		step.belongsTo(models.workflow, {
+
+			onDelete: "CASCADE",
+			foreignKey: {
+				allowNull: false
+			}
+
+		});
+
+	};
 
 	return step;
 

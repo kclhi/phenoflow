@@ -60,4 +60,5 @@ test_web:
   stage: test_web
   before_script:
     - cd web
+    - mkdir uploads
   script: npm test

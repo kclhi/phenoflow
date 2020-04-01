@@ -1,22 +1,20 @@
 'use strict';
 module.exports = function(sequelize, DataTypes) {
 
-	var output = sequelize.define('output', {
+	var implementation = sequelize.define('implementation', {
 
 		id: {
 		 type: DataTypes.INTEGER,
 		 autoIncrement: true,
 		 primaryKey: true
 		},
-		outputId: DataTypes.STRING,
-		doc: DataTypes.STRING,
-		extension: DataTypes.STRING
+		fileName: DataTypes.STRING
 
 	});
 
-	output.associate = function(models) {
+	implementation.associate = function(models) {
 
-		output.belongsTo(models.step, {
+		implementation.belongsTo(models.step, {
 
 			onDelete: "CASCADE",
 			foreignKey: {
@@ -27,6 +25,6 @@ module.exports = function(sequelize, DataTypes) {
 
 	};
 
-	return output;
+	return implementation;
 
 };
