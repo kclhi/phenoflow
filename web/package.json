@@ -3,16 +3,25 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "mocha --exit"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
-    "express": "~4.16.1",
-    "http-errors": "~1.6.3",
-    "morgan": "~1.9.1",
+    "body-parser": "^1.19.0",
+    "config": "^3.3.1",
+    "cookie-parser": "^1.4.5",
+    "debug": "^2.6.9",
+    "express": "^4.16.4",
+    "http-errors": "^1.6.3",
+    "morgan": "^1.9.1",
     "pug": "^2.0.4",
     "sequelize": "^5.21.5",
-    "sequelize-cli": "^5.5.1"
+    "sequelize-cli": "^5.5.1",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "mocha": "^7.1.1"
   }
 }
