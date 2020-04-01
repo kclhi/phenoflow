@@ -12,14 +12,14 @@ describe('basic', () => {
 		it('Homepage should be reachable.', (done) => {
 
 			chai.request(server)
-				.get('/')
-	            .end((err, res) => {
+			.get('/')
+      .end((err, res) => {
 
-	            		res.should.have.status(200);
-	            		res.body.should.be.a('object');
-	            		done();
+      		res.should.have.status(200);
+      		res.body.should.be.a('object');
+      		done();
 
-	            });
+      });
 
 		});
 
