@@ -9,3 +9,4 @@ config
 winston
 body-parser
 express-fileupload
+request

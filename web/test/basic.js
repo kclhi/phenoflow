@@ -28,64 +28,96 @@ describe('basic', () => {
 
 		let stepId;
 
+		function addStep(done, position=1) {
+			chai.request(server)
+			.post('/step/new').send({
+				stepId: "stepId",
+				doc: "doc",
+				type: "type",
+				language: "python",
+				position: position,
+				workflowId: workflowId
+			}).end((err, res) => {
+				res.should.have.status(200);
+				res.body.should.be.a('object');
+				stepId = res.body.id;
+				done();
+			});
+		}
+
 		it('Step endpoint should be reachable.', (done) => {
 			models.step.sync({force:true}).then(function() {
-				chai.request(server)
-				.post('/step/new').send({
-					stepId: "stepId",
-					doc: "doc",
-					type: "type",
-					language: "language",
-					position: 1,
-					workflowId: workflowId
-				}).end((err, res) => {
-					res.should.have.status(200);
-					res.body.should.be.a('object');
-					stepId = res.body.id;
-					done();
-				});
+				addStep(done);
 			});
 		});
+
+		async function addInput(done) {
+			chai.request(server).post('/input/new').send({
+				inputId: "inputId",
+				doc: "doc",
+				stepId: stepId
+			}).end((err, res) => {
+				res.should.have.status(200);
+				res.body.should.be.a('object');
+				done();
+			});
+		}
 
 		it('Input endpoint should be reachable.', (done) => {
 			models.input.sync({force:true}).then(function() {
-				chai.request(server).post('/input/new').send({
-					inputId: "inputId",
-					doc: "doc",
-					stepId: stepId
-				}).end((err, res) => {
-					res.should.have.status(200);
-					res.body.should.be.a('object');
-					done();
-				});
+				addInput(done);
 			});
 		});
+
+		function addOutput(done) {
+			chai.request(server).post('/output/new').send({
+				outputId: "outputId",
+				doc: "doc",
+				extension: "extension",
+				stepId: stepId
+			}).end((err, res) => {
+				res.should.have.status(200);
+				res.body.should.be.a('object');
+				done();
+			});
+		}
 
 		it('Output endpoint should be reachable.', (done) => {
 			models.output.sync({force:true}).then(function() {
-				chai.request(server).post('/output/new').send({
-					outputId: "outputId",
-					doc: "doc",
-					extension: "extension",
-					stepId: stepId
-				}).end((err, res) => {
-					res.should.have.status(200);
-					res.body.should.be.a('object');
-					done();
-				});
+				addOutput(done);
 			});
 		});
 
+		function addImplementation(done) {
+			chai.request(server).post('/implementation/new').attach('implementation', 'test/hello-world.py', 'hello-world.py').field(
+				'stepId', stepId
+			).end((err, res) => {
+				res.should.have.status(200);
+				res.body.should.be.a('object');
+				done();
+			});
+		}
+
 		it('Implementation endpoint should be reachable.', (done) => {
 			models.implementation.sync({force:true}).then(function() {
-				chai.request(server).post('/implementation/new').attach('implementation', 'test/hello-world.py', 'hello-world.py').field(
-					'stepId', stepId
-				).end((err, res) => {
-					res.should.have.status(200);
-					res.body.should.be.a('object');
-					done();
-				});
+				addImplementation(done);
 			});
+		});
+
+		it('Should be able to add second step.', (done) => {
+			addStep(done, 2);
+		});
+
+		it('Should be able to add input to second step', (done) => {
+			addInput(done);
+		});
+
+		it('Should be able to add output to second step.', (done) => {
+			addOutput(done);
+		});
+
+		it('Should be able to add implementation to second step', (done) => {
+			addImplementation(done);
 		});
 
 		it('Generate endpoint should be reachable.', (done) => {
