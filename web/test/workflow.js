@@ -11,10 +11,11 @@ chai.use(require('chai-http'));
 
 class Workflow {
 
-	static async createWorkflow(author, about) {
+	static async createWorkflow(name, author, about) {
 
 		await models.workflow.sync({force:true});
 		let res = await chai.request(server).post('/workflow/new').send({
+			name: name,
 			author: author,
 			about: about
 		});
@@ -39,10 +40,9 @@ class Workflow {
 
 	}
 
-	static async addInput(inputId, doc, stepId) {
+	static async addInput(doc, stepId) {
 
 		let res = await chai.request(server).post('/input/new').send({
-			inputId: inputId,
 			doc: doc,
 			stepId: stepId
 		});
@@ -51,10 +51,9 @@ class Workflow {
 
 	}
 
-	static async addOutput(outputId, doc, extension, stepId) {
+	static async addOutput(doc, extension, stepId) {
 
 		let res = await chai.request(server).post('/output/new').send({
-			outputId: outputId,
 			doc: doc,
 			extension: extension,
 			stepId: stepId
@@ -64,12 +63,12 @@ class Workflow {
 
 	}
 
-	static async addImplementation(language, stepId) {
+	static async addImplementation(language, stepId, path, filename) {
 
 		let res = await chai.request(server).post('/implementation/new').attach(
 			'implementation',
-			'test/hello-world.py',
-			'../uploads/hello-world.py'
+			path + filename,
+			'../uploads/' + filename
 		).field(
 			'language', language
 		).field(

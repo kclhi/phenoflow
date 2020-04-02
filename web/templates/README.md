@@ -8,8 +8,8 @@
 
 ## Configuration
 
-Specify input dataset path in '1-inputs.yml'.
+Specify input dataset path in '[id]-inputs.yml'.
 
 ## Usage
 
-Run: `cwltool 1.cwl 1-inputs.yml`
+Run: `cwltool [id].cwl [id]-inputs.yml`

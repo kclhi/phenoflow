@@ -26,8 +26,12 @@ class ZIP {
       throw err;
     });
 
+    let distDir = __dirname + '/../dist/';
+
+    if (!fs.existsSync(distDir)) fs.mkdirSync(distDir);
+
     // create a file to stream archive data to.
-    var output = fs.createWriteStream(__dirname + '/' + name + '.zip');
+    var output = fs.createWriteStream(distDir + name + '.zip');
 
     // listen for all archive data to be written
     // 'close' event is fired only when a file descriptor is involved
@@ -66,7 +70,7 @@ class ZIP {
     //set the archive name
     res.attachment(name + '.zip');
 
-    archive.pipe(res);
+    await archive.pipe(res);
     return archive;
 
   }

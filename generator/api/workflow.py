@@ -2,7 +2,7 @@ import cwlgen, requests, uuid, time
 from datetime import datetime
 from git import Repo
 
-def createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, language="KNIME"):
+def createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, language="knime"):
 
     cwl_tool.namespaces.s = "https://phekb.org/";
     metadata = {'type': type}
@@ -38,7 +38,7 @@ def createKNIMEStep(id, type, doc, input_doc, extension, output_doc):
 
     cases_file_binding = cwlgen.CommandLineBinding(prefix="-workflow.variable=dm_potential_cases,file://", separate=False, value_from=" $(inputs.potentialCases.path),String");
 
-    return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, "KNIME");
+    return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, "knime");
 
 def createPythonStep(id, type, doc, input_doc, extension, output_doc):
 
@@ -59,7 +59,7 @@ def createWorkflowStep(workflow, position, id, language="KNIME", extension=None)
 
     # Individual step input
 
-    workflow_step = cwlgen.WorkflowStep(position, id + ".cwl");
+    workflow_step = cwlgen.WorkflowStep(str(position), id + ".cwl");
     workflow_step.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule" + str(position)));
 
     if ( position == 1 ):

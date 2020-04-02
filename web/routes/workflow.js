@@ -9,10 +9,11 @@ const Utils = require('../util/utils');
 
 router.post('/new', function(req, res, next) {
 
-  if (!req.body.author || !req.body.about) {
+  if (!req.body.name || !req.body.author || !req.body.about) {
     res.sendStatus(500);
   } else {
     models.workflow.create({
+      name: req.body.name,
       author: req.body.author,
       about: req.body.about
     }).then(
@@ -92,8 +93,8 @@ router.get("/generate/:workflowId/:language", async function(req, res, next) {
       res.sendStatus(503);
       return;
     }
-    if (!error && response.statusCode == 200) {
-      await Utils.createPFZipResponse(res, req.params.workflowId, response.body.workflow, response.body.workflowInputs, req.params.language, response.body.steps, workflow.about);
+    if (!error && response.statusCode==200) {
+      await Utils.createPFZipResponse(res, workflow.name, response.body.workflow, response.body.workflowInputs, req.params.language, response.body.steps, workflow.about);
     } else {
       res.sendStatus(500);
     }
