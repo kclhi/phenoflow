@@ -1,13 +1,15 @@
 const chai = require('chai');
+chai.use(require('chai-http'));
 const server = require('../app');
 const should = chai.should();
 const expect = chai.expect;
 const fs = require('fs');
+
 const models = require('../models');
-const Utils = require('../util/utils')
 const logger = require('../config/winston');
 
-chai.use(require('chai-http'));
+const Utils = require('../util/utils');
+const Workflow = require('./workflow');
 
 describe('basic', () => {
 
@@ -15,113 +17,47 @@ describe('basic', () => {
 
 		let workflowId;
 
-		it('Workflow endpoint should be reachable.', (done) => {
-			models.workflow.sync({force:true}).then(function() {
-				chai.request(server).post('/workflow/new').send({ author: "martin", about: "this is a special phenotype" }).end((err, res) => {
-					res.should.have.status(200);
-					res.body.should.be.a('object');
-					workflowId = res.body.id;
-					done();
-				});
-      })
-      .error(function(error) {
-        done(error);
-      });
+		it('Workflow endpoint should be reachable.', async() => {
+			await models.workflow.sync({force:true});
+			workflowId = await Workflow.createWorkflow("martin", "this is a special phenotype");
 		});
 
 		let stepId;
 
-		function addStep(done, position=1) {
-			chai.request(server)
-			.post('/step/new').send({
-				stepId: "stepId-" + position,
-				doc: "doc",
-				type: "type",
-				position: position,
-				workflowId: workflowId
-			}).end((err, res) => {
-				res.should.have.status(200);
-				res.body.should.be.a('object');
-				stepId = res.body.id;
-				done();
-			});
-		}
-
-		it('Step endpoint should be reachable.', (done) => {
-			models.step.sync({force:true}).then(function() {
-				addStep(done);
-			});
+		it('Step endpoint should be reachable.', async() => {
+			await models.step.sync({force:true});
+			stepId = await Workflow.addStep("stepId-" + 1, "doc", "type", 1, workflowId);
 		});
 
-		async function addInput(done) {
-			chai.request(server).post('/input/new').send({
-				inputId: "inputId",
-				doc: "doc",
-				stepId: stepId
-			}).end((err, res) => {
-				res.should.have.status(200);
-				res.body.should.be.a('object');
-				done();
-			});
-		}
-
-		it('Input endpoint should be reachable.', (done) => {
-			models.input.sync({force:true}).then(function() {
-				addInput(done);
-			});
+		it('Input endpoint should be reachable.', async() => {
+			await models.input.sync({force:true});
+			await Workflow.addInput("inputId", "doc", stepId);
 		});
 
-		function addOutput(done) {
-			chai.request(server).post('/output/new').send({
-				outputId: "outputId",
-				doc: "doc",
-				extension: "extension",
-				stepId: stepId
-			}).end((err, res) => {
-				res.should.have.status(200);
-				res.body.should.be.a('object');
-				done();
-			});
-		}
-
-		it('Output endpoint should be reachable.', (done) => {
-			models.output.sync({force:true}).then(function() {
-				addOutput(done);
-			});
+		it('Output endpoint should be reachable.', async() => {
+			await models.output.sync({force:true});
+			await Workflow.addOutput("outputId", "doc", "extension", stepId);
 		});
 
-		function addImplementation(done) {
-			chai.request(server).post('/implementation/new').attach('implementation', 'test/hello-world.py', '../uploads/hello-world.py').field(
-				'stepId', stepId
-			).field(
-				'language', 'python'
-			).end((err, res) => {
-				res.should.have.status(200);
-				res.body.should.be.a('object');
-				done();
-			});
-		}
-
-		it('Implementation endpoint should be reachable.', (done) => {
-			models.implementation.sync({force:true}).then(function() {
-				addImplementation(done);
-			});
+		it('Implementation endpoint should be reachable.', async() => {
+			await models.implementation.sync({force:true});
+			await Workflow.addImplementation("python", stepId);
 		});
 
-		it('Should be able to add second step.', (done) => {
-			addStep(done, 2);
+		it('Should be able to add second step.', async() => {
+			stepId = await Workflow.addStep("stepId-" + 2, "doc", "type", 2, workflowId);
 		});
 
-		it('Should be able to add input to second step', (done) => {
-			addInput(done);
+		it('Should be able to add input to second step', async() => {
+			await Workflow.addInput("inputId", "doc", stepId);
 		});
 
-		it('Should be able to add output to second step.', (done) => {
-			addOutput(done);
+		it('Should be able to add output to second step.', async() => {
+			await Workflow.addOutput("outputId", "doc", "extension", stepId);
 		});
 
-		it('Should be able to add implementation to second step', (done) => {
-			addImplementation(done);
+		it('Should be able to add implementation to second step', async() => {
+			await Workflow.addImplementation("python", stepId);
 		});
 
 		it('Construct ZIP from generated CWL.', async() => {
@@ -136,12 +72,10 @@ describe('basic', () => {
 			expect(fs.existsSync('util/' + workflowId + ".zip")).to.be.true
 		});
 
-		it('Generate endpoint should be reachable.', (done) => {
-			chai.request(server).get('/workflow/generate/' + workflowId + '/python').end((err, res) => {
-				res.should.not.have.status(500);
-				res.body.should.be.a('object');
-				done();
-			});
+		it('Generate endpoint should be reachable.', async() => {
+			let res = await chai.request(server).get('/workflow/generate/' + workflowId + '/python');
+			res.should.not.have.status(500);
+			res.body.should.be.a('object');
 		});
 
 	});

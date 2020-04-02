@@ -24,40 +24,61 @@ router.post('/new', function(req, res, next) {
 
 router.get("/generate/:workflowId/:language", async function(req, res, next) {
 
-  let workflow = await models.workflow.findOne({
-    where: {
-      id: req.params.workflowId
-    }
-  });
+  try {
+    var workflow = await models.workflow.findOne({
+      where: {
+        id: req.params.workflowId
+      }
+    });
+  } catch(err) {
+    logger.error("Error finding workflow: " + err);
+  }
 
-  let steps = await models.step.findAll({
-    where: {
-      workflowId: req.params.workflowId
-    }
-  });
+  try {
+    var steps = await models.step.findAll({
+      where: {
+        workflowId: req.params.workflowId
+      }
+    });
+  } catch(err) {
+    logger.error("Error finding steps: " + err);
+  }
 
   let mergedSteps = [];
 
   for (const step in steps) {
     let mergedStep = JSON.parse(JSON.stringify(steps[step]));
-    mergedStep.inputs = await models.input.findAll({
-      where: {
-        stepId: steps[step].id
-      }
-    });
-    mergedStep.outputs = await models.output.findAll({
-      where: {
-        stepId: steps[step].id
-      }
-    });
-    mergedStep.implementation = await models.implementation.findOne({
-      where: {
-        stepId: steps[step].id,
-        language: req.params.language
-      }
-    });
+    try {
+      mergedStep.inputs = await models.input.findAll({
+        where: {
+          stepId: steps[step].id
+        }
+      });
+    } catch(err) {
+      logger.error("Error finding inputs: " + err);
+    }
+    try {
+      mergedStep.outputs = await models.output.findAll({
+        where: {
+          stepId: steps[step].id
+        }
+      });
+    } catch(err) {
+      logger.error("Error finding outputs: " + err);
+    }
+    try {
+      mergedStep.implementation = await models.implementation.findOne({
+        where: {
+          stepId: steps[step].id,
+          language: req.params.language
+        }
+      });
+    } catch(err) {
+      logger.error("Error finding implementation: " + err);
+    }
 
     if (!mergedStep.implementation) {
+      logger.error("No implementation units found (for this language).")
       res.sendStatus(500);
       return;
     }
