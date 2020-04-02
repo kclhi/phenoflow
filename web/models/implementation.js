@@ -8,6 +8,7 @@ module.exports = function(sequelize, DataTypes) {
 		 autoIncrement: true,
 		 primaryKey: true
 		},
+		language: DataTypes.STRING,
 		fileName: DataTypes.STRING
 
 	});

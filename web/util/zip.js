@@ -30,7 +30,7 @@ class ZIP {
     // good practice to catch warnings (ie stat failures and other non-blocking errors)
     archive.on('warning', function(err) {
       if (err.code === 'ENOENT') {
-        logger.error(err.code);
+        logger.error(err);
       } else {
         // throw error
         throw err;
@@ -50,8 +50,16 @@ class ZIP {
 
   static async add(archive, string, filename) {
 
+    logger.debug(string + " " + filename);
     // append a file from string
     await archive.append(string, { name: filename });
+
+  }
+
+  static async addFile(archive, path, filename) {
+
+    // append a file
+    await archive.file(path + filename, { name: filename });
 
   }
 

@@ -5,14 +5,13 @@ const models = require('../models');
 
 router.post('/new', function(req, res, next) {
 
-  if ( !req.body.stepId || !req.body.doc || !req.body.type || !req.body.language || !req.body.position || !req.body.workflowId  ) {
+  if ( !req.body.stepId || !req.body.doc || !req.body.type || !req.body.position || !req.body.workflowId  ) {
     res.status(500).send("Missing parameters.");
   } else {
     models.step.create({
       stepId: req.body.stepId,
       doc: req.body.doc,
       type: req.body.type,
-      language: req.body.language,
       position: req.body.position,
       workflowId: req.body.workflowId
     }).then(
@@ -22,7 +21,7 @@ router.post('/new', function(req, res, next) {
       res.send(error);
     });
   }
-  
+
 });
 
 module.exports = router;

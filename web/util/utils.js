@@ -8,6 +8,7 @@ class Utils {
     await ZIP.add(archive, workflow, workflowId + ".cwl");
     for ( const step in steps ) {
       await ZIP.add(archive, steps[step].content, steps[step].stepId + ".cwl");
+      await ZIP.addFile(archive, "uploads/", steps[step].fileName);
     }
     await ZIP.output(archive);
 

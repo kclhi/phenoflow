@@ -5,7 +5,7 @@ const models = require('../models');
 
 router.post('/new', function(req, res, next) {
 
-  if (!req.files || Object.keys(req.files).length === 0) return res.status(400).send('No files were uploaded.');
+  if (!req.body.language || !req.body.stepId || !req.files || Object.keys(req.files).length === 0) return res.status(400).send('No files were uploaded.');
 
   let uploadedFile = req.files.implementation;
 
@@ -15,6 +15,7 @@ router.post('/new', function(req, res, next) {
 
     models.implementation.create({
       fileName: uploadedFile.name,
+      language: req.body.language,
       stepId: req.body.stepId
     }).then(
       (created)=>logger.info("Created upload.")

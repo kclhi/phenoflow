@@ -11,7 +11,6 @@ module.exports = function(sequelize, DataTypes) {
 		stepId: DataTypes.TEXT,
 		doc: DataTypes.STRING,
 		type: DataTypes.STRING,
-		language: DataTypes.STRING,
 		position: DataTypes.INTEGER
 
 	});

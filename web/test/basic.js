@@ -36,7 +36,6 @@ describe('basic', () => {
 				stepId: "stepId-" + position,
 				doc: "doc",
 				type: "type",
-				language: "python",
 				position: position,
 				workflowId: workflowId
 			}).end((err, res) => {
@@ -91,8 +90,10 @@ describe('basic', () => {
 		});
 
 		function addImplementation(done) {
-			chai.request(server).post('/implementation/new').attach('implementation', 'test/hello-world.py', 'hello-world.py').field(
+			chai.request(server).post('/implementation/new').attach('implementation', 'test/hello-world.py', '../uploads/hello-world.py').field(
 				'stepId', stepId
+			).field(
+				'language', 'python'
 			).end((err, res) => {
 				res.should.have.status(200);
 				res.body.should.be.a('object');
@@ -129,6 +130,14 @@ describe('basic', () => {
 				[{"stepId":"stepId-1","content":"$namespaces:\n  s: https://phekb.org/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: doc\nid: stepId-1\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: doc\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: doc\n  id: output\n  outputBinding:\n    glob: '*.extension'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: python:latest\ns:type: type\n"},{"stepId":"stepId-2","content":"$namespaces:\n  s: https://phekb.org/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: doc\nid: stepId-2\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: doc\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: doc\n  id: output\n  outputBinding:\n    glob: '*.extension'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: python:latest\ns:type: type\n"}]
 			);
 			expect(fs.existsSync('util/' + workflowId + ".zip")).to.be.true
+		});
+
+		it('Generate endpoint should be reachable.', (done) => {
+			chai.request(server).post('/workflow/generate/' + workflowId + '/python').end((err, res) => {
+				res.should.not.have.status(500);
+				res.body.should.be.a('object');
+				done();
+			});
 		});
 
 	});
