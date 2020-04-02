@@ -9,11 +9,12 @@ const Utils = require('../util/utils');
 
 router.post('/new', function(req, res, next) {
 
-  if (!req.body.author) {
+  if (!req.body.author || !req.body.about) {
     res.sendStatus(500);
   } else {
     models.workflow.create({
-      author: req.body.author
+      author: req.body.author,
+      about: req.body.about
     }).then(
       (created)=>res.send({"id": created.id})
     );
@@ -22,6 +23,12 @@ router.post('/new', function(req, res, next) {
 });
 
 router.get("/generate/:workflowId/:language", async function(req, res, next) {
+
+  let workflow = await models.workflow.findOne({
+    where: {
+      id: req.params.workflowId
+    }
+  });
 
   let steps = await models.step.findAll({
     where: {
@@ -65,7 +72,7 @@ router.get("/generate/:workflowId/:language", async function(req, res, next) {
       return;
     }
     if (!error && response.statusCode == 200) {
-      await Utils.createPFZipResponse(res, req.params.workflowId, response.body.workflow, response.body.workflowInputs, req.params.language, response.body.steps);
+      await Utils.createPFZipResponse(res, req.params.workflowId, response.body.workflow, response.body.workflowInputs, req.params.language, response.body.steps, workflow.about);
     } else {
       res.sendStatus(500);
     }

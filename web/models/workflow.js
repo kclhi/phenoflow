@@ -8,7 +8,8 @@ module.exports = function(sequelize, DataTypes) {
 		 autoIncrement: true,
 		 primaryKey: true
 		},
-		author: DataTypes.STRING
+		author: DataTypes.STRING,
+		about: DataTypes.STRING
 
 	});
 
