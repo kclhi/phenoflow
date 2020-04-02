@@ -64,9 +64,8 @@ router.post("/generate/:workflowId/:language", async function(req, res, next) {
       res.sendStatus(503);
       return;
     }
-
     if (!error && response.statusCode == 200) {
-      await Utils.createZIP(req.params.workflowId, response.body.workflow, response.body.steps);
+      await Utils.createPFZip(req.params.workflowId, response.body.workflow, response.body.workflowInputs, req.params.language, response.body.steps);
       res.sendStatus(200);
     } else {
       res.sendStatus(500);

@@ -9,7 +9,7 @@ router.post('/new', function(req, res, next) {
 
   let uploadedFile = req.files.implementation;
 
-  uploadedFile.mv("uploads/" + uploadedFile.name, function(err) {
+  uploadedFile.mv("uploads/" + req.body.language + "/" + uploadedFile.name, function(err) {
 
     if (err) return res.status(500).send(err);
 

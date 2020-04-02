@@ -31,7 +31,7 @@ app.use('/input', input);
 app.use('/output', output);
 
 // default options
-app.use(fileUpload());
+app.use(fileUpload({createParentPath:true}));
 app.use('/implementation', implementation);
 
 // catch 404 and forward to error handler

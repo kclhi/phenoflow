@@ -50,7 +50,6 @@ class ZIP {
 
   static async add(archive, string, filename) {
 
-    logger.debug(string + " " + filename);
     // append a file from string
     await archive.append(string, { name: filename });
 

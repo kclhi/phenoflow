@@ -4,7 +4,6 @@ stages:
   - build_generator
   - test_generator
 
-
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
 variables:
@@ -37,9 +36,8 @@ test_web:
   stage: test_web
   before_script:
     - cd web
-    - mkdir uploads
   script: npm test
-  
+
 install_python_dependencies:
   image: "python:3.7"
   stage: build_generator
