@@ -120,14 +120,6 @@ describe('basic', () => {
 			addImplementation(done);
 		});
 
-		it('Generate endpoint should be reachable.', (done) => {
-			chai.request(server).post('/workflow/generate/' + workflowId).end((err, res) => {
-				res.should.have.status(200);
-				res.body.should.be.a('object');
-				done();
-			});
-		});
-
 	});
 
 });

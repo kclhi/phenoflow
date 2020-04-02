@@ -53,6 +53,8 @@ router.post("/generate/:workflowId", async function(req, res, next) {
     mergedSteps.push(mergedStep);
   }
 
+  logger.debug(mergedSteps);
+  
   request.post(config.get("generator.URL") + "/generate", {json: mergedSteps}, function(error, response, data) {
     if (!error && response.statusCode == 200) {
       res.sendStatus(200);
