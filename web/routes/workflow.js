@@ -21,7 +21,7 @@ router.post('/new', function(req, res, next) {
 
 });
 
-router.post("/generate/:workflowId/:language", async function(req, res, next) {
+router.get("/generate/:workflowId/:language", async function(req, res, next) {
 
   let steps = await models.step.findAll({
     where: {
@@ -65,8 +65,7 @@ router.post("/generate/:workflowId/:language", async function(req, res, next) {
       return;
     }
     if (!error && response.statusCode == 200) {
-      await Utils.createPFZip(req.params.workflowId, response.body.workflow, response.body.workflowInputs, req.params.language, response.body.steps);
-      res.sendStatus(200);
+      await Utils.createPFZipResponse(res, req.params.workflowId, response.body.workflow, response.body.workflowInputs, req.params.language, response.body.steps);
     } else {
       res.sendStatus(500);
     }
