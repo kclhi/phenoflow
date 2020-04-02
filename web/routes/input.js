@@ -6,11 +6,8 @@ const models = require('../models');
 router.post('/new', function(req, res, next) {
 
   if ( !req.body.inputId || !req.body.doc || !req.body.stepId ) {
-
     res.sendStatus(500);
-
   } else {
-
     models.input.create({
       inputId: req.body.inputId,
       doc: req.body.doc,
@@ -20,7 +17,6 @@ router.post('/new', function(req, res, next) {
     ).then(
       ()=>res.sendStatus(200)
     );
-
   }
 
 });

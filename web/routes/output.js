@@ -6,11 +6,8 @@ const models = require('../models');
 router.post('/new', function(req, res, next) {
 
   if ( !req.body.outputId || !req.body.doc || !req.body.extension || !req.body.stepId ) {
-
     res.status(500).send("Missing parameters.");
-
   } else {
-
     models.output.create({
       inputId: req.body.inputId,
       doc: req.body.doc,
@@ -21,9 +18,8 @@ router.post('/new', function(req, res, next) {
     ).then(
       ()=>res.sendStatus(200)
     );
-
   }
-
+  
 });
 
 module.exports = router;

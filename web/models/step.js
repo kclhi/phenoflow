@@ -8,7 +8,7 @@ module.exports = function(sequelize, DataTypes) {
 		 autoIncrement: true,
 		 primaryKey: true
 		},
-		stepId: DataTypes.STRING,
+		stepId: DataTypes.TEXT,
 		doc: DataTypes.STRING,
 		type: DataTypes.STRING,
 		language: DataTypes.STRING,

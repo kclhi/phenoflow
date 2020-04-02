@@ -5,20 +5,18 @@ const models = require('../models');
 const config = require('config');
 const request = require('request');
 
+const Utils = require('../util/utils');
+
 router.post('/new', function(req, res, next) {
 
   if ( !req.body.author ) {
-
     res.sendStatus(500);
-
   } else {
-
     models.workflow.create({
       author: req.body.author
     }).then(
       (created)=>res.send({"id": created.id})
     );
-
   }
 
 });
@@ -53,17 +51,16 @@ router.post("/generate/:workflowId", async function(req, res, next) {
     mergedSteps.push(mergedStep);
   }
 
-  logger.debug(mergedSteps);
-  
-  request.post(config.get("generator.URL") + "/generate", {json: mergedSteps}, function(error, response, data) {
+  request.post(config.get("generator.URL") + "/generate", {json: mergedSteps}, async function(error, response, data) {
+
     if (!error && response.statusCode == 200) {
+      Utils.createZIP(req.params.workflowId, response.body.workflow, response.body.steps);
       res.sendStatus(200);
     } else {
       res.sendStatus(500);
     }
+    
   });
-
-  res.sendStatus(200);
 
 });
 

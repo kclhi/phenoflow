@@ -6,11 +6,8 @@ const models = require('../models');
 router.post('/new', function(req, res, next) {
 
   if ( !req.body.stepId || !req.body.doc || !req.body.type || !req.body.language || !req.body.position || !req.body.workflowId  ) {
-
     res.status(500).send("Missing parameters.");
-
   } else {
-
     models.step.create({
       stepId: req.body.stepId,
       doc: req.body.doc,
@@ -24,9 +21,8 @@ router.post('/new', function(req, res, next) {
       logger.debug(error);
       res.send(error);
     });
-
   }
-
+  
 });
 
 module.exports = router;
