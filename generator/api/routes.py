@@ -9,7 +9,7 @@ app = Starlette(debug=True)
 async def generate(request):
     generatedWorkflow = workflow.initWorkflow();
     generatedWorkflowInputs = {};
-    generatedWorkflowInputs["potentialCases"] = {'class':'File', 'path':''};
+    generatedWorkflowInputs["potentialCases"] = {'class':'File', 'path':'replaceMe.csv'};
     generatedSteps = [];
 
     try:
@@ -33,6 +33,8 @@ async def generate(request):
                 generatedStep = workflow.createPythonStep(step['stepId'], step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string()
             elif ( language == "knime" ):
                 generatedStep = workflow.createKNIMEStep(step['stepId'], step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string();
+            elif ( language == "js" ):
+                generatedStep = workflow.createJSStep(step['stepId'], step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string();
             else:
                 # Handle unknown language
                 generatedStep = "";

@@ -40,18 +40,26 @@ def createKNIMEStep(id, type, doc, input_doc, extension, output_doc):
 
     return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, "knime");
 
-def createPythonStep(id, type, doc, input_doc, extension, output_doc):
+def createGenericStep(id, base_command, type, doc, input_doc, extension, output_doc):
 
-    cwl_tool = cwlgen.CommandLineTool(tool_id=id, base_command='python');
+    cwl_tool = cwlgen.CommandLineTool(tool_id=id, base_command=base_command);
 
     # ~MDC Below not supported by visualiser?
-    cwl_tool_docker = cwlgen.DockerRequirement(docker_pull = "python:latest");
+    cwl_tool_docker = cwlgen.DockerRequirement(docker_pull = base_command + ":latest");
 
     implementation_file_binding = cwlgen.CommandLineBinding(position=1);
 
     cases_file_binding = cwlgen.CommandLineBinding(position=2);
 
-    return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, "python");
+    return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, base_command);
+
+def createPythonStep(id, type, doc, input_doc, extension, output_doc):
+
+    return createGenericStep(id, "python", type, doc, input_doc, extension, output_doc);
+
+def createJSStep(id, type, doc, input_doc, extension, output_doc):
+
+    return createGenericStep(id, "node", type, doc, input_doc, extension, output_doc);
 
 def createWorkflowStep(workflow, position, id, language="KNIME", extension=None):
 

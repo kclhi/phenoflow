@@ -3,7 +3,7 @@ const fs = require('fs');
 const archiver = require('archiver');
 const logger = require('../config/winston');
 
-class ZIP {
+class Zip {
 
   static async createFile(name) {
 
@@ -99,4 +99,4 @@ class ZIP {
 
 }
 
-module.exports = ZIP;
+module.exports = Zip;

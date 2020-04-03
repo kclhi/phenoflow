@@ -3,5 +3,21 @@ html
   head
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
+    script.
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "http://localhost:3000/workflow/generate/1", true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.responseType = 'blob';
+      xhr.onload = function(event) {
+          var blob = this.response;
+          var contentDispo = this.getResponseHeader('Content-Disposition');
+          var fileName = contentDispo.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/)[1];
+          var a = document.createElement('a');
+          a.href = window.URL.createObjectURL(blob);
+          a.download = fileName;
+          a.dispatchEvent(new MouseEvent('click'));
+      }
+      xhr.send(JSON.stringify({"implementationUnits":{"stepId-1": "python", "stepId-2": "js"}}));
+
   body
     block content
