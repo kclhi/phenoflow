@@ -82,51 +82,44 @@ describe('basic', () => {
 			"stepId-2": "python"
 		};
 
-		let timestamp=""; //Math.floor(new Date() / 1000);
+		let timestamp="" + Math.floor(new Date() / 1000);
 
 		it('Create repo for push to CWL viewer.', async() => {
 			// If endpoint is unreachable test can't be performed.
 			const GIT_SERVER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.HOST") + config.get("gitserver.PORT");
 			try { await got(GIT_SERVER_URL, {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }
-			await Utils.commitPushWorkflowRepo(
-				workflowId + timestamp,
-				name,
-				workflow,
-				steps
-			);
+			await Utils.commitPushWorkflowRepo(workflowId, timestamp, name, workflow, steps);
 			expect(fs.existsSync('output/' + workflowId + "/.git")).to.be.true
 		}).timeout(120000);
 
-		it('Create visualisation from generated CWL.', (done) => {
+		it('Create visualisation from generated CWL.', async() => {
 			// If endpoint is unreachable test can't be performed.
-			request(config.get("visualiser.URL"), {method: "HEAD"}, function(error, response, data) {
-				if (error) {
-					done();
-					return;
-				} else {
-					Utils.addWorkflowToViewer(workflowId + timestamp, name, function(queueLocation) {
-						Utils.getWorkflowFromViewer(workflowId + timestamp, name, queueLocation, function(png) {
-							expect(png).to.not.be.null;
-							done();
-						});
-					});
-				}
-			});
+			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }
+			let png = await Utils.getWorkflowPNGFromViewer(workflowId + timestamp, name);
+			if (!png) {
+				let queueLocation = await Utils.addWorkflowToViewer(workflowId + timestamp, name);
+				png = await Utils.getWorkflowFromViewer(workflowId + timestamp, name, queueLocation);
+			}
+			expect(png).to.not.be.null;
 		}).timeout(120000);
 
 		it('Construct ZIP from generated CWL.', async() => {
+			let visualise=true;
+			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) visualise=false; }
 			await Utils.createPFZipFile(
+				workflowId,
 				name,
 				workflow,
 				"inputModule1:\n  class: File\n  path: python/hello-world.py\ninputModule2:\n  class: File\n  path: python/hello-world.py\npotentialCases:\n  class: File\n  path: replaceMe.csv\n",
 				implementationUnits,
 				steps,
-				"this is a really cool phenotype"
+				"this is a really cool phenotype",
+				visualise
 			);
 			expect(fs.existsSync('dist/' + name + ".zip")).to.be.true
-		});
+		}).timeout(120000);;
 
-		it('Generate endpoint should be reachable.', async() => {
+		it('Construct ZIP from generate endpoint.', async() => {
 			// If endpoint is unreachable test can't be performed.
 			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }
 			let res = await chai.request(server).post('/workflow/generate/' + workflowId).send({

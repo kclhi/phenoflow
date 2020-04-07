@@ -2,14 +2,14 @@ const fspromises = require('fs').promises;
 const git = require('isomorphic-git')
 const fs = require('fs');
 const http = require('isomorphic-git/http/node')
-const request = require('request');
+const got = require('got');
 const logger = require('../config/winston');
 const config = require('config');
 const Zip = require("./zip");
 
 class Utils {
 
-  static async commitPushWorkflowRepo(id, name, workflow, steps) {
+  static async commitPushWorkflowRepo(id, timestamp, name, workflow, steps) {
 
     const GIT_SERVER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.HOST") + config.get("gitserver.PORT");
     let workflowRepo = "output/" + id;
@@ -22,10 +22,9 @@ class Utils {
 
     await fspromises.writeFile(workflowRepo + "/" + name + ".cwl", workflow);
     for ( const step in steps ) await fspromises.writeFile(workflowRepo + "/" + steps[step].stepId + ".cwl", steps[step].content);
-
-
     await git.init({ fs, dir: workflowRepo })
     await git.add({ fs, dir: workflowRepo, filepath: '.' })
+
     let sha = await git.commit({
       fs,
       dir: workflowRepo,
@@ -35,102 +34,127 @@ class Utils {
       },
       message: "visualisation"
     });
-    await git.addRemote({
+    logger.debug("SHA: " + sha);
+
+    let addRemoteResult = await git.addRemote({
       fs,
       dir: workflowRepo,
-      remote: "workflow" + id,
-      url: GIT_SERVER_URL + "/workflow" + id + ".git"
-    })
+      remote: "workflow" + id + timestamp,
+      url: GIT_SERVER_URL + "/workflow" + id + timestamp + ".git"
+    });
+    logger.debug("Add remote: " + addRemoteResult);
+
     let pushResult = await git.push({
       fs,
       http,
       dir: workflowRepo,
-      remote: "workflow" + id,
+      remote: "workflow" + id + timestamp,
       ref: "master"
     })
-    logger.debug(pushResult)
+    logger.debug("Push: " + pushResult);
 
   }
 
- static async addWorkflowToViewer(id, file, processQueueLocation=function(queueId){}) {
+  static async getWorkflowPNGFromViewer(id, file) {
+
+    const urlSuffix = config.get("gitserver.CONTAINER_HOST") + config.get("gitserver.PORT") + "/workflow" + id + ".git/master/" + file + ".cwl"
+
+    try {
+      const pngPromise = got.get(config.get("visualiser.URL") + "/graph/png/" + urlSuffix, {timeout: 120000, followRedirect: false});
+	    const pngBufferPromise = pngPromise.buffer();
+      var [png, pngBuffer] = await Promise.all([pngPromise, pngBufferPromise]);
+    } catch (error) {
+      logger.debug("Failed to get PNG: " + urlSuffix + " " + error);
+      return null;
+    }
+
+    logger.debug("Response from get workflow png from viewer: " + png.statusCode + " " + pngBuffer);
+
+    if (png.statusCode==200 && pngBuffer) {
+      return pngBuffer;
+    } else {
+      return null;
+    }
+
+  }
+
+  static async addWorkflowToViewer(id, file) {
 
     const GIT_CONTAINER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.CONTAINER_HOST") + config.get("gitserver.PORT");
 
-    request.post(config.get("visualiser.URL") + "/workflows", {
-      headers: {'accept':'application/json'},
-      form: {
-        url: GIT_CONTAINER_URL + "/workflow" + id + ".git",
-        branch: "master",
-        path: file + ".cwl"
-      },
-      timeout: 120000
-    }, function(error, response, data) {
+    try {
+      var generate = await got.post(config.get("visualiser.URL") + "/workflows", {
+        headers: {'user-agent': 'pf/0.0.1', 'accept':'application/json'},
+        form: {
+          url: GIT_CONTAINER_URL + "/workflow" + id + ".git",
+          branch: "master",
+          path: file + ".cwl"
+        },
+        timeout: 120000
+      });
+    } catch (error) {
+      logger.debug("Failed to add workflow to viewer: " + id + " " + file + " " + error);
+      return null;
+    }
 
-      logger.debug("CWL visualisation server generate response: " + JSON.stringify(response) + " " + error + " " + data);
-      let location;
+    logger.debug("Response from add workflow to viewer: " + JSON.stringify(generate.headers) + " " + JSON.stringify(generate.body));
 
-      if (!error && response && response.headers && (location = response.headers.location) ) {
-        processQueueLocation(location);
-      } else {
-        processQueueLocation(null);
-      }
-
-    });
-
-  }
-
-  static async getWorkflowFromViewer(id, file, queueLocation, procesPNG=function(png){}) {
-
-    if (!queueLocation) procesPNG(null);
-    let options = {headers: {'user-agent': 'my-app/0.0.1', 'accept':'application/json'}, timeout: 120000, followRedirect: false};
-    let urlSuffix = config.get("gitserver.CONTAINER_HOST") + config.get("gitserver.PORT") + "/workflow" + id + ".git/master/" + file + ".cwl"
-
-    request.get(config.get("visualiser.URL") + queueLocation, options, function(error, response, data) {
-
-      logger.debug("CWL queue response: " + JSON.stringify(response) + " " + error + " " + data);
-
-      let toolStatus;
-      if (response && response.statusCode==200 && response.body && (toolStatus=JSON.parse(response.body).cwltoolStatus) && toolStatus=="RUNNING") {
-        logger.debug("Visualisation still processing, trying again.");
-        setTimeout(()=>Utils.getWorkflowFromViewer(id, file, queueLocation, procesPNG), 1000);
-        return;
-      } else if (response && response.statusCode==303 && response.body && (toolStatus=JSON.parse(response.body).cwltoolStatus) && toolStatus=="SUCCESS") {
-
-        request.get(config.get("visualiser.URL") + "/graph/png/" + urlSuffix, {timeout: 120000, followRedirect: false}, function(error, response, data) {
-
-          logger.debug("CWL visualisation server get PNG response: " + JSON.stringify(response) + " " + error + " " + data);
-
-          if (!error && response.statusCode == 200 && response.body) {
-            procesPNG(response.body);
-          } else {
-            procesPNG(null);
-          }
-
-        });
-
-      } else {
-        procesPNG(null);
-      }
-
-    });
+    if (generate && generate.headers && generate.headers.location) {
+      return generate.headers.location;
+    } else if (generate && generate.body && JSON.parse(generate.body).visualisationPng) {
+      return await Utils.getWorkflowPNGFromViewer(id, file);
+    } else {
+      return null;
+    }
 
   }
 
-  static async createPFZipFile(name, workflow, workflowInputs, implementationUnits, steps, about) {
+  static async getWorkflowFromViewer(id, file, queueLocation) {
+
+    if (!queueLocation || (queueLocation && queueLocation.indexOf("queue")==-1)) {
+      logger.debug("No queue location specified");
+      return null;
+    }
+
+    let options = {headers: {'user-agent': 'pf/0.0.1', 'accept':'application/json'}, timeout: 120000, followRedirect: false};
+
+    try {
+      var queue = await got.get(config.get("visualiser.URL") + queueLocation, options);
+    } catch (error) {
+      logger.debug("Failed to get queue information: " + error);
+      return null;
+    }
+
+    logger.debug("Response from get workflow from viewer: " + queue.statusCode + " " + JSON.stringify(queue.body));
+
+    if (queue && queue.statusCode==200 && queue.body && JSON.parse(queue.body).cwltoolStatus=="RUNNING") {
+      logger.debug("Visualisation still processing, trying again.");
+      await new Promise(resolve=>setTimeout(resolve, 1000));
+      return await Utils.getWorkflowFromViewer(id, file, queueLocation);
+    } else if (queue && queue.statusCode==303 && queue.body && JSON.parse(queue.body).cwltoolStatus=="SUCCESS") {
+      logger.debug("Visualisation processed, getting PNG.");
+      return await Utils.getWorkflowPNGFromViewer(id, file);
+    } else {
+      return null;
+    }
+
+  }
+
+  static async createPFZipFile(id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise=false) {
 
     let archive = await Zip.createFile(name);
-    await Utils.createPFZip(archive, name, workflow, workflowInputs, implementationUnits, steps, about)
+    await Utils.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise)
 
   }
 
-  static async createPFZipResponse(res, name, workflow, workflowInputs, implementationUnits, steps, about) {
+  static async createPFZipResponse(res, id, name, workflow, workflowInputs, implementationUnits, steps, about) {
 
     let archive = await Zip.createResponse(name, res);
-    await Utils.createPFZip(archive, name, workflow, workflowInputs, implementationUnits, steps, about)
+    await Utils.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, true)
 
   }
 
-  static async createPFZip(archive, name, workflow, workflowInputs, implementationUnits, steps, about) {
+  static async createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise) {
 
     await Zip.add(archive, workflow, name + ".cwl");
     await Zip.add(archive, workflowInputs, name + "-inputs.yml");
@@ -140,6 +164,18 @@ class Utils {
       await Zip.add(archive, steps[step].content, steps[step].stepId + ".cwl");
       await Zip.addFile(archive, "uploads/", implementationUnits[steps[step].stepId] + "/" + steps[step].fileName);
     }
+
+    if (visualise) {
+      const timestamp="" + Math.floor(new Date() / 1000);
+			const GIT_SERVER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.HOST") + config.get("gitserver.PORT");
+			await Utils.commitPushWorkflowRepo(id, timestamp, name, workflow, steps);
+			let png = await Utils.getWorkflowPNGFromViewer(id + timestamp, name);
+			if (!png) {
+				let queueLocation = await Utils.addWorkflowToViewer(id + timestamp, name);
+				png = await Utils.getWorkflowFromViewer(id + timestamp, name, queueLocation);
+        await Zip.add(archive, png, "abstract.png");
+			}
+		}
 
     let readme = await fspromises.readFile("templates/README.md", "utf8");
     readme = readme.replace(/\[id\]/g, name);

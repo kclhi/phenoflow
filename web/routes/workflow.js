@@ -101,7 +101,7 @@ router.post("/generate/:workflowId", async function(req, res, next) {
     request.post(config.get("generator.URL") + "/generate", {json: mergedSteps}, async function(error, response, data) {
 
       if (!error && response.statusCode==200) {
-        await Utils.createPFZipResponse(res, workflow.name, response.body.workflow, response.body.workflowInputs, req.body.implementationUnits, response.body.steps, workflow.about);
+        await Utils.createPFZipResponse(res, req.params.workflowId, workflow.name, response.body.workflow, response.body.workflowInputs, req.body.implementationUnits, response.body.steps, workflow.about);
       } else {
         res.sendStatus(500);
       }
