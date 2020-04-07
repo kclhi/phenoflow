@@ -40,4 +40,5 @@ async def generate(request):
                 generatedStep = "";
 
             generatedSteps.append({"stepId": step['stepId'], "content": generatedStep, "fileName": step['implementation']['fileName']});
+
     return JSONResponse({"workflow": generatedWorkflow.export_string(), "steps": generatedSteps, "workflowInputs": yaml.dump(generatedWorkflowInputs, default_flow_style=False)})

@@ -42,6 +42,8 @@ router.post("/generate/:workflowId", async function(req, res, next) {
       });
     } catch(err) {
       logger.error("Error finding workflow: " + err);
+      res.sendStatus(500);
+      return;
     }
 
     try {
@@ -52,6 +54,8 @@ router.post("/generate/:workflowId", async function(req, res, next) {
       });
     } catch(err) {
       logger.error("Error finding steps: " + err);
+      res.sendStatus(500);
+      return;
     }
 
     let mergedSteps = [];
@@ -66,6 +70,8 @@ router.post("/generate/:workflowId", async function(req, res, next) {
         });
       } catch(err) {
         logger.error("Error finding inputs: " + err);
+        res.sendStatus(500);
+        return;
       }
       try {
         mergedStep.outputs = await models.output.findAll({
@@ -75,6 +81,8 @@ router.post("/generate/:workflowId", async function(req, res, next) {
         });
       } catch(err) {
         logger.error("Error finding outputs: " + err);
+        res.sendStatus(500);
+        return;
       }
       try {
         if ( req.body.implementationUnits[steps[step].stepId] ) {
@@ -87,10 +95,12 @@ router.post("/generate/:workflowId", async function(req, res, next) {
         }
       } catch(err) {
         logger.error("Error finding implementation: " + err);
+        res.sendStatus(500);
+        return;
       }
 
       if (!mergedStep.implementation) {
-        logger.error("No implementation units found (for this language permutation).")
+        logger.error("No implementation units found (for this language permutation): " + steps[step].stepId + " not in " + req.body.implementationUnits);
         res.sendStatus(500);
         return;
       }

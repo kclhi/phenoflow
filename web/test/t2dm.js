@@ -83,6 +83,10 @@ describe('t2dm', () => {
 			await Workflow.addImplementation("knime", stepId, "test/implementation/knime/", "rx_t2dm_med-abnormal-lab.knwf");
 		});
 
+		it('Add rx_t2dm_med-abnormal-lab alternative implementation.', async() => {
+			await Workflow.addImplementation("python", stepId, "test/implementation/python/", "rx_t2dm_med-abnormal-lab.py");
+		});
+
 		// 4. dx_t2dm-abnormal-lab
 
 		it('Add dx_t2dm-abnormal-lab (case rule 2) step.', async() => {
@@ -197,30 +201,39 @@ describe('t2dm', () => {
 			"output-cases": "knime"
 		};
 
-		it('Construct ZIP from generated CWL.', async() => {
+		async function constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps) {
 			let visualise=true;
-			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) visualise=false; }
-			await Utils.createPFZipFile(
-				workflowId,
-				name,
-				workflow,
-				workflowInput,
-				implementationUnits,
-				steps,
-				"Type 2 Diabetes Mellitus phenotype as a structured phenotype definition, as produced by the Phenoflow architecture.",
-				visualise
-			);
+			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") visualise=false; }
+			await Utils.createPFZipFile(workflowId, name, workflow, workflowInput, implementationUnits, steps, "Type 2 Diabetes Mellitus phenotype as a structured phenotype definition, as produced by the Phenoflow architecture.", visualise);
 			expect(fs.existsSync('dist/' + name + ".zip")).to.be.true
-		}).timeout(120000);
+		}
 
-		it('Construct ZIP from generate endpoint.', async() => {
+		async function constructZIPFromGenerateEndpoint(workflowId, implementationUnits) {
 			// If endpoint is unreachable test can't be performed.
-			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }
-			let res = await chai.request(server).post('/workflow/generate/' + workflowId).send({
-				implementationUnits: implementationUnits
-			});
+			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") return; }
+			let res = await chai.request(server).post('/workflow/generate/' + workflowId).send({implementationUnits: implementationUnits});
 			res.should.have.status(200);
 			res.body.should.be.a('object');
+		}
+
+		it("Construct ZIP from generated CWL.", async() => {
+			await constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps);
+		}).timeout(120000);
+
+		it("Construct ZIP from generate endpoint.", async() => {
+			await constructZIPFromGenerateEndpoint(workflowId, implementationUnits);
+		}).timeout(120000);
+
+		workflowInput = workflowInput.replace("knime/rx_t2dm_med-abnormal-lab.knwf", "python/rx_t2dm_med-abnormal-lab.py");
+		steps[2] = {'stepId': 'rx_t2dm_med-abnormal-lab', 'content': "$namespaces:\n  s: https://phekb.org/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: An abnormal lab value is defined as one of three different exacerbations in blood\n  sugar level.\nid: rx_t2dm_med-abnormal-lab\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: python:latest\ns:type: boolean-expression\n", 'fileName': 'rx_t2dm_med-abnormal-lab.py'}
+		implementationUnits["rx_t2dm_med-abnormal-lab"] = "python";
+
+		it("Construct ZIP from generated CWL (alternative implementation).", async() => {
+			await constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps);
+		}).timeout(120000);
+
+		it("Construct ZIP from generate endpoint (alternative implementation).", async() => {
+			await constructZIPFromGenerateEndpoint(workflowId, implementationUnits);
 		}).timeout(120000);
 
 	});
