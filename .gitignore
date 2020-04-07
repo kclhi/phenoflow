@@ -22,6 +22,8 @@ src/
 *.key
 *.crt
 *.priv
+*.srl
+*.csr
 
 ### Dropbox ###
 # Dropbox settings and caches

@@ -100,10 +100,6 @@ router.post("/generate/:workflowId", async function(req, res, next) {
 
     request.post(config.get("generator.URL") + "/generate", {json: mergedSteps}, async function(error, response, data) {
 
-      if(error && error.code=="ECONNREFUSED") {
-        res.sendStatus(503);
-        return;
-      }
       if (!error && response.statusCode==200) {
         await Utils.createPFZipResponse(res, workflow.name, response.body.workflow, response.body.workflowInputs, req.body.implementationUnits, response.body.steps, workflow.about);
       } else {

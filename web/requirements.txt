@@ -10,3 +10,5 @@ winston
 body-parser
 express-fileupload
 request
+isomorphic-git
+got

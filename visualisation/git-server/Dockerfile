@@ -3,6 +3,7 @@ FROM node:11
 ENV user node
 
 COPY package.json /home/$user/
+COPY certs/ /home/$user/
 COPY . /home/$user/
 
 WORKDIR /home/$user

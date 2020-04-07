@@ -101,24 +101,3 @@ def initWorkflow():
     workflow = cwlgen.Workflow()
     workflow.requirements.append(cwlgen.SubworkflowFeatureRequirement());
     return workflow;
-
-
-def commitPushWorkflowRepo():
-
-    repo = Repo("./output")
-    assert not repo.bare
-    repo.git.add(A=True)
-    repo.git.commit('-m', 'Update', author='contact@martinchapman.co.uk')
-    origin = repo.remote(name='origin')
-    origin.push()
-
-def addWorkflowToViewer(workflowFile):
-
-    headers = {'accept': 'application/json'}
-    payload = {
-        "url": "http://git-server:7005/workflows.git",
-        "branch": "master",
-        "path": workflowFile
-    }
-    r = requests.post("http://localhost:8080/workflows", headers=headers, data=payload)
-    print("Response: " + r.text)
