@@ -5,7 +5,7 @@ const models = require('../models');
 
 router.post('/new', function(req, res, next) {
 
-  if ( !req.body.stepId || !req.body.doc || !req.body.type || !req.body.position || !req.body.workflowId  ) {
+  if (!req.body.stepId || !req.body.doc || !req.body.type || !req.body.position || !req.body.workflowId) {
     res.status(500).send("Missing parameters.");
   } else {
     models.step.create({

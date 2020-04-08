@@ -3,13 +3,13 @@ const router = express.Router();
 const logger = require('../config/winston');
 const models = require('../models');
 const config = require('config');
-const request = require('request');
+const got = require('got');
 
 const Utils = require('../util/utils');
 
 router.get('/define', function(req, res, next) {
 
-  res.render('index', { title: 'Express' });
+  res.render('define', { title: 'Express' });
 
 });
 
@@ -108,15 +108,21 @@ router.post("/generate/:workflowId", async function(req, res, next) {
       mergedSteps.push(mergedStep);
     }
 
-    request.post(config.get("generator.URL") + "/generate", {json: mergedSteps}, async function(error, response, data) {
+    try {
+      var generate = await got.post(config.get("generator.URL") + "/generate", {json: mergedSteps, responseType: "json"});
+    } catch(error) {
+      logger.error("Error contacting generator: " + error);
+      res.sendStatus(500);
+      return;
+    }
 
-      if (!error && response.statusCode==200) {
-        await Utils.createPFZipResponse(res, req.params.workflowId, workflow.name, response.body.workflow, response.body.workflowInputs, req.body.implementationUnits, response.body.steps, workflow.about);
-      } else {
-        res.sendStatus(500);
-      }
+    logger.debug("Response from generator: " + generate.body + " " + generate.body.workflow + " " + generate.body.workflowInputs + " " + generate.body.steps);
 
-    });
+    if (generate.statusCode==200 && generate.body && generate.body.workflow && generate.body.workflowInputs && generate.body.steps) {
+      await Utils.createPFZipResponse(res, req.params.workflowId, workflow.name, generate.body.workflow, generate.body.workflowInputs, req.body.implementationUnits, generate.body.steps, workflow.about);
+    } else {
+      res.sendStatus(500);
+    }
 
   }
 

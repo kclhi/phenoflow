@@ -109,7 +109,7 @@ class Utils {
 
   }
 
-  static async getWorkflowFromViewer(id, file, queueLocation) {
+  static async getWorkflowFromViewer(id, file, queueLocation, remainingTries=10) {
 
     if (!queueLocation || (queueLocation && queueLocation.indexOf("queue")==-1)) {
       logger.debug("No queue location specified");
@@ -127,10 +127,10 @@ class Utils {
 
     logger.debug("Response from get workflow from viewer: " + queue.statusCode + " " + JSON.stringify(queue.body));
 
-    if (queue && queue.statusCode==200 && queue.body && JSON.parse(queue.body).cwltoolStatus=="RUNNING") {
+    if (queue && queue.statusCode==200 && queue.body && JSON.parse(queue.body).cwltoolStatus=="RUNNING" && remainingTries>0) {
       logger.debug("Visualisation still processing, trying again.");
       await new Promise(resolve=>setTimeout(resolve, 1000));
-      return await Utils.getWorkflowFromViewer(id, file, queueLocation);
+      return await Utils.getWorkflowFromViewer(id, file, queueLocation, remainingTries-1);
     } else if (queue && queue.statusCode==303 && queue.body && JSON.parse(queue.body).cwltoolStatus=="SUCCESS") {
       logger.debug("Visualisation processed, getting PNG.");
       return await Utils.getWorkflowPNGFromViewer(id, file);

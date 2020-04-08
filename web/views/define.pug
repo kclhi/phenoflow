@@ -1,0 +1,83 @@
+extends layout
+
+block content
+  script.
+    function newWorkflow() {
+
+      createWorkflow(document.getElementById('workflow-name').value, "martin", document.getElementById('workflow-about').value, function(workflowCreateResponse) {
+
+        const workflowId = JSON.parse(workflowCreateResponse).id;
+        var position = 1;
+        for (let step of document.getElementById('steps').childNodes) {
+          createStep(step.getElementsByTagName('input')[0].value, step.getElementsByTagName('input')[1].value, step.getElementsByTagName('select')[0].value, position++, workflowId, function(stepCreateResponse){
+
+            const stepId = JSON.parse(stepCreateResponse).id;
+            createInput(step.getElementsByTagName('input')[2].value, stepId);
+            createOutput(step.getElementsByTagName('input')[3].value, step.getElementsByTagName('input')[4].value, stepId);
+            createImplementation(step.getElementsByTagName('input')[5].files[0], step.getElementsByTagName('input')[6].value, stepId);
+
+          });
+        }
+
+      });
+
+    }
+
+    var steps = 1;
+    function addStep() {
+
+      var original = document.getElementById('step-1');
+      var clone = original.cloneNode(true);
+      clone.id = "step-" + ++steps;
+      original.parentNode.appendChild(clone);
+
+    }
+
+  nav(class="navbar navbar-expand-md navbar-dark bg-info fixed-left")
+    a(class="navbar-brand mx-auto")
+      span(style="font-family: 'Sen', sans-serif; color: white;") pf
+    button(class="navbar-toggler" type="button" data-toggle="collapse" data-target="#pfnav" aria-controls="pfnav" aria-expanded="false" aria-label="Toggle navigation")
+      span(class="navbar-toggler-icon")
+    div(class="collapse navbar-collapse" id="pfnav")
+      ul(class="navbar-nav")
+        li(class="nav-item")
+          a(class="nav-link")
+            svg(class="bi bi-house-fill" width="2em" height="2em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg")
+              path(fill-rule="evenodd" d="M8 3.293l6 6V13.5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 13.5V9.293l6-6zm5-.793V6l-2-2V2.5a.5.5 0 01.5-.5h1a.5.5 0 01.5.5z" clip-rule="evenodd")
+              path(fill-rule="evenodd" d="M7.293 1.5a1 1 0 011.414 0l6.647 6.646a.5.5 0 01-.708.708L8 2.207 1.354 8.854a.5.5 0 11-.708-.708L7.293 1.5z" clip-rule="evenodd")
+        li(class="nav-item")
+          a(class="nav-link")
+            svg(class="bi bi-plus-circle-fill" width="2em" height="2em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg")
+              path(fill-rule="evenodd" d="M16 8A8 8 0 110 8a8 8 0 0116 0zM8.5 4a.5.5 0 00-1 0v3.5H4a.5.5 0 000 1h3.5V12a.5.5 0 001 0V8.5H12a.5.5 0 000-1H8.5V4z" clip-rule="evenodd")
+
+  div(class="container")
+    p(style='white-space:pre;')
+      | Workflow:
+      input(id="workflow-name", placeholder="name" label="workflow name" type=text)
+      input(id="workflow-about", placeholder="about" type=text)
+
+    div(id="steps")
+      div(id="step-1")
+        p(style='white-space:pre;')
+          | Step:
+          input(id="step-id", placeholder="id" label="workflow name" type="text")
+          input(id="step-doc", placeholder="doc" type="text")
+          select(id="step-type", placeholder="about")
+            option(value='load', selected=true) load
+            option(value='boolean-expression') boolean-expression
+            option(value='write') write
+        p(style='white-space:pre;')
+          | Input:
+          input(id="input-doc", placeholder="doc" label="input doc" type="text")
+        p(style='white-space:pre;')
+          | Output:
+          input(id="output-doc", placeholder="doc" label="output doc" type="text")
+          input(id="output-extension", placeholder="extension" label="output extension" type="text")
+        p(style='white-space:pre;')
+          | Implementation:
+          input(id="implementation-file", placeholder="file", type="file")
+          input(id="implementation-language", placeholder="language", type="text")
+
+
+    a(onclick="addStep(); return false;") Add step
+    a(onclick="newWorkflow(); return false;") Send

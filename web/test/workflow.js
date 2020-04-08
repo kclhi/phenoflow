@@ -14,7 +14,7 @@ class Workflow {
 	static async createWorkflow(name, author, about) {
 
 		await models.workflow.sync({force:true});
-		let res = await chai.request(server).post('/workflow/new').send({
+		let res = await chai.request(server).post('/phenotype/new').send({
 			name: name,
 			author: author,
 			about: about

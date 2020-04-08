@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/workflow', workflow);
+app.use('/phenotype', workflow);
 app.use('/step', step);
 app.use('/input', input);
 app.use('/output', output);
