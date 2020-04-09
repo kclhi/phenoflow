@@ -123,12 +123,16 @@ describe('basic', () => {
 		it('Construct ZIP from generate endpoint.', async() => {
 			// If endpoint is unreachable test can't be performed.
 			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }
-			let res = await chai.request(server).post('/workflow/generate/' + workflowId).send({
+			let res = await chai.request(server).post('/phenotype/generate/' + workflowId).send({
 				implementationUnits: implementationUnits
 			});
 			res.should.have.status(200);
 			res.body.should.be.a('object');
 		}).timeout(120000);
+
+		it('Should not be able to add step with same id + workflow', async() => {
+			await Workflow.notAddStep("stepId-" + 1, "doc", "type", 1, workflowId);
+		});
 
 	});
 

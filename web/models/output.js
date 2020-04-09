@@ -2,15 +2,8 @@
 module.exports = function(sequelize, DataTypes) {
 
 	var output = sequelize.define('output', {
-
-		id: {
-		 type: DataTypes.INTEGER,
-		 autoIncrement: true,
-		 primaryKey: true
-	 	},
 		doc: DataTypes.STRING,
 		extension: DataTypes.STRING
-
 	});
 
 	output.associate = function(models) {

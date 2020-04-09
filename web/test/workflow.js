@@ -13,7 +13,6 @@ class Workflow {
 
 	static async createWorkflow(name, author, about) {
 
-		await models.workflow.sync({force:true});
 		let res = await chai.request(server).post('/phenotype/new').send({
 			name: name,
 			author: author,
@@ -25,16 +24,29 @@ class Workflow {
 
 	}
 
-	static async addStep(stepId, doc, type, position, workflowId) {
-
-		let res = await chai.request(server).post('/step/new').send({
+	static async step(stepId, doc, type, position, workflowId) {
+		return await chai.request(server).post('/step/new').send({
 			stepId: stepId,
 			doc: doc,
 			type: type,
 			position: position,
 			workflowId: workflowId
 		});
+	}
+
+	static async addStep(id, doc, type, position, workflowId) {
+
+		let res = await Workflow.step(id, doc, type, position, workflowId);
 		res.should.have.status(200);
+		res.body.should.be.a('object');
+		return res.body.id;
+
+	}
+
+	static async notAddStep(id, doc, type, position, workflowId) {
+
+		let res = await Workflow.step(id, doc, type, position, workflowId);
+		res.should.have.status(500);
 		res.body.should.be.a('object');
 		return res.body.id;
 

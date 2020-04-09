@@ -12,8 +12,8 @@ function createWorkflow(name, author, about, callback) {
   sendPostRequest("phenotype/new", JSON.stringify({"name": name, "author": author, "about": about}), callback);
 }
 
-function createStep(stepId, doc, type, position, workflowId, callback) {
-  sendPostRequest("step/new", JSON.stringify({"stepId": stepId, "doc": doc, "type": type, "position": position, "workflowId": workflowId}), callback);
+function createStep(id, doc, type, position, workflowId, callback) {
+  sendPostRequest("step/new", JSON.stringify({"id": id, "doc": doc, "type": type, "position": position, "workflowId": workflowId}), callback);
 }
 
 function createInput(doc, stepId, callback=function(response){}) {

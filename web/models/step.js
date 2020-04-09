@@ -2,17 +2,23 @@
 module.exports = function(sequelize, DataTypes) {
 
 	var step = sequelize.define('step', {
-
-		id: {
-		 type: DataTypes.INTEGER,
-		 autoIncrement: true,
-		 primaryKey: true
+		stepId: {
+		 type: DataTypes.STRING,
+		 allowNull: false
 		},
-		stepId: DataTypes.TEXT,
 		doc: DataTypes.STRING,
 		type: DataTypes.STRING,
-		position: DataTypes.INTEGER
-
+		position: {
+			type: DataTypes.INTEGER,
+			allowNull: false
+		}
+	},
+	{
+		indexes: [
+			{ unique: true, fields: [ 'stepId', 'position', 'workflowId' ] },
+			{ unique: true, fields: [ 'stepId', 'workflowId' ] },
+			{ unique: true, fields: [ 'position', 'workflowId' ] }
+		]
 	});
 
 	step.associate = function(models) {

@@ -2,15 +2,8 @@
 module.exports = function(sequelize, DataTypes) {
 
 	var implementation = sequelize.define('implementation', {
-
-		id: {
-		 type: DataTypes.INTEGER,
-		 autoIncrement: true,
-		 primaryKey: true
-		},
 		language: DataTypes.STRING,
 		fileName: DataTypes.STRING
-
 	});
 
 	implementation.associate = function(models) {

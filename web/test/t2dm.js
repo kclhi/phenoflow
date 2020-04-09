@@ -211,7 +211,7 @@ describe('t2dm', () => {
 		async function constructZIPFromGenerateEndpoint(workflowId, implementationUnits) {
 			// If endpoint is unreachable test can't be performed.
 			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") return; }
-			let res = await chai.request(server).post('/workflow/generate/' + workflowId).send({implementationUnits: implementationUnits});
+			let res = await chai.request(server).post('/phenotype/generate/' + workflowId).send({implementationUnits: implementationUnits});
 			res.should.have.status(200);
 			res.body.should.be.a('object');
 		}

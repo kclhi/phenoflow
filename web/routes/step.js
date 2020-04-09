@@ -17,8 +17,8 @@ router.post('/new', function(req, res, next) {
     }).then(
       (created)=>res.send({"id": created.id})
     ).catch(function(error) {
-      logger.debug(error);
-      res.send(error);
+      //logger.debug(error);
+      res.status(500).send(error);
     });
   }
 

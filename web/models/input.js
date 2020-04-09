@@ -2,14 +2,7 @@
 module.exports = function(sequelize, DataTypes) {
 
 	var input = sequelize.define('input', {
-
-		id: {
-		 type: DataTypes.INTEGER,
-		 autoIncrement: true,
-		 primaryKey: true
-		},
 		doc: DataTypes.STRING
-
 	});
 
 	input.associate = function(models) {
