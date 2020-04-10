@@ -21,9 +21,10 @@ class Utils {
     }
 
     await fspromises.writeFile(workflowRepo + "/" + name + ".cwl", workflow);
-    for ( const step in steps ) await fspromises.writeFile(workflowRepo + "/" + steps[step].stepId + ".cwl", steps[step].content);
-    await git.init({ fs, dir: workflowRepo })
-    await git.add({ fs, dir: workflowRepo, filepath: '.' })
+    for ( const step in steps ) await fspromises.writeFile(workflowRepo + "/" + steps[step].name + ".cwl", steps[step].content);
+
+    await git.init({fs, dir: workflowRepo})
+    await git.add({fs, dir: workflowRepo, filepath: '.'})
 
     let sha = await git.commit({
       fs,
@@ -36,22 +37,31 @@ class Utils {
     });
     logger.debug("SHA: " + sha);
 
-    let addRemoteResult = await git.addRemote({
-      fs,
-      dir: workflowRepo,
-      remote: "workflow" + id + timestamp,
-      url: GIT_SERVER_URL + "/workflow" + id + timestamp + ".git"
-    });
-    logger.debug("Add remote: " + addRemoteResult);
+    try {
+      let addRemoteResult = await git.addRemote({
+        fs,
+        dir: workflowRepo,
+        remote: "workflow" + id + timestamp,
+        url: GIT_SERVER_URL + "/workflow" + id + timestamp + ".git"
+      });
+    } catch(error) {
+      logger.debug("Cannot add remote (" + workflow + id + timestamp + "): " + error);
+    }
 
-    let pushResult = await git.push({
-      fs,
-      http,
-      dir: workflowRepo,
-      remote: "workflow" + id + timestamp,
-      ref: "master"
-    })
-    logger.debug("Push: " + pushResult);
+    try {
+      let pushResult = await git.push({
+        fs,
+        http,
+        dir: workflowRepo,
+        remote: "workflow" + id + timestamp,
+        ref: "master"
+      });
+      logger.debug("Pushed to: " + id + timestamp);
+    } catch(error) {
+      logger.debug("Cannot push to remote (" + id + timestamp + "): " + error);
+    }
+
+
 
   }
 
@@ -68,7 +78,7 @@ class Utils {
       return null;
     }
 
-    logger.debug("Response from get workflow png from viewer: " + png.statusCode + " " + pngBuffer);
+    logger.debug("Response from get workflow png from viewer: " + png.statusCode);
 
     if (png.statusCode==200 && pngBuffer) {
       return pngBuffer;
@@ -161,8 +171,8 @@ class Utils {
     await Zip.add(archive, "", "replaceMe.csv");
 
     for ( const step in steps ) {
-      await Zip.add(archive, steps[step].content, steps[step].stepId + ".cwl");
-      await Zip.addFile(archive, "uploads/", implementationUnits[steps[step].stepId] + "/" + steps[step].fileName);
+      await Zip.add(archive, steps[step].content, steps[step].name + ".cwl");
+      await Zip.addFile(archive, "uploads/", (implementationUnits[steps[step].name]?implementationUnits[steps[step].name]:implementationUnits) + "/" + steps[step].fileName);
     }
 
     if (visualise) {

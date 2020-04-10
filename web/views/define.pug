@@ -1,37 +1,7 @@
 extends layout
 
 block content
-  script.
-    function newWorkflow() {
-
-      createWorkflow(document.getElementById('workflow-name').value, "martin", document.getElementById('workflow-about').value, function(workflowCreateResponse) {
-
-        const workflowId = JSON.parse(workflowCreateResponse).id;
-        var position = 1;
-        for (let step of document.getElementById('steps').childNodes) {
-          createStep(step.getElementsByTagName('input')[0].value, step.getElementsByTagName('input')[1].value, step.getElementsByTagName('select')[0].value, position++, workflowId, function(stepCreateResponse){
-
-            const stepId = JSON.parse(stepCreateResponse).id;
-            createInput(step.getElementsByTagName('input')[2].value, stepId);
-            createOutput(step.getElementsByTagName('input')[3].value, step.getElementsByTagName('input')[4].value, stepId);
-            createImplementation(step.getElementsByTagName('input')[5].files[0], step.getElementsByTagName('input')[6].value, stepId);
-
-          });
-        }
-
-      });
-
-    }
-
-    var steps = 1;
-    function addStep() {
-
-      var original = document.getElementById('step-1');
-      var clone = original.cloneNode(true);
-      clone.id = "step-" + ++steps;
-      original.parentNode.appendChild(clone);
-
-    }
+  script(src='/javascripts/define.js')
 
   nav(class="navbar navbar-expand-md navbar-dark bg-info fixed-left")
     a(class="navbar-brand mx-auto")
@@ -80,4 +50,4 @@ block content
 
 
     a(onclick="addStep(); return false;") Add step
-    a(onclick="newWorkflow(); return false;") Send
+    a(onclick="createOrUpdateWorkflow(); return false;") Send

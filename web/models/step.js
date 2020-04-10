@@ -2,7 +2,7 @@
 module.exports = function(sequelize, DataTypes) {
 
 	var step = sequelize.define('step', {
-		stepId: {
+		name: {
 		 type: DataTypes.STRING,
 		 allowNull: false
 		},
@@ -15,8 +15,8 @@ module.exports = function(sequelize, DataTypes) {
 	},
 	{
 		indexes: [
-			{ unique: true, fields: [ 'stepId', 'position', 'workflowId' ] },
-			{ unique: true, fields: [ 'stepId', 'workflowId' ] },
+			{ unique: true, fields: [ 'name', 'position', 'workflowId' ] },
+			{ unique: true, fields: [ 'name', 'workflowId' ] },
 			{ unique: true, fields: [ 'position', 'workflowId' ] }
 		]
 	});

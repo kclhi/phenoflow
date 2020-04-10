@@ -44,7 +44,7 @@ describe('t2dm', () => {
 
 		it('Add read potential cases implementation.', async() => {
 			await models.implementation.sync({force:true});
-			await Workflow.addImplementation("knime", stepId, "test/implementation/knime/", "read-potential-cases.knwf");
+			await Workflow.addImplementation("knime", "test/implementation/knime/", "read-potential-cases.knwf", stepId);
 		});
 
 		// 2. abnormal-lab
@@ -62,7 +62,7 @@ describe('t2dm', () => {
 		});
 
 		it('Add abnormal lab implementation.', async() => {
-			await Workflow.addImplementation("knime", stepId, "test/implementation/knime/", "abnormal-lab.knwf");
+			await Workflow.addImplementation("knime", "test/implementation/knime/", "abnormal-lab.knwf", stepId);
 		});
 
 		// 3. rx_t2dm_med-abnormal-lab
@@ -80,11 +80,11 @@ describe('t2dm', () => {
 		});
 
 		it('Add rx_t2dm_med-abnormal-lab implementation.', async() => {
-			await Workflow.addImplementation("knime", stepId, "test/implementation/knime/", "rx_t2dm_med-abnormal-lab.knwf");
+			await Workflow.addImplementation("knime", "test/implementation/knime/", "rx_t2dm_med-abnormal-lab.knwf", stepId);
 		});
 
 		it('Add rx_t2dm_med-abnormal-lab alternative implementation.', async() => {
-			await Workflow.addImplementation("python", stepId, "test/implementation/python/", "rx_t2dm_med-abnormal-lab.py");
+			await Workflow.addImplementation("python", "test/implementation/python/", "rx_t2dm_med-abnormal-lab.py", stepId);
 		});
 
 		// 4. dx_t2dm-abnormal-lab
@@ -102,7 +102,7 @@ describe('t2dm', () => {
 		});
 
 		it('Add dx_t2dm-abnormal-lab implementation.', async() => {
-			await Workflow.addImplementation("knime", stepId, "test/implementation/knime/", "dx_t2dm-abnormal-lab.knwf");
+			await Workflow.addImplementation("knime", "test/implementation/knime/", "dx_t2dm-abnormal-lab.knwf", stepId);
 		});
 
 		// 5. dx_t2dm-rx_t2dm_med
@@ -120,7 +120,7 @@ describe('t2dm', () => {
 		});
 
 		it('Add dx_t2dm-rx_t2dm_med implementation.', async() => {
-			await Workflow.addImplementation("knime", stepId, "test/implementation/knime/", "dx_t2dm-rx_t2dm_med.knwf");
+			await Workflow.addImplementation("knime", "test/implementation/knime/", "dx_t2dm-rx_t2dm_med.knwf", stepId);
 		});
 
 		// 6. dx_t2dm-rx_tdm_med-prec
@@ -138,7 +138,7 @@ describe('t2dm', () => {
 		});
 
 		it('Add dx_t2dm-rx_tdm_med-prec implementation.', async() => {
-			await Workflow.addImplementation("knime", stepId, "test/implementation/knime/", "dx_t2dm-rx_tdm_med-prec.knwf");
+			await Workflow.addImplementation("knime", "test/implementation/knime/", "dx_t2dm-rx_tdm_med-prec.knwf", stepId);
 		});
 
 		// 7. dx_t2dm-rx_t1dm_med-dx2
@@ -156,7 +156,7 @@ describe('t2dm', () => {
 		});
 
 		it('Add dx_t2dm-rx_t1dm_med-dx2 implementation.', async() => {
-			await Workflow.addImplementation("knime", stepId, "test/implementation/knime/", "dx_t2dm-rx_t1dm_med-dx2.knwf");
+			await Workflow.addImplementation("knime", "test/implementation/knime/", "dx_t2dm-rx_t1dm_med-dx2.knwf", stepId);
 		});
 
 		// 8. output-cases
@@ -174,21 +174,21 @@ describe('t2dm', () => {
 		});
 
 		it('Add output-cases implementation.', async() => {
-			await Workflow.addImplementation("knime", stepId, "test/implementation/knime/", "output-cases.knwf");
+			await Workflow.addImplementation("knime", "test/implementation/knime/", "output-cases.knwf", stepId);
 		});
 
 		let workflow = // ~MDC This is obviously sub-optimal...
 		"class: Workflow\ncwlVersion: v1.0\ninputs:\n  inputModule1:\n    doc: KNIME implementation unit\n    id: inputModule1\n    type: File\n  inputModule2:\n    doc: KNIME implementation unit\n    id: inputModule2\n    type: File\n  inputModule3:\n    doc: KNIME implementation unit\n    id: inputModule3\n    type: File\n  inputModule4:\n    doc: KNIME implementation unit\n    id: inputModule4\n    type: File\n  inputModule5:\n    doc: KNIME implementation unit\n    id: inputModule5\n    type: File\n  inputModule6:\n    doc: KNIME implementation unit\n    id: inputModule6\n    type: File\n  inputModule7:\n    doc: KNIME implementation unit\n    id: inputModule7\n    type: File\n  inputModule8:\n    doc: KNIME implementation unit\n    id: inputModule8\n    type: File\n  potentialCases:\n    doc: Input of potential cases for processing\n    id: potentialCases\n    type: File\noutputs:\n  cases:\n    id: cases\n    outputBinding:\n      glob: '*.csv'\n    outputSource: 8/output\n    type: File\nrequirements:\n  SubworkflowFeatureRequirement: {}\nsteps:\n  '1':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule1\n      potentialCases:\n        id: potentialCases\n        source: potentialCases\n    out:\n    - output\n    run: read-potential-cases.cwl\n  '2':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule2\n      potentialCases:\n        id: potentialCases\n        source: 1/output\n    out:\n    - output\n    run: abnormal-lab.cwl\n  '3':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule3\n      potentialCases:\n        id: potentialCases\n        source: 2/output\n    out:\n    - output\n    run: rx_t2dm_med-abnormal-lab.cwl\n  '4':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule4\n      potentialCases:\n        id: potentialCases\n        source: 3/output\n    out:\n    - output\n    run: dx_t2dm-abnormal-lab.cwl\n  '5':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule5\n      potentialCases:\n        id: potentialCases\n        source: 4/output\n    out:\n    - output\n    run: dx_t2dm-rx_t2dm_med.cwl\n  '6':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule6\n      potentialCases:\n        id: potentialCases\n        source: 5/output\n    out:\n    - output\n    run: dx_t2dm-rx_tdm_med-prec.cwl\n  '7':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule7\n      potentialCases:\n        id: potentialCases\n        source: 6/output\n    out:\n    - output\n    run: dx_t2dm-rx_t1dm_med-dx2.cwl\n  '8':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule8\n      potentialCases:\n        id: potentialCases\n        source: 7/output\n    out:\n    - output\n    run: output-cases.cwl\n";
 		let workflowInput = "inputModule1:\n  class: File\n  path: knime/read-potential-cases.knwf\ninputModule2:\n  class: File\n  path: knime/abnormal-lab.knwf\ninputModule3:\n  class: File\n  path: knime/rx_t2dm_med-abnormal-lab.knwf\ninputModule4:\n  class: File\n  path: knime/dx_t2dm-abnormal-lab.knwf\ninputModule5:\n  class: File\n  path: knime/dx_t2dm-rx_t2dm_med.knwf\ninputModule6:\n  class: File\n  path: knime/dx_t2dm-rx_tdm_med-prec.knwf\ninputModule7:\n  class: File\n  path: knime/dx_t2dm-rx_t1dm_med-dx2.knwf\ninputModule8:\n  class: File\n  path: knime/output-cases.knwf\npotentialCases:\n  class: File\n  path: replaceMe.csv\n";
 		let steps = [
-			{"stepId":"read-potential-cases","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Read potential cases\nid: read-potential-cases\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Initial potential cases, read from disc.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: load\n","fileName":"read-potential-cases.knwf"},
-			{"stepId":"abnormal-lab","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: An abnormal lab value is defined as one of three different exacerbations in blood\n  sugar level.\nid: abnormal-lab\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output of patients flagged as having an abnormal lab result.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: logic\n","fileName":"abnormal-lab.knwf"},
-			{"stepId":"rx_t2dm_med-abnormal-lab","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: An abnormal lab value is defined as one of three different exacerbations in blood\n  sugar level.\nid: rx_t2dm_med-abnormal-lab\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"rx_t2dm_med-abnormal-lab.knwf"},
-			{"stepId":"dx_t2dm-abnormal-lab","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: A case is identified in the presence of an abnormal lab value (defined as one\n  of three different exacerbations in blood sugar level) AND if a diagnosis of T2DM\n  is identified.\nid: dx_t2dm-abnormal-lab\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"dx_t2dm-abnormal-lab.knwf"},
-			{"stepId":"dx_t2dm-rx_t2dm_med","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Diagnosis of this type of diabetes AND a prescription of medication for it.\nid: dx_t2dm-rx_t2dm_med\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"dx_t2dm-rx_t2dm_med.knwf"},
-			{"stepId":"dx_t2dm-rx_tdm_med-prec","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Diagnosis of this type of diabetes (by at least two physicians) AND a prescription\n  of medication for both this type, and type 1, of diabetes AND type 1 prescribed\n  prior.\nid: dx_t2dm-rx_tdm_med-prec\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"dx_t2dm-rx_tdm_med-prec.knwf"},
-			{"stepId":"dx_t2dm-rx_t1dm_med-dx2","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Diagnosis of this type of diabetes (by at least two physicians) AND a prescription\n  of medication for type 1 of this type of diabetes.\nid: dx_t2dm-rx_t1dm_med-dx2\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"dx_t2dm-rx_t1dm_med-dx2.knwf"},
-			{"stepId":"output-cases","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Output cases.\nid: output-cases\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"output-cases.knwf"}
+			{"name":"read-potential-cases","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Read potential cases\nid: read-potential-cases\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Initial potential cases, read from disc.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: load\n","fileName":"read-potential-cases.knwf"},
+			{"name":"abnormal-lab","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: An abnormal lab value is defined as one of three different exacerbations in blood\n  sugar level.\nid: abnormal-lab\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output of patients flagged as having an abnormal lab result.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: logic\n","fileName":"abnormal-lab.knwf"},
+			{"name":"rx_t2dm_med-abnormal-lab","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: An abnormal lab value is defined as one of three different exacerbations in blood\n  sugar level.\nid: rx_t2dm_med-abnormal-lab\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"rx_t2dm_med-abnormal-lab.knwf"},
+			{"name":"dx_t2dm-abnormal-lab","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: A case is identified in the presence of an abnormal lab value (defined as one\n  of three different exacerbations in blood sugar level) AND if a diagnosis of T2DM\n  is identified.\nid: dx_t2dm-abnormal-lab\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"dx_t2dm-abnormal-lab.knwf"},
+			{"name":"dx_t2dm-rx_t2dm_med","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Diagnosis of this type of diabetes AND a prescription of medication for it.\nid: dx_t2dm-rx_t2dm_med\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"dx_t2dm-rx_t2dm_med.knwf"},
+			{"name":"dx_t2dm-rx_tdm_med-prec","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Diagnosis of this type of diabetes (by at least two physicians) AND a prescription\n  of medication for both this type, and type 1, of diabetes AND type 1 prescribed\n  prior.\nid: dx_t2dm-rx_tdm_med-prec\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"dx_t2dm-rx_tdm_med-prec.knwf"},
+			{"name":"dx_t2dm-rx_t1dm_med-dx2","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Diagnosis of this type of diabetes (by at least two physicians) AND a prescription\n  of medication for type 1 of this type of diabetes.\nid: dx_t2dm-rx_t1dm_med-dx2\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"dx_t2dm-rx_t1dm_med-dx2.knwf"},
+			{"name":"output-cases","content":"$namespaces:\n  s: https://phekb.org/\narguments:\n- -data\n- /home/kclhi/.eclipse\n- -reset\n- -nosplash\n- -nosave\n- -application\n- org.knime.product.KNIME_BATCH_APPLICATION\nbaseCommand: /home/kclhi/knime_4.1.1/knime\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Output cases.\nid: output-cases\ninputs:\n- doc: KNIME implementation unit\n  id: inputModule\n  inputBinding:\n    prefix: -workflowFile=\n    separate: false\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    prefix: -workflow.variable=dm_potential_cases,file://\n    separate: false\n    valueFrom: ' $(inputs.potentialCases.path),String'\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerOutputDirectory: /home/kclhi/.eclipse\n    dockerPull: kclhi/knime:amia\ns:type: boolean-expression\n","fileName":"output-cases.knwf"}
 		];
 		let implementationUnits = {
 			"read-potential-cases": "knime",
@@ -201,6 +201,15 @@ describe('t2dm', () => {
 			"output-cases": "knime"
 		};
 
+		async function testGenerateEndpoint(workflowId, implementationUnits) {
+			// If endpoint is unreachable test can't be performed.
+			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") return; }
+			let res = await chai.request(server).post('/phenotype/generate/' + workflowId).send({implementationUnits: implementationUnits});
+			res.should.have.status(200);
+			res.body.should.be.a('object');
+			// Handle received ZIP.
+		}
+
 		async function constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps) {
 			let visualise=true;
 			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") visualise=false; }
@@ -208,32 +217,24 @@ describe('t2dm', () => {
 			expect(fs.existsSync('dist/' + name + ".zip")).to.be.true
 		}
 
-		async function constructZIPFromGenerateEndpoint(workflowId, implementationUnits) {
-			// If endpoint is unreachable test can't be performed.
-			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") return; }
-			let res = await chai.request(server).post('/phenotype/generate/' + workflowId).send({implementationUnits: implementationUnits});
-			res.should.have.status(200);
-			res.body.should.be.a('object');
-		}
+		it("Generate endpoint should be reachable.", async() => {
+			await testGenerateEndpoint(workflowId, implementationUnits);
+		}).timeout(120000);
 
 		it("Construct ZIP from generated CWL.", async() => {
 			await constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps);
 		}).timeout(120000);
 
-		it("Construct ZIP from generate endpoint.", async() => {
-			await constructZIPFromGenerateEndpoint(workflowId, implementationUnits);
-		}).timeout(120000);
-
 		workflowInput = workflowInput.replace("knime/rx_t2dm_med-abnormal-lab.knwf", "python/rx_t2dm_med-abnormal-lab.py");
-		steps[2] = {'stepId': 'rx_t2dm_med-abnormal-lab', 'content': "$namespaces:\n  s: https://phekb.org/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: An abnormal lab value is defined as one of three different exacerbations in blood\n  sugar level.\nid: rx_t2dm_med-abnormal-lab\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: python:latest\ns:type: boolean-expression\n", 'fileName': 'rx_t2dm_med-abnormal-lab.py'}
+		steps[2] = {'name': 'rx_t2dm_med-abnormal-lab', 'content': "$namespaces:\n  s: https://phekb.org/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: An abnormal lab value is defined as one of three different exacerbations in blood\n  sugar level.\nid: rx_t2dm_med-abnormal-lab\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of this type of diabetes.\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this case of diabetes.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: python:latest\ns:type: boolean-expression\n", 'fileName': 'rx_t2dm_med-abnormal-lab.py'}
 		implementationUnits["rx_t2dm_med-abnormal-lab"] = "python";
+
+		it("Generate endpoint should be reachable (alternative implementation).", async() => {
+			await testGenerateEndpoint(workflowId, implementationUnits);
+		}).timeout(120000);
 
 		it("Construct ZIP from generated CWL (alternative implementation).", async() => {
 			await constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps);
-		}).timeout(120000);
-
-		it("Construct ZIP from generate endpoint (alternative implementation).", async() => {
-			await constructZIPFromGenerateEndpoint(workflowId, implementationUnits);
 		}).timeout(120000);
 
 	});
