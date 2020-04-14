@@ -5,7 +5,8 @@
     "password": "password",
     "database": "database",
     "host": "",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "logging": false
   }
 
 }

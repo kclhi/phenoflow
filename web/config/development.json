@@ -1,6 +1,7 @@
 {
   "dbConfig": {
 	  "dialect": "sqlite",
-	  "storage": "db.dev.sqlite"
+	  "storage": "db.dev.sqlite",
+    "logging": false
   }
 }

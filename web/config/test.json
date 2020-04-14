@@ -2,7 +2,8 @@
 
   "dbConfig": {
 	  "dialect": "sqlite",
-	  "storage": "db.test.sqlite"
+	  "storage": "db.test.sqlite",
+    "logging": false
   }
 
 }

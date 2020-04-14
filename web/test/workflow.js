@@ -62,7 +62,7 @@ class Workflow {
 		let res = await Workflow.step(workflowId, position, name, doc, type);
 		res.should.have.status(500);
 		res.body.should.be.a("object");
-		logger.debug(res.body.errors.message);
+		logger.debug(res.body.errors&&res.body.errors[0]&&res.body.errors[0].message?res.body.errors[0].message:res.body);
 
 	}
 

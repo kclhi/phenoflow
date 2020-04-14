@@ -37,6 +37,7 @@ function createOrUpdateWorkflow() {
         let position = 1;
         for (let stepNode of stepNodes) {
           processStep(true, stepNode, position, workflowId);
+          position++;
         }
       }
     });
@@ -46,6 +47,7 @@ function createOrUpdateWorkflow() {
         let position = 1;
         for (let stepNode of stepNodes) {
           processStep(false, stepNode, position, workflowId);
+          position++;
         }
       }
     });

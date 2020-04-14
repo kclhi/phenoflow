@@ -1,5 +1,34 @@
 extends layout
 
+mixin createWorkflow(workflowName, workflowAbout)
+  input(id="workflow-name", text=workflowName, value=workflowName, placeholder="name" label="workflow name" type=text)
+  input(id="workflow-about", text=workflowAbout, value=workflowAbout, placeholder="about" type=text)
+
+mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension, implementationFile, implementationLanguage)
+  div(id="step-" + position)
+    p(style='white-space:pre;')
+      | Step:
+      input(id="step-name", value=name, text=name, placeholder="id" label="workflow name" type="text")
+      input(id="step-doc", value=doc, text=doc, placeholder="doc" type="text")
+      select(id="step-type", placeholder="about")
+        option(value='load', selected=true) load
+        option(value='boolean-expression') boolean-expression
+        option(value='write') write
+    p(style='white-space:pre;')
+      | Input:
+      input(id="input-doc", value=inputDoc, text=inputDoc, placeholder="doc" label="input doc" type="text")
+    p(style='white-space:pre;')
+      | Output:
+      input(id="output-doc", value=outputDoc, text=outputDoc, placeholder="doc" label="output doc" type="text")
+      input(id="output-extension", value=outputExtension, text=outputExtension, placeholder="extension" label="output extension" type="text")
+    p(style='white-space:pre;')
+      | Implementation:
+      if implementationFile
+        label(id="implementation-file-existing", placeholder="implementation-file-existing")
+          | #{implementationFile}
+      input(id="implementation-file-" + position, value=implementationFile, text=implementationFile, placeholder="file", type="file")
+      input(id="implementation-language-" + position, value=implementationLanguage, text=implementationLanguage, placeholder="language", type="text")
+
 block content
   script(src='/javascripts/define.js')
 
@@ -23,31 +52,17 @@ block content
   div(class="container")
     p(style='white-space:pre;')
       | Workflow:
-      input(id="workflow-name", placeholder="name" label="workflow name" type=text)
-      input(id="workflow-about", placeholder="about" type=text)
-
-    div(id="steps")
-      div(id="step-1")
-        p(style='white-space:pre;')
-          | Step:
-          input(id="step-id", placeholder="id" label="workflow name" type="text")
-          input(id="step-doc", placeholder="doc" type="text")
-          select(id="step-type", placeholder="about")
-            option(value='load', selected=true) load
-            option(value='boolean-expression') boolean-expression
-            option(value='write') write
-        p(style='white-space:pre;')
-          | Input:
-          input(id="input-doc", placeholder="doc" label="input doc" type="text")
-        p(style='white-space:pre;')
-          | Output:
-          input(id="output-doc", placeholder="doc" label="output doc" type="text")
-          input(id="output-extension", placeholder="extension" label="output extension" type="text")
-        p(style='white-space:pre;')
-          | Implementation:
-          input(id="implementation-file", placeholder="file", type="file")
-          input(id="implementation-language", placeholder="language", type="text")
+      if workflow
+        +createWorkflow(workflow.name?workflow.name:"", workflow.about?workflow.about:"")
+      else
+        +createWorkflow("", "")
+      div(id="steps")
+        if workflow && workflow.steps && workflow.steps[0]
+          each step in workflow.steps
+            +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementation&&step.implementation.fileName?step.implementation.fileName:"", step.implementation&&step.implementation.language?step.implementation.language:"")
+        else
+          +createStep(1, "", "", "", "", "", "", "", "", "")
 
 
     a(onclick="addStep(); return false;") Add step
-    a(onclick="createOrUpdateWorkflow(); return false;") Send
+    a(onclick="createOrUpdateWorkflow(); return false;") Save

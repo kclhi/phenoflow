@@ -3,10 +3,17 @@ const router = express.Router();
 const logger = require('../config/winston');
 const models = require('../models');
 
-router.post('/:stepId', function(req, res, next) {
+router.post('/:stepId', async function(req, res, next) {
 
   if (!req.body.doc) return res.status(500).send("Missing parameters.");
-  models.input.upsert({doc:req.body.doc, stepId:req.params.stepId}).then((upserted)=>res.sendStatus(200)).catch((error)=>res.status(500).send(error));
+  try {
+    await models.input.upsert({doc:req.body.doc, stepId:req.params.stepId});
+    res.sendStatus(200);
+  } catch(error) {
+    error = "Error adding input: " + (error.errors[0].message?error.errors[0].message:error);
+    logger.debug(error);
+    res.status(500).send(error);
+  }
 
 });
 
