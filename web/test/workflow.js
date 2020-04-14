@@ -37,62 +37,38 @@ class Workflow {
 
 	}
 
-	static async step(name, doc, type, position, workflowId) {
-		return await chai.request(server).post("/step/new").send({
+	static async step(workflowId, position, name, doc, type) {
+
+		return await chai.request(server).post("/step/" + workflowId + "/" + position).send({
 			name: name,
 			doc: doc,
-			type: type,
-			position: position,
-			workflowId: workflowId
+			type: type
 		});
+
 	}
 
-	static async addStep(name, doc, type, position, workflowId) {
+	static async upsertStep(workflowId, position, name, doc, type) {
 
-		let res = await Workflow.step(name, doc, type, position, workflowId);
+		let res = await Workflow.step(workflowId, position, name, doc, type);
+		if (!res.body.id) logger.debug(res.body);
 		res.should.have.status(200);
 		res.body.should.be.a("object");
 		return res.body.id;
 
 	}
 
-	static async notAddStep(name, doc, type, position, workflowId) {
+	static async notUpsertStep(workflowId, position, name, doc, type) {
 
-		let res = await Workflow.step(name, doc, type, position, workflowId);
+		let res = await Workflow.step(workflowId, position, name, doc, type);
 		res.should.have.status(500);
 		res.body.should.be.a("object");
-		return res.body.id;
+		logger.debug(res.body.errors.message);
 
 	}
 
-	static async updateStep(name, doc, type, newPosition, workflowId, position) {
+	static async input(stepId, doc) {
 
-		let res = await chai.request(server).post("/step/update/" + workflowId + "/" + position).send({
-			name: name,
-			doc: doc,
-			type: type,
-			position: newPosition
-		});
-		res.should.have.status(200);
-		res.body.should.be.a("object");
-		return res.body.id;
-
-	}
-
-	static async addInput(doc, stepId) {
-
-		let res = await chai.request(server).post("/input/new").send({
-			doc: doc,
-			stepId: stepId
-		});
-		res.should.have.status(200);
-		res.body.should.be.a("object");
-
-	}
-
-	static async updateInput(doc, stepId) {
-
-		let res = await chai.request(server).post("/input/update/" + stepId).send({
+		let res = await chai.request(server).post("/input/" + stepId).send({
 			doc: doc
 		});
 		res.should.have.status(200);
@@ -100,21 +76,9 @@ class Workflow {
 
 	}
 
-	static async addOutput(doc, extension, stepId) {
+	static async output(stepId, doc, extension) {
 
-		let res = await chai.request(server).post("/output/new").send({
-			doc: doc,
-			extension: extension,
-			stepId: stepId
-		});
-		res.should.have.status(200);
-		res.body.should.be.a("object");
-
-	}
-
-	static async updateOutput(doc, extension, stepId) {
-
-		let res = await chai.request(server).post("/output/update/" + stepId).send({
+		let res = await chai.request(server).post("/output/" + stepId).send({
 			doc: doc,
 			extension: extension
 		});
@@ -124,30 +88,12 @@ class Workflow {
 
 	}
 
-	static async addImplementation(language, path, filename, stepId) {
+	static async implementation(stepId, language, path, filename) {
 
-		let res = await chai.request(server).post("/implementation/new").attach(
+		let res = await chai.request(server).post("/implementation/" + stepId + "/" + language).attach(
 			"implementation",
 			path + filename,
 			"../uploads/" + filename
-		).field(
-			"language", language
-		).field(
-			"stepId", stepId
-		);
-		res.should.have.status(200);
-		res.body.should.be.a("object");
-
-	}
-
-	static async updateImplementation(newLanguage, path, filename, stepId, language) {
-
-		let res = await chai.request(server).post("/implementation/update/" + stepId + "/" + language).attach(
-			"implementation",
-			path + filename,
-			"../uploads/" + filename
-		).field(
-			"language", newLanguage
 		);
 		res.should.have.status(200);
 		res.body.should.be.a("object");

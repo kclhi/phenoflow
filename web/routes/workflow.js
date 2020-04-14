@@ -35,13 +35,12 @@ router.post('/update/:id', function(req, res, next) {
 
   if (!req.body.name || !req.body.author || !req.body.about) return res.sendStatus(500);
 
-  models.workflow.update({
+  models.workflow.upsert({
+    id: req.params.id,
     name: req.body.name,
     author: req.body.author,
     about: req.body.about
-  },{
-    where: { id: req.params.id }
-  }).then((updated)=>updated==1?res.sendStatus(200):res.sendStatus(500)).catch((error)=>res.status(500).send(error));
+  }).then((upserted)=>res.sendStatus(200)).catch((error)=>res.status(500).send(error));
 
 });
 

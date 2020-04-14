@@ -30,70 +30,70 @@ describe("basic", () => {
 
 		it("Should be able to add a new step, for a workflow.", async() => {
 			await models.step.sync({force:true});
-			stepId = await Workflow.addStep("stepName1", "doc", "type", 1, workflowId);
+			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "doc", "type");
 		});
 
 		it("Should be able to add a new input, for a step.", async() => {
 			await models.input.sync({force:true});
-			await Workflow.addInput("doc", stepId);
+			await Workflow.input(stepId, "doc");
 		});
 
 		it("Should be able to add a new output, for a step.", async() => {
 			await models.output.sync({force:true});
-			await Workflow.addOutput("doc", "csv", stepId);
+			await Workflow.output(stepId, "doc", "csv");
 		});
 
 		it("Should be able to add a new implementation, for a step.", async() => {
 			await models.implementation.sync({force:true});
-			await Workflow.addImplementation("python", "test/implementation/python/", "hello-world.py", stepId);
+			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
 		});
 
 		it("Should be able to add an alternative implementation, for a step.", async() => {
-			await Workflow.addImplementation("js", "test/implementation/js/", "hello-world.js", stepId);
+			await Workflow.implementation(stepId, "js", "test/implementation/js/", "hello-world.js");
 		});
 
-		// Update:
+		Update:
 
 		it("Should be able to update a workflow's details.", async() => {
 			await Workflow.updateWorkflow(workflowId, name, "martin", "this is an updated special phenotype");
 		});
 
 		it("Should be able to update a steps's details.", async() => {
-			stepId = await Workflow.updateStep("stepName1", "newDoc", "newType", 1, workflowId, 1, );
+			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "newDoc", "newType");
 		});
 
 		it("Should be able to update an input's details.", async() => {
-			await Workflow.updateInput("newDoc", stepId);
+			await Workflow.input(stepId, "newDoc");
 		});
 
 		it("Should be able to update an output's details.", async() => {
-			await Workflow.updateOutput("newDoc", "csv", stepId);
+			await Workflow.output(stepId, "newDoc", "csv");
 		});
 
 		it("Should be able to update an implementation's details", async() => {
-			await Workflow.updateImplementation("python", "test/implementation/python/", "hello-there.py", "python", stepId);
+			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-there.py");
 		});
 
 		// Add second:
 
 		it("Should be able to add second step.", async() => {
-			stepId = await Workflow.addStep("stepName2", "doc", "type", 2, workflowId);
+			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2", "doc", "type");
 		});
 
 		it("Should be able to add input to second step", async() => {
-			await Workflow.addInput("doc", stepId);
+			await Workflow.input(stepId, "doc");
 		});
 
 		it("Should be able to add output to second step.", async() => {
-			await Workflow.addOutput("doc", "csv", stepId);
+			await Workflow.output(stepId, "doc", "csv");
 		});
 
 		it("Should be able to add implementation to second step", async() => {
-			await Workflow.addImplementation("python", "test/implementation/python/", "hello-world.py", stepId);
+			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
 		});
 
 		it("Should be able to add alternative implementation to second step", async() => {
-			await Workflow.addImplementation("js", "test/implementation/js/", "hello-world.js", stepId);
+			await Workflow.implementation(stepId, "js", "test/implementation/js/", "hello-world.js");
 		});
 
 		//
@@ -147,7 +147,7 @@ describe("basic", () => {
 		}).timeout(120000);
 
 		it("Generate endpoint should be reachable.", async() => {
-			// If endpoint is unreachable test can't be performed.
+			// If service is not running, endpoint cannot be tested.
 			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") return; }
 			let res = await chai.request(server).post("/phenotype/generate/" + workflowId).send({ implementationUnits: implementationUnits });
 			res.should.have.status(200);
