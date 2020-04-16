@@ -1,12 +1,15 @@
 extends layout
 
 mixin createWorkflow(name, about)
+  | Workflow "
   input(id="workflow-name", value=name, placeholder="name" label="workflow name" type=text)
+  | "
   input(id="workflow-about", value=about, placeholder="about" type=text)
 
 mixin createImplementation(currentLanguage, languages)
-  input(class="implementationFile", placeholder="file", type="file")
+  input(class="implementationFile" type="file" style="border: none; width: inherit; height: inherit")
   select(class="implementationLanguage")
+    option() -
     each language in languages
       if language==currentLanguage
         option(value=language selected=true) #{language}
@@ -14,44 +17,57 @@ mixin createImplementation(currentLanguage, languages)
         option(value=language) #{language}
 
 mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension, implementations)
-  div(id="step" + position)
-    p(style="white-space:pre;")
-      | Step:
-      input(class="name", value=name, placeholder="id" label="workflow name" type="text")
-      input(class="doc", value=doc, placeholder="doc" type="text")
-      select(class="type", placeholder="about")
-        option(value="load", selected=true) load
-        option(value="boolean-expression") boolean-expression
-        option(value="write") write
-    p(style="white-space:pre;")
-      | Input:
-      input(class="inputDoc", value=inputDoc, placeholder="doc" label="input doc" type="text")
-    p(style="white-space:pre;")
-      | Output:
-      input(class="outputDoc", value=outputDoc, placeholder="doc" label="output doc" type="text")
-      input(class="outputExtension", value=outputExtension, placeholder="extension" label="output extension" type="text")
-    if implementations && implementations[0]
-      each implementation in implementations
-        p(class="implementation" style="white-space:pre;")
-          | Implementation:
-          if implementation.fileName
-            | #{implementation.fileName}
-          +createImplementation(implementation.language, languages)
-    p(class="implementation" style="white-space:pre;")
-      | Implementation:
-      +createImplementation(languages[0], languages)
-    a(onclick="addImplementation('step" + position +"'); return false;") Add implementation
+  div(id="step" + position, style="text-align: center;")
+    div(class="row")
+      div(class="col")
+        div(class="theme" style="font-size: 50px;") &#8675;
+        div
+          input(class="inputDoc", value=inputDoc, placeholder="doc" label="input doc" type="text")
+        div(class="theme" style="font-size: 50px;") &#8675;
+    div(class="row")
+      div(class="step col")
+        p(style="white-space:pre;")
+          div
+            select(class="type", placeholder="about")
+              each concept in concepts
+                option(value=concept, selected=true) #{concept}
+          div
+            input(class="name", value=name, placeholder="name" label="workflow name" type="text")
+          div
+            input(class="doc", value=doc, placeholder="doc" type="text")
+      div(class="col-1")
+      div(class="step col")
+        div
+          if implementations && implementations[0]
+            each implementation in implementations
+              div(class="implementation" style="white-space:pre;")
+                if implementation.fileName
+                  | #{implementation.fileName}
+                +createImplementation(implementation.language, languages)
+          div(class="implementation" style="white-space:pre;")
+            +createImplementation("-", languages)
+        a(onclick="addImplementation('step" + position +"'); return false;" style="float: right;")
+          +plusButton()
+    div(class="row")
+      div(class="col")
+        div(class="theme" style="font-size: 50px;") &#8675;
+        input(class="outputDoc", value=outputDoc, placeholder="doc" label="output doc" type="text")
+        input(class="outputExtension", value=outputExtension, placeholder="extension" label="output extension" type="text")
+
+block pageJS
+  script(src="/javascripts/define.js")
+
+block header
+  div
+    if workflow
+      +createWorkflow(workflow.name?workflow.name:"", workflow.about?workflow.about:"")
+    else
+      +createWorkflow("", "")
 
 block content
-  script(src="/javascripts/define.js")
 
   div(class="container")
     p(style="white-space:pre;")
-      | Workflow:
-      if workflow
-        +createWorkflow(workflow.name?workflow.name:"", workflow.about?workflow.about:"")
-      else
-        +createWorkflow("", "")
       div(id="steps")
         if workflow && workflow.steps && workflow.steps[0]
           each step in workflow.steps
@@ -59,6 +75,8 @@ block content
         else
           +createStep(1, "", "", "", "", "", "", "", "", "")
 
-
-    a(onclick="addStep(); return false;") Add step
-    a(onclick="createOrUpdateWorkflow(); return false;") Save
+    div(class="row justify-content-center")
+      a(onclick="addStep(); return false;" style="margin: 10px;")
+        +plusButton()
+      a(onclick="createOrUpdateWorkflow(); return false;" style="margin: 10px;")
+        +tickButton()

@@ -8,21 +8,25 @@ const Workflow = require("../util/workflow");
 const Download = require("../util/download");
 
 router.get("/all", async function(req, res, next) {
-  let workflows=await Workflow.completeWorkflows();
+
+  let workflows = await Workflow.completeWorkflows();
   res.render("all",{title:"Phenoflow", workflows:workflows})
+
 });
 
 router.get("/mine", async function(req, res, next) {
-  let workflows=await models.workflow.findAll({where:{author:"martinchapman"}});
+
+  let workflows = await models.workflow.findAll({where:{author:"martinchapman"}});
   res.render("mine",{title:"Phenoflow", workflows:workflows})
+
 });
 
-router.get("/define", (req, res, next)=>res.render("define",{title:"Phenoflow", languages:config.get("workflow.LANGUAGES")}));
+router.get("/define", (req, res, next)=>res.render("define",{title:"Phenoflow", languages:config.get("workflow.LANGUAGES"), concepts:config.get("workflow.CONCEPTS")}));
 
 router.get("/define/:workflowId", async function(req, res, next) {
 
   try {
-    res.render("define",{title:"Phenoflow", workflow:await Workflow.getWorkflow(req.params.workflowId), languages:config.get("workflow.LANGUAGES")});
+    res.render("define", {title:"Phenoflow", workflow:await Workflow.getWorkflow(req.params.workflowId), languages:config.get("workflow.LANGUAGES"), concepts:config.get("workflow.CONCEPTS")});
   } catch(error) {
     logger.error("Get workflow error: " + error);
     res.sendStatus(500);
@@ -33,7 +37,7 @@ router.get("/define/:workflowId", async function(req, res, next) {
 router.get("/download/:workflowId", async function(req, res, next) {
 
   try {
-    res.render("download",{title:"Phenoflow", workflow:await Workflow.getWorkflow(req.params.workflowId)});
+    res.render("download", {title:"Phenoflow", workflow:await Workflow.getWorkflow(req.params.workflowId)});
   } catch(error) {
     logger.error("Get workflow error: " + error);
     res.sendStatus(500);

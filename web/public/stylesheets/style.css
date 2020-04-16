@@ -1,8 +1,71 @@
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background-color: #f5f6fc;
+  font-family: 15px 'Cantarell', sans-serif;
+  font-weight
 }
 
 a {
   color: #00B7FF;
+}
+
+input {
+  border-radius: 5px;
+  border: 1px solid #d1d8eb;
+  padding: 15px;
+  width: 200px;
+  height: 15px;
+}
+
+.theme {
+  color: #17a2b8
+}
+
+.button {
+  text-align: center;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  font-size: 35px;
+  background-color: #17a2b8;
+  color: rgba(255, 255, 255, 1);
+  box-shadow: 0 5px 5px -5px rgba(0,0,0,.4);
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.title {
+  height: 100px;
+  background-color: #fafbfe;
+  box-shadow: 0 3px 3px -3px rgba(0,0,0,.2);
+}
+
+.step {
+  text-align: center;
+  background-color: #fafbfe;
+  box-shadow: 0 3px 3px -3px rgba(0,0,0,.2);
+  border-radius: 5px;
+  border: 1px solid #eff0f4;
+}
+
+.step > * {
+  padding: 10px;
+}
+
+.dash {
+  border: 0 none;
+  border-top: 2px dashed #17a2b8;
+  background: none;
+  height:0;
+}
+
+.pf {
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  color: white;
+}
+
+#pfnav {
+  text-align: left;
+  font-size: 15px;
 }

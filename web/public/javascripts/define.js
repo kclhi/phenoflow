@@ -58,7 +58,7 @@ function createOrUpdateWorkflow() {
 
 var steps = 1;
 function addStep() {
-  let original = document.getElementById('step-1');
+  let original = document.getElementById('step1');
   let clone = original.cloneNode(true);
   clone.id = "step-" + ++steps;
   original.parentNode.appendChild(clone);
@@ -69,9 +69,6 @@ function addImplementation(stepId) {
   let clone = original.cloneNode(true);
   let implementationFile = clone.getElementsByClassName("implementationFile")[0];
   implementationFile.value = "";
-  let implementationLanguage = clone.getElementsByClassName("implementationLanguage")[0];
-  implementationLanguage.value = "";
-  implementationLanguage.text = "";
   let implementationFileExisting = clone.getElementsByClassName("implementationFileExisting")?clone.getElementsByClassName("implementationFileExisting")[0]:null;
   if (implementationFileExisting ) implementationFileExisting.remove();
   original.parentNode.appendChild(clone);

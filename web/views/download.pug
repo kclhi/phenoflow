@@ -1,36 +1,39 @@
 extends layout
 
 mixin createWorkflow(name, about)
-  | Workflow:
-  | #{name}
+  | Workflow "#{name}"
   | #{about}
 
 mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension, implementations)
-  div(id="step-" + position, class="step")
-    p(style='white-space:pre;')
-      | Step:
-      span(class="name")
-        | #{name}
-      span(class="doc")
-        | #{doc}
-      span(class="type")
-        | #{type}
-    p(style='white-space:pre;')
-      | Input:
-      span(class="inputDoc")
-        | #{inputDoc}
-    p(style='white-space:pre;')
-      | Output:
-      span(class="outputDoc")
+  div(id="step" + position, style="text-align: center;")
+    div(class="row")
+      div(class="col")
+        div(class="theme" style="font-size: 50px;") &#8675;
+        div
+          | #{inputDoc}
+        div(class="theme" style="font-size: 50px;") &#8675;
+    div(class="row")
+      div(class="step col")
+        p(style="white-space:pre;")
+          div
+            | #{type}
+          div
+            | #{name}
+          div
+            | #{doc}
+      div(class="col-1")
+      div(class="step col")
+        div
+          select(class="implementation", placeholder="about")
+            each implementation in implementations
+              option(value=implementation.language, selected=true) #{implementation.language}
+    div(class="row")
+      div(class="col")
+        div(class="theme" style="font-size: 50px;") &#8675;
         | #{outputDoc}
-      span(class="outputExtension")
         | #{outputExtension}
-    select(class="implementation", placeholder="about")
-      each implementation in implementations
-        option(value=implementation.language, selected=true) #{implementation.language}
 
-block content
-
+block pageJS
   script.
     function downloadWorkflow() {
       let implementationUnits = {};
@@ -53,19 +56,22 @@ block content
       xhr.send(JSON.stringify({"implementationUnits":implementationUnits}));
     }
 
+block header
+  if workflow
+    +createWorkflow(workflow.name?workflow.name:"", workflow.about?workflow.about:"")
+  else
+    +createWorkflow("", "")
+  a(onclick="downloadWorkflow(); return false;")
+    div(class="button")
+      | &#8595;
+
+block content
+
   div(class="container")
-    p(style='white-space:pre;')
-      | Workflow:
-      if workflow
-        +createWorkflow(workflow.name?workflow.name:"", workflow.about?workflow.about:"")
-      else
-        +createWorkflow("", "")
-      div(id="steps")
-        if workflow && workflow.steps && workflow.steps[0]
-          each step in workflow.steps
-            +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations)
-        else
-          +createStep(1, "", "", "", "", "", "", "", "", "")
-
-
-    a(onclick="downloadWorkflow(); return false;") Download
+      p(style='white-space:pre;')
+        div(id="steps")
+          if workflow && workflow.steps && workflow.steps[0]
+            each step in workflow.steps
+              +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations)
+          else
+            +createStep(1, "", "", "", "", "", "", "", "", "")

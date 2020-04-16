@@ -4,36 +4,53 @@ html
     title= title
 
     meta(charset="UTF-8", name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no")
-    link(rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous")
 
-    link(rel='stylesheet', href='/stylesheets/style.css')
+    link(rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous")
     link(rel="stylesheet" href="/stylesheets/navbar-fixed-left.min.css")
-    link(rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous")
+    link(rel="stylesheet" href="/stylesheets/style.css")
+    link(rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cantarell:wght@400;700&family=Poppins:wght@400;700&display=swap")
 
-    script(src='/javascripts/pf.js')
+    script(src="/javascripts/pf.js")
     script(src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous")
     script(src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous")
-    script(href="https://fonts.googleapis.com/css2?family=Sen:wght@800&display=swap" rel="stylesheet")
+
+
+    block pageJS
 
   body
-    nav(class="navbar navbar-expand-md navbar-dark bg-info fixed-left")
+    nav(class="navbar navbar-expand-md navbar-dark bg-info fixed-left pf")
       a(class="navbar-brand mx-auto")
-        span(style="font-family: 'Sen', sans-serif; color: white;") pf
+        | phenoflow
       button(class="navbar-toggler" type="button" data-toggle="collapse" data-target="#pfnav" aria-controls="pfnav" aria-expanded="false" aria-label="Toggle navigation")
         span(class="navbar-toggler-icon")
       div(class="collapse navbar-collapse" id="pfnav")
-        ul(class="navbar-nav")
+        ul(class="navbar-nav mx-auto")
           li(class="nav-item")
             a(class="nav-link" href="/phenotype/all")
               svg(class="bi bi-house-fill" width="2em" height="2em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg")
                 path(fill-rule="evenodd" d="M8 3.293l6 6V13.5a1.5 1.5 0 01-1.5 1.5h-9A1.5 1.5 0 012 13.5V9.293l6-6zm5-.793V6l-2-2V2.5a.5.5 0 01.5-.5h1a.5.5 0 01.5.5z" clip-rule="evenodd")
                 path(fill-rule="evenodd" d="M7.293 1.5a1 1 0 011.414 0l6.647 6.646a.5.5 0 01-.708.708L8 2.207 1.354 8.854a.5.5 0 11-.708-.708L7.293 1.5z" clip-rule="evenodd")
+              | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BROWSE
           li(class="nav-item")
             a(class="nav-link" href="/phenotype/mine")
               svg(class="bi bi-person-fill" width="2em" height="2em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg")
                 path(fill-rule="evenodd" d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd")
+              | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; EDIT
           li(class="nav-item")
             a(class="nav-link" href="/phenotype/define")
               svg(class="bi bi-plus-circle-fill" width="2em" height="2em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg")
                 path(fill-rule="evenodd" d="M16 8A8 8 0 110 8a8 8 0 0116 0zM8.5 4a.5.5 0 00-1 0v3.5H4a.5.5 0 000 1h3.5V12a.5.5 0 001 0V8.5H12a.5.5 0 000-1H8.5V4z" clip-rule="evenodd")
+              | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DEFINE
+
+    nav(class="navbar title")
+      block header
+
+    mixin tickButton()
+      div(class="button")
+        | &#10004;
+
+    mixin plusButton()
+      div(class="button")
+        | &#43;
+
     block content
