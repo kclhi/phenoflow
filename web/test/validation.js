@@ -9,7 +9,6 @@ const got = require('got');
 const models = require('../models');
 const logger = require('../config/winston');
 const config = require('config');
-const Utils = require('../util/utils');
 const Workflow = require('./workflow');
 
 describe('validation', () => {

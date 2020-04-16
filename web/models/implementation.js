@@ -1,7 +1,11 @@
 'use strict';
 module.exports = function(sequelize, DataTypes) {
 
-	var implementation = sequelize.define('implementation', {language: DataTypes.STRING, fileName: DataTypes.STRING});
+	var implementation = sequelize.define('implementation', {language: DataTypes.STRING, fileName: DataTypes.STRING},{
+		indexes: [
+			{ unique: true, fields: [ 'language', 'stepId' ] }
+		]
+	});
 
 	implementation.associate = function(models) {
 

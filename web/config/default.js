@@ -1,4 +1,7 @@
 module.exports = {
+  workflow: {
+    LANGUAGES: ["knime", "python", "js"]
+  },
   generator: {
     URL: "http://localhost:3001"
   },
