@@ -1,7 +1,7 @@
 module.exports = {
   workflow: {
     LANGUAGES: ["knime", "python", "js"],
-    CONCEPTS: ["load", "boolean-expression", "write"]
+    CONCEPTS: ["load", "logic", "boolean", "output"]
   },
   generator: {
     URL: "http://localhost:3001"

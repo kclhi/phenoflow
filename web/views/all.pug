@@ -7,5 +7,6 @@ block content
   div(class="container")
     p(style='white-space:pre;')
       each workflow in workflows
-        a(href="download/" + workflow.id) #{workflow.name}
-        |  #{workflow.about}
+        div(class="row" style='white-space:pre;')
+          a(href="download/" + workflow.id) #{workflow.name}
+          |  #{workflow.about}

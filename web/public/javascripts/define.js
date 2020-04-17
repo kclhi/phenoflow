@@ -14,7 +14,10 @@ function processInputOutputImplementation(create, stepNode, stepId) {
 function processStep(create, stepNode, position, workflowId) {
   let stepName = stepNode.getElementsByClassName('name')[0].value
   let stepDoc = stepNode.getElementsByClassName('doc')[0].value
-  let stepType = stepNode.getElementsByClassName('type')[0].value
+  let stepType;
+  for (let potentialStepType of stepNode.getElementsByClassName('type')) {
+    if (potentialStepType.checked) stepType = potentialStepType.value;
+  }
   if (!stepName || !stepDoc || !stepType) return;
   let stepId;
   step(workflowId, position, stepName, stepDoc, stepType, function(stepUpdateResponse){
@@ -27,9 +30,9 @@ function processStep(create, stepNode, position, workflowId) {
 function createOrUpdateWorkflow() {
   let workflowId;
   if (window.location.pathname.split('/')[3]) workflowId = window.location.pathname.split('/')[3];
-  let workflowName = document.getElementById('workflow-name').value;
+  let workflowName = document.getElementById('workflowName').value;
   let workflowAuthor = "martinchapman";
-  let workflowAbout = document.getElementById('workflow-about').value;
+  let workflowAbout = document.getElementById('workflowAbout').value;
   let stepNodes = document.getElementById('steps').childNodes;
   if (!workflowName || !workflowAuthor || !workflowAbout) return;
   if (!workflowId) {

@@ -1,43 +1,43 @@
 extends layout
 
 mixin createWorkflow(name, about)
-  | Workflow "#{name}"
+  | Phenotype "#{name}"
   | #{about}
 
 mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension, implementations)
   div(id="step" + position, style="text-align: center;")
     div(class="row")
       div(class="col")
-        div(class="theme" style="font-size: 50px;") &#8675;
         div
           | #{inputDoc}
-        div(class="theme" style="font-size: 50px;") &#8675;
-    div(class="row")
-      div(class="step col")
+        div(class="highlight" style="font-size: 50px;") &#8675;
+    div(class="row step")
+      div(class="box col")
         p(style="white-space:pre;")
           div
-            | #{type}
-          div
+            +conceptIcon(type)
+          div(class="name")
             | #{name}
           div
             | #{doc}
       div(class="col-1")
-      div(class="step col")
+      div(class="box col")
         div
           select(class="implementation", placeholder="about")
             each implementation in implementations
               option(value=implementation.language, selected=true) #{implementation.language}
     div(class="row")
       div(class="col")
-        div(class="theme" style="font-size: 50px;") &#8675;
+        div(class="highlight" style="font-size: 50px;") &#8675;
         | #{outputDoc}
-        | #{outputExtension}
+        | (#{outputExtension})
 
 block pageJS
   script.
     function downloadWorkflow() {
       let implementationUnits = {};
       for (let step of document.getElementsByClassName("step")) {
+        - console.log(step);
         implementationUnits[step.getElementsByClassName("name")[0].innerText] = step.getElementsByClassName("implementation")[0].value;
       }
       var xhr = new XMLHttpRequest();
@@ -47,11 +47,13 @@ block pageJS
       xhr.onload = function(event) {
         var blob = this.response;
         var contentDispo = this.getResponseHeader('Content-Disposition');
-        var fileName = contentDispo.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/)[1];
-        var a = document.createElement('a');
-        a.href = window.URL.createObjectURL(blob);
-        a.download = fileName;
-        a.dispatchEvent(new MouseEvent('click'));
+        if (contentDispo) {
+          var fileName = contentDispo.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/)[1];
+          var a = document.createElement('a');
+          a.href = window.URL.createObjectURL(blob);
+          a.download = fileName;
+          a.dispatchEvent(new MouseEvent('click'));
+        }
       }
       xhr.send(JSON.stringify({"implementationUnits":implementationUnits}));
     }
@@ -61,9 +63,8 @@ block header
     +createWorkflow(workflow.name?workflow.name:"", workflow.about?workflow.about:"")
   else
     +createWorkflow("", "")
-  a(onclick="downloadWorkflow(); return false;")
-    div(class="button")
-      | &#8595;
+  a(onclick="downloadWorkflow(); return false;", style="color: #17a2b8; font-weight:700")
+    | DOWNLOAD
 
 block content
 

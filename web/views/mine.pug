@@ -6,6 +6,8 @@ block header
 block content
   div(class="container")
     p(style='white-space:pre;')
-      each workflow in workflows
-        a(href="define/" + workflow.id) #{workflow.name}
-        |  #{workflow.about}
+    each workflow in workflows
+      div(class="row")
+        div(style='white-space:pre;')
+          a(href="define/" + workflow.id) #{workflow.name}
+          |  #{workflow.about}

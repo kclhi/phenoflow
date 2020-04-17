@@ -1,23 +1,11 @@
 body {
   background-color: #f5f6fc;
-  font-family: 15px 'Cantarell', sans-serif;
-  font-weight
+  font-family: 'Poppins', sans-serif!important;
 }
 
 a {
-  color: #00B7FF;
-}
-
-input {
-  border-radius: 5px;
-  border: 1px solid #d1d8eb;
-  padding: 15px;
-  width: 200px;
-  height: 15px;
-}
-
-.theme {
-  color: #17a2b8
+  cursor: pointer;
+  color: #17a2b8;
 }
 
 .button {
@@ -34,12 +22,16 @@ input {
 }
 
 .title {
-  height: 100px;
+  height: 100%;
   background-color: #fafbfe;
   box-shadow: 0 3px 3px -3px rgba(0,0,0,.2);
 }
 
-.step {
+.highlight {
+  color: #17a2b8
+}
+
+.box {
   text-align: center;
   background-color: #fafbfe;
   box-shadow: 0 3px 3px -3px rgba(0,0,0,.2);
@@ -47,15 +39,8 @@ input {
   border: 1px solid #eff0f4;
 }
 
-.step > * {
+.box > * {
   padding: 10px;
-}
-
-.dash {
-  border: 0 none;
-  border-top: 2px dashed #17a2b8;
-  background: none;
-  height:0;
 }
 
 .pf {
@@ -63,6 +48,25 @@ input {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
   color: white;
+}
+
+label {
+  margin: 10px;
+  cursor: pointer;
+  width: 60px;
+}
+
+.input-hidden {
+  position: absolute;
+  left: -9999px;
+}
+
+input[type=radio]:checked + label>svg {
+  color: #17a2b8!important;
+}
+
+input[type=radio]:checked + label>div {
+  color: #17a2b8!important;
 }
 
 #pfnav {
