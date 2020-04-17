@@ -1,7 +1,7 @@
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from api import workflow
-import yaml
+import oyaml as yaml
 
 app = Starlette(debug=True)
 
@@ -28,7 +28,7 @@ async def generate(request):
             generatedWorkflow = workflow.createWorkflowStep(generatedWorkflow, step['position'], step['name'], language, extension);
             generatedWorkflowInputs["inputModule" + str(step['position'])] = {'class':'File', 'path':language + "/" + step['implementation']['fileName']};
 
-            # For now, we only assume one variable input to each step, the potential cases; and one variable output, the filtered potential cases.
+            # ~MDC For now, we only assume one variable input to each step, the potential cases; and one variable output, the filtered potential cases.
             if ( language == "python" ):
                 generatedStep = workflow.createPythonStep(step['name'], step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string()
             elif ( language == "knime" ):
@@ -41,4 +41,4 @@ async def generate(request):
 
             generatedSteps.append({"name": step['name'], "content": generatedStep, "fileName": step['implementation']['fileName']});
 
-    return JSONResponse({"workflow": generatedWorkflow.export_string(), "steps": generatedSteps, "workflowInputs": yaml.dump(generatedWorkflowInputs, default_flow_style=False)})
+    return JSONResponse({"workflow": yaml.dump(generatedWorkflow.get_dict(), default_flow_style=False), "steps": generatedSteps, "workflowInputs": yaml.dump(generatedWorkflowInputs, default_flow_style=False)})
