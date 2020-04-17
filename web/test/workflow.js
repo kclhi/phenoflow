@@ -12,7 +12,7 @@ class Workflow {
 
 	static async createWorkflow(name, author, about) {
 
-		let res = await chai.request(server).post("/phenotype/new").send({name:name, author:author, about:about});
+		let res = await chai.request(server).post("/phenoflow/phenotype/new").send({name:name, author:author, about:about});
 		res.should.have.status(200);
 		res.body.should.be.a("object");
 		return res.body.id;
@@ -21,7 +21,7 @@ class Workflow {
 
 	static async updateWorkflow(id, name, author, about) {
 
-		let res = await chai.request(server).post("/phenotype/update/" + id).send({name:name, author:author, about:about});
+		let res = await chai.request(server).post("/phenoflow/phenotype/update/" + id).send({name:name, author:author, about:about});
 		res.should.have.status(200);
 		res.body.should.be.a("object");
 		return res.body.id;
@@ -30,13 +30,13 @@ class Workflow {
 
 	static async step(workflowId, position, name, doc, type) {
 
-		return await chai.request(server).post("/step/" + workflowId + "/" + position).send({name:name, doc:doc, type:type});
+		return await chai.request(server).post("/phenoflow/step/" + workflowId + "/" + position).send({name:name, doc:doc, type:type});
 
 	}
 
 	static async deleteStep(workflowId, position) {
 
-		let res = await chai.request(server).post("/step/delete/" + workflowId + "/" + position);
+		let res = await chai.request(server).post("/phenoflow/step/delete/" + workflowId + "/" + position);
 		res.should.have.status(200);
 		res.body.should.be.a("object");
 
@@ -63,7 +63,7 @@ class Workflow {
 
 	static async input(stepId, doc) {
 
-		let res = await chai.request(server).post("/input/" + stepId).send({doc:doc});
+		let res = await chai.request(server).post("/phenoflow/input/" + stepId).send({doc:doc});
 		res.should.have.status(200);
 		res.body.should.be.a("object");
 
@@ -71,7 +71,7 @@ class Workflow {
 
 	static async output(stepId, doc, extension) {
 
-		let res = await chai.request(server).post("/output/" + stepId).send({doc:doc, extension:extension});
+		let res = await chai.request(server).post("/phenoflow/output/" + stepId).send({doc:doc, extension:extension});
 		if (res.text) logger.debug(res.text);
 		res.should.have.status(200);
 		res.body.should.be.a("object");
@@ -80,7 +80,7 @@ class Workflow {
 
 	static async implementation(stepId, language, path, filename) {
 
-		let res = await chai.request(server).post("/implementation/" + stepId + "/" + language).attach("implementation", path + filename, "../uploads/" + filename);
+		let res = await chai.request(server).post("/phenoflow/implementation/" + stepId + "/" + language).attach("implementation", path + filename, "../uploads/" + filename);
 		res.should.have.status(200);
 		res.body.should.be.a("object");
 

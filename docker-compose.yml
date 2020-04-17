@@ -1,0 +1,60 @@
+version: "3.7"
+services:
+  proxy:
+    build:
+      context: ./web/proxy
+    command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
+    ports:
+      - '443:443'
+      - '80:80'
+    depends_on:
+      - webapp
+    restart: unless-stopped
+  webapp:
+    build: web
+    environment:
+      - NODE_EXTRA_CA_CERTS=/home/node/certs/pf.pem
+    restart: unless-stopped
+    volumes:
+      - pf_uploads:/home/node/uploads
+    depends_on:
+      - mariadb
+      - generator
+  mariadb:
+    build: web/db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - pf_data:/var/lib/mysql
+  # migration:
+  #   image: phenoflow_webapp:latest
+  #   command: ["./bin/wait-for-it.sh", "--timeout=0", "mariadb:3306", "--", "npm", "run", "migrate"]
+  #   depends_on:
+  #     - mariadb
+  webapp-t2dm:
+    build:
+     context: web
+     dockerfile: Dockerfile.test
+    environment:
+      - NODE_EXTRA_CA_CERTS=/home/node/certs/pf.pem
+    volumes:
+      - pf_uploads:/home/node/uploads
+    depends_on:
+      - webapp
+      - mariadb
+    command: ["./bin/wait-for-it.sh", "--timeout=0", "mariadb:3306", "--", "npx", "mocha", "-g", "t2dm", "--exit"]
+  generator:
+    build:
+      context: generator/
+    restart: unless-stopped
+    environment:
+      PORT: 3004
+volumes:
+  pf_uploads:
+  pf_data:
+networks:
+  default:
+    name: pf_network

@@ -1,12 +1,21 @@
 {
-
   "dbConfig": {
     "username": "user",
     "password": "password",
     "database": "database",
-    "host": "",
-    "dialect": "mysql",
-    "logging": false
+    "host": "mariadb",
+    "dialect": "mysql"
+  },
+  "generator": {
+    "URL": "http://generator:3004"
+  },
+  "visualiser": {
+    "URL": "http://spring:8080"
+  },
+  "gitserver": {
+    "PREFIX": "https://",
+    "HOST": "git-server",
+    "CONTAINER_HOST": "git-server",
+    "PORT": ":7005"
   }
-
 }

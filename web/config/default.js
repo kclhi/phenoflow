@@ -4,7 +4,7 @@ module.exports = {
     CONCEPTS: ["load", "logic", "boolean", "output"]
   },
   generator: {
-    URL: "http://localhost:3001"
+    URL: "http://localhost:3004"
   },
   visualiser: {
     URL: "http://localhost:8080"

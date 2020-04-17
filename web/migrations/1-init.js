@@ -5,53 +5,50 @@ var Sequelize = require('sequelize');
 /**
  * Actions summary:
  *
- * createTable "steps", deps: []
+ * createTable "workflows", deps: []
+ * createTable "steps", deps: [workflows]
+ * createTable "implementations", deps: [steps]
  * createTable "inputs", deps: [steps]
  * createTable "outputs", deps: [steps]
+ * addIndex ["language","stepId"] to table "implementations"
+ * addIndex ["stepId"] to table "inputs"
+ * addIndex ["stepId"] to table "outputs"
+ * addIndex ["name","position","workflowId"] to table "steps"
+ * addIndex ["name","workflowId"] to table "steps"
+ * addIndex ["position","workflowId"] to table "steps"
  *
  **/
 
 var info = {
     "revision": 1,
     "name": "init",
-    "created": "2020-04-01T10:12:33.132Z",
+    "created": "2020-04-17T15:52:31.212Z",
     "comment": ""
 };
 
 var migrationCommands = [{
         fn: "createTable",
         params: [
-            "steps",
+            "workflows",
             {
                 "id": {
                     "type": Sequelize.INTEGER,
                     "field": "id",
+                    "autoIncrement": true,
                     "primaryKey": true,
-                    "autoIncrement": true
+                    "allowNull": false
                 },
-                "workflowId": {
-                    "type": Sequelize.INTEGER,
-                    "field": "workflowId"
-                },
-                "stepId": {
+                "name": {
                     "type": Sequelize.STRING,
-                    "field": "stepId"
+                    "field": "name"
                 },
-                "doc": {
+                "author": {
                     "type": Sequelize.STRING,
-                    "field": "doc"
+                    "field": "author"
                 },
-                "type": {
+                "about": {
                     "type": Sequelize.STRING,
-                    "field": "type"
-                },
-                "language": {
-                    "type": Sequelize.STRING,
-                    "field": "language"
-                },
-                "position": {
-                    "type": Sequelize.INTEGER,
-                    "field": "position"
+                    "field": "about"
                 },
                 "createdAt": {
                     "type": Sequelize.DATE,
@@ -70,17 +67,114 @@ var migrationCommands = [{
     {
         fn: "createTable",
         params: [
+            "steps",
+            {
+                "id": {
+                    "type": Sequelize.INTEGER,
+                    "field": "id",
+                    "autoIncrement": true,
+                    "primaryKey": true,
+                    "allowNull": false
+                },
+                "name": {
+                    "type": Sequelize.STRING,
+                    "field": "name",
+                    "allowNull": false
+                },
+                "doc": {
+                    "type": Sequelize.STRING,
+                    "field": "doc"
+                },
+                "type": {
+                    "type": Sequelize.STRING,
+                    "field": "type"
+                },
+                "position": {
+                    "type": Sequelize.INTEGER,
+                    "field": "position",
+                    "allowNull": false
+                },
+                "createdAt": {
+                    "type": Sequelize.DATE,
+                    "field": "createdAt",
+                    "allowNull": false
+                },
+                "updatedAt": {
+                    "type": Sequelize.DATE,
+                    "field": "updatedAt",
+                    "allowNull": false
+                },
+                "workflowId": {
+                    "type": Sequelize.INTEGER,
+                    "field": "workflowId",
+                    "onUpdate": "CASCADE",
+                    "onDelete": "CASCADE",
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "allowNull": false
+                }
+            },
+            {}
+        ]
+    },
+    {
+        fn: "createTable",
+        params: [
+            "implementations",
+            {
+                "id": {
+                    "type": Sequelize.INTEGER,
+                    "field": "id",
+                    "autoIncrement": true,
+                    "primaryKey": true,
+                    "allowNull": false
+                },
+                "language": {
+                    "type": Sequelize.STRING,
+                    "field": "language"
+                },
+                "fileName": {
+                    "type": Sequelize.STRING,
+                    "field": "fileName"
+                },
+                "createdAt": {
+                    "type": Sequelize.DATE,
+                    "field": "createdAt",
+                    "allowNull": false
+                },
+                "updatedAt": {
+                    "type": Sequelize.DATE,
+                    "field": "updatedAt",
+                    "allowNull": false
+                },
+                "stepId": {
+                    "type": Sequelize.INTEGER,
+                    "field": "stepId",
+                    "onUpdate": "CASCADE",
+                    "onDelete": "CASCADE",
+                    "references": {
+                        "model": "steps",
+                        "key": "id"
+                    },
+                    "allowNull": false
+                }
+            },
+            {}
+        ]
+    },
+    {
+        fn: "createTable",
+        params: [
             "inputs",
             {
                 "id": {
                     "type": Sequelize.INTEGER,
                     "field": "id",
+                    "autoIncrement": true,
                     "primaryKey": true,
-                    "autoIncrement": true
-                },
-                "inputId": {
-                    "type": Sequelize.STRING,
-                    "field": "inputId"
+                    "allowNull": false
                 },
                 "doc": {
                     "type": Sequelize.STRING,
@@ -119,12 +213,9 @@ var migrationCommands = [{
                 "id": {
                     "type": Sequelize.INTEGER,
                     "field": "id",
+                    "autoIncrement": true,
                     "primaryKey": true,
-                    "autoIncrement": true
-                },
-                "outputId": {
-                    "type": Sequelize.STRING,
-                    "field": "outputId"
+                    "allowNull": false
                 },
                 "doc": {
                     "type": Sequelize.STRING,
@@ -157,6 +248,66 @@ var migrationCommands = [{
                 }
             },
             {}
+        ]
+    },
+    {
+        fn: "addIndex",
+        params: [
+            "implementations",
+            ["language", "stepId"],
+            {
+                "indicesType": "UNIQUE"
+            }
+        ]
+    },
+    {
+        fn: "addIndex",
+        params: [
+            "inputs",
+            ["stepId"],
+            {
+                "indicesType": "UNIQUE"
+            }
+        ]
+    },
+    {
+        fn: "addIndex",
+        params: [
+            "outputs",
+            ["stepId"],
+            {
+                "indicesType": "UNIQUE"
+            }
+        ]
+    },
+    {
+        fn: "addIndex",
+        params: [
+            "steps",
+            ["name", "position", "workflowId"],
+            {
+                "indicesType": "UNIQUE"
+            }
+        ]
+    },
+    {
+        fn: "addIndex",
+        params: [
+            "steps",
+            ["name", "workflowId"],
+            {
+                "indicesType": "UNIQUE"
+            }
+        ]
+    },
+    {
+        fn: "addIndex",
+        params: [
+            "steps",
+            ["position", "workflowId"],
+            {
+                "indicesType": "UNIQUE"
+            }
         ]
     }
 ];

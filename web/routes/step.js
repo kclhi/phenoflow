@@ -12,7 +12,7 @@ router.post('/:workflowId/:position', async function(req, res, next) {
     let stepId = await models.step.findOne({where:{workflowId:req.params.workflowId, position:req.params.position}});
     res.send({"id":stepId.id});
   } catch(error) {
-    error = "Error adding step: " + (error.errors[0].message?error.errors[0].message:error);
+    error = "Error adding step: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
     logger.debug(error);
     res.status(500).send(error);
   }

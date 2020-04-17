@@ -7,8 +7,6 @@ const got = require("got");
 const Workflow = require("../util/workflow");
 const Download = require("../util/download");
 
-router.get("/", (req, res, next)=>res.render("index",{title:"Phenoflow"}));
-
 router.get("/all", async function(req, res, next) {
 
   let workflows = await Workflow.completeWorkflows();
@@ -61,7 +59,7 @@ router.post("/new", async function(req, res, next) {
     let workflow = await models.workflow.create({name:req.body.name, author:req.body.author, about:req.body.about});
     res.send({"id":workflow.id});
   } catch(error) {
-    error = "Error adding workflow: " + (error.errors[0].message?error.errors[0].message:error);
+    error = "Error adding workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
     logger.debug(error);
     res.status(500).send(error);
   }
@@ -75,7 +73,7 @@ router.post("/update/:id", async function(req, res, next) {
     await models.workflow.upsert({id:req.params.id, name: req.body.name, author: req.body.author, about: req.body.about});
     res.sendStatus(200);
   } catch(error) {
-    error = "Error updating workflow: " + (error.errors[0].message?error.errors[0].message:error);
+    error = "Error updating workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
     logger.debug(error);
     res.status(500).send(error);
   }

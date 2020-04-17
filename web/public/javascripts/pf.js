@@ -1,6 +1,6 @@
 function sendPostRequest(endpoint, body, callback, contentType='application/json') {
   var xhr = new XMLHttpRequest();
-  xhr.open("POST", "http://localhost:3000/" + endpoint, true);
+  xhr.open("POST", "/phenoflow/" + endpoint, true);
   if (contentType) xhr.setRequestHeader('Content-Type', contentType);
   xhr.onreadystatechange = function() {
     if(xhr.readyState === XMLHttpRequest.DONE) {

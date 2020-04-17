@@ -46,7 +46,7 @@ block pageJS
         implementationUnits[step.getElementsByClassName("name")[0].innerText.replace(/\'/g, "")] = step.getElementsByClassName("implementation")[0].value;
       }
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/phenotype/generate/#{workflow.id}", true);
+      xhr.open("POST", "/phenoflow/phenotype/generate/#{workflow.id}", true);
       xhr.setRequestHeader("Content-Type", "application/json");
       xhr.responseType = "blob";
       xhr.onload = function(event) {

@@ -24,7 +24,7 @@ router.post('/:stepId/:language', async function(req, res, next) {
       await models.implementation.upsert({fileName:uploadedFile.name, language:req.params.language, stepId:req.params.stepId});
       res.sendStatus(200);
     } catch(error) {
-      error = "Error adding implementation: " + (error.errors[0].message?error.errors[0].message:error);
+      error = "Error adding implementation: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
       logger.debug(error);
       res.status(500).send(error);
     }

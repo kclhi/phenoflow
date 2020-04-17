@@ -29,7 +29,7 @@ function processStep(create, stepNode, position, workflowId) {
 
 function createOrUpdateWorkflow() {
   let workflowId;
-  if (window.location.pathname.split("/")[3]) workflowId = window.location.pathname.split("/")[3];
+  if (window.location.pathname.split("/")[4]) workflowId = window.location.pathname.split("/")[4];
   let workflowName = document.getElementsByClassName("workflowName")[0].value;
   let workflowAuthor = "martinchapman";
   let workflowAbout = document.getElementsByClassName("workflowAbout")[0].value;
@@ -38,7 +38,7 @@ function createOrUpdateWorkflow() {
   if (!workflowId) {
     createWorkflow(workflowName, workflowAuthor, workflowAbout, function(workflowCreateResponse) {
       if (workflowCreateResponse && (workflowId=JSON.parse(workflowCreateResponse).id)) {
-        history.pushState({page: 1}, "", "/phenotype/define/" + workflowId);
+        history.pushState({page: 1}, "", "/phenoflow/phenotype/define/" + workflowId);
         let position = 1;
         for (let stepNode of stepNodes) {
           processStep(true, stepNode, position, workflowId);
