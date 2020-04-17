@@ -1,9 +1,5 @@
 extends layout
 
-mixin createWorkflow(name, about)
-  | Phenotype "#{name}"
-  | #{about}
-
 mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension, implementations)
   div(id="step" + position, style="text-align: center;")
     div(class="row")
@@ -13,19 +9,21 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
         div(class="highlight" style="font-size: 50px;") &#8675;
     div(class="row step")
       div(class="box col")
-        p(style="white-space:pre;")
+        div(style="padding-top: 20px;")
           div
             +conceptIcon(type)
           div(class="name")
-            | #{name}
+            | '#{name}'
           div
             | #{doc}
       div(class="col-1")
       div(class="box col")
-        div
-          select(class="implementation", placeholder="about")
-            each implementation in implementations
-              option(value=implementation.language, selected=true) #{implementation.language}
+        div(style="padding-top: 20px;")
+          | Implementation:
+          div
+            select(class="implementation", placeholder="about")
+              each implementation in implementations
+                option(value=implementation.language, selected=true) #{implementation.language}
     div(class="row")
       div(class="col")
         div(class="highlight" style="font-size: 50px;") &#8675;
@@ -42,34 +40,32 @@ block pageJS
       }
       var xhr = new XMLHttpRequest();
       xhr.open("POST", "/phenotype/generate/#{workflow.id}", true);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.responseType = 'blob';
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.responseType = "blob";
       xhr.onload = function(event) {
         var blob = this.response;
-        var contentDispo = this.getResponseHeader('Content-Disposition');
+        var contentDispo = this.getResponseHeader("Content-Disposition");
         if (contentDispo) {
           var fileName = contentDispo.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?;?/)[1];
-          var a = document.createElement('a');
+          var a = document.createElement("a");
           a.href = window.URL.createObjectURL(blob);
           a.download = fileName;
-          a.dispatchEvent(new MouseEvent('click'));
+          a.dispatchEvent(new MouseEvent("click"));
         }
       }
       xhr.send(JSON.stringify({"implementationUnits":implementationUnits}));
     }
 
 block header
-  if workflow
-    +createWorkflow(workflow.name?workflow.name:"", workflow.about?workflow.about:"")
-  else
-    +createWorkflow("", "")
-  a(onclick="downloadWorkflow(); return false;", style="color: #17a2b8; font-weight:700")
+  | Phenotype "#{workflow&&workflow.name?workflow.name:""}"
+  | #{workflow&&workflow.about?workflow.about:""}
+  a(onclick="downloadWorkflow(); return false;", style="color: #17a2b8;")
     | DOWNLOAD
 
 block content
 
   div(class="container")
-      p(style='white-space:pre;')
+      div(style="padding-top: 10px;")
         div(id="steps")
           if workflow && workflow.steps && workflow.steps[0]
             each step in workflow.steps

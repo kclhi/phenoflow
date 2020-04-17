@@ -34,6 +34,14 @@ class Workflow {
 
 	}
 
+	static async deleteStep(workflowId, position) {
+
+		let res = await chai.request(server).post("/step/delete/" + workflowId + "/" + position);
+		res.should.have.status(200);
+		res.body.should.be.a("object");
+
+	}
+
 	static async upsertStep(workflowId, position, name, doc, type) {
 
 		let res = await Workflow.step(workflowId, position, name, doc, type);

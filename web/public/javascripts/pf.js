@@ -24,6 +24,8 @@ function updateWorkflow(id, name, author, about, callback=function(response){}) 
 
 function step(workflowId, position, name, doc, type, callback) { sendPostRequest("step/" + workflowId + "/" + position, JSON.stringify({"name": name, "doc": doc, "type": type}), callback); }
 
+function deleteStep(workflowId, position, callback=function(response){}) { sendPostRequest("step/delete/" + workflowId + "/" + position, "", callback); }
+
 function input(stepId, doc, callback=function(response){}) { sendPostRequest("input/" + stepId, JSON.stringify({"doc": doc}), callback); }
 
 function output(stepId, doc, extension, callback=function(response){}) { sendPostRequest("output/" + stepId, JSON.stringify({"doc": doc, "extension": extension}), callback); }
@@ -32,10 +34,4 @@ function implementation(stepId, language, file, callback=function(response){}) {
   var data = new FormData();
   data.append("implementation", file);
   sendPostRequest("implementation/" + stepId + "/" + language, data, callback, null)
-}
-
-//
-
-function downloadWorkflow() {
-
 }

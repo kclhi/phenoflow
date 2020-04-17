@@ -19,4 +19,21 @@ router.post('/:workflowId/:position', async function(req, res, next) {
 
 });
 
+router.post('/delete/:workflowId/:position', async function(req, res, next) {
+
+  try {
+    let removedStep = await models.step.destroy({where:{workflowId:req.params.workflowId, position:req.params.position}});
+    let stepId = await models.step.findOne({where:{workflowId:req.params.workflowId, position:req.params.position}});
+    await models.input.destroy({where:{stepId:stepId}});
+    await models.output.destroy({where:{stepId:stepId}});
+    await models.implementation.destroy({where:{stepId:stepId}});
+    res.sendStatus(200);
+  } catch(error) {
+    error = "Error deleting step: " + (error&&error.errors&&error.errors[0].message?error.errors[0].message:error);
+    logger.debug(error);
+    res.status(500).send(error);
+  }
+
+});
+
 module.exports = router;

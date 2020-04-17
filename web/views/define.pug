@@ -1,62 +1,62 @@
 extends layout
 
-mixin input(id, content, value)
+mixin input(step, id, content, value)
   div(class="input-group")
     div(class="input-group-prepend")
-      span(class="input-group-text" id=id) #{content}
-    input(value=value type="text" class=content + " form-control" placeholder=content aria-label=content aria-describedby=id)
+      span(class="input-group-text" id=step+id) #{content}
+    input(value=value type="text" class=id + " form-control" placeholder=content aria-label=content aria-describedby=step+id)
 
-mixin createImplementation(currentLanguage, languages)
-  input(class="implementationFile" type="file" style="border: none; width: inherit; height: inherit")
-  select(class="implementationLanguage")
-    option() -
-    each language in languages
-      if language==currentLanguage
-        option(value=language selected=true) #{language}
-      else
-        option(value=language) #{language}
+mixin createImplementation(currentLanguage, languages, fileName=null)
+  div(class="implementation" style="padding-top: 10px;")
+    if fileName
+      span(class="implementationFileExisting") #{fileName}
+    div
+      input(class="implementationFile" type="file" style="border: none; width: inherit; height: inherit")
+      select(class="implementationLanguage")
+        option() -
+        each language in languages
+          if language==currentLanguage
+            option(value=language selected=true) #{language}
+          else
+            option(value=language) #{language}
 
 mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension, implementations)
-  div(id="step" + position, style="text-align: center;")
+  div(id="step" + position style="padding-top: 20px;")
     div(class="row")
       div(class="col")
-        div
-          +input("step" + position + "inputDoc", "inputDoc", inputDoc)
-        div(class="highlight" style="font-size: 50px;") &#8675;
+        +input("step" + position, "inputDoc", "Document", inputDoc)
+        div(class="highlight" style="font-size: 50px; text-align: center;") &#8675;
     div(class="row step")
       div(class="box col")
-        p(style="white-space:pre;")
-          div
-            each concept in concepts
-              if type==concept
-                input(type="radio" value=type id=concept name="step" + position + "type" class="type input-hidden" checked)
-              else
-                input(type="radio" value=type id=concept name="step" + position + "type" class="type input-hidden")
-              label(for=concept)
-                +conceptIcon(concept)
-          div
-            +input("step" + position + "name", "name", name)
-          div
-            +input("step" + position + "doc", "doc", doc)
+        each concept in concepts
+          if type==concept
+            input(type="radio" value=concept id="step" + position + concept name="step" + position + "type" class="type input-hidden" checked)
+          else
+            input(type="radio" value=concept id="step" + position + concept name="step" + position + "type" class="type input-hidden")
+          label(for="step" + position + concept, class=concept)
+            +conceptIcon(concept)
+        div
+          +input("step" + position, "name", "Name", name)
+        div
+          +input("step" + position, "doc", "Describe", doc)
       div(class="col-1")
       div(class="box col")
-        p(style="white-space:pre;")
-          div
-            if implementations && implementations[0]
-              each implementation in implementations
-                div(class="implementation" style="white-space:pre;")
-                  if implementation.fileName
-                    div(style="text-align: left;") #{implementation.fileName}
-                  +createImplementation(implementation.language, languages)
-            div(class="implementation" style="white-space:pre;")
-              +createImplementation("-", languages)
-          a(onclick="addImplementation('step" + position +"'); return false;" style="float: right;")
-            +plusButton()
+        if implementations && implementations[0]
+          each implementation in implementations
+              +createImplementation(implementation.language, languages, implementation.fileName)
+        else
+            +createImplementation("-", languages)
+        a(onclick="addImplementation('step" + position +"'); return false;" style="float: right;")
+          +plusButton()
     div(class="row")
       div(class="col")
-        div(class="highlight" style="font-size: 50px;") &#8675;
-        +input("step" + position + "outputDoc", "outputDoc", outputDoc)
-        +input("step" + position + "outputExtension", "outputExtension", outputExtension)
+        div(class="highlight" style="font-size: 50px; text-align: center;") &#8675;
+        +input("step" + position, "outputDoc", "Document", outputDoc)
+        +input("step" + position, "outputExtension", "Extension", outputExtension)
+    div(class="row stepRemove" style=(position==1?"display: none;":""))
+      div(class="col")
+        a(onclick="logDeletedStep(this); return false;" style="margin: 10px; color: #17a2b8;")
+          | REMOVE
 
 block pageJS
   script(src="/javascripts/define.js")
@@ -64,22 +64,21 @@ block pageJS
 block header
   | Phenotype
   form(class="form-inline")
-    +input("workflowName", "name", workflow&&workflow.name?workflow.name:"")
-    +input("workflowAbout", "about", workflow&&workflow.about?workflow.about:"")
+    +input("", "workflowName", "name", workflow&&workflow.name?workflow.name:"")
+    +input("", "workflowAbout", "about", workflow&&workflow.about?workflow.about:"")
+    a(onclick="createOrUpdateWorkflow(); return false;" style="margin: 10px; color: #17a2b8;")
+      | SAVE
 
 block content
 
   div(class="container")
-    p(style="white-space:pre;")
-      div(id="steps")
-        if workflow && workflow.steps && workflow.steps[0]
-          each step in workflow.steps
-            +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations)
-        else
-          +createStep(1, "", "", "", "", "", "", "", "", "")
+    div(id="steps")
+      if workflow && workflow.steps && workflow.steps[0]
+        each step in workflow.steps
+          +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations)
+      else
+        +createStep(1, "", "", "", "", "", "", "", "", "")
 
     div(class="row justify-content-center")
       a(onclick="addStep(); return false;" style="margin: 10px;")
         +plusButton()
-      a(onclick="createOrUpdateWorkflow(); return false;" style="margin: 10px;")
-        +tickButton()
