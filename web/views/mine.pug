@@ -9,5 +9,6 @@ block content
     each workflow in workflows
       div(class="row")
         div(style='white-space:pre;')
-          a(href="define/" + workflow.id) #{workflow.name}
-          |  #{workflow.about}
+          p(style='white-space:pre;')
+            a(href="define/" + workflow.id) #{workflow.name}
+            |  #{workflow.about}

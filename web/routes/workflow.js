@@ -7,9 +7,18 @@ const got = require("got");
 const Workflow = require("../util/workflow");
 const Download = require("../util/download");
 
+router.get("/", (req, res, next)=>res.render("index",{title:"Phenoflow"}));
+
 router.get("/all", async function(req, res, next) {
 
   let workflows = await Workflow.completeWorkflows();
+  res.render("all",{title:"Phenoflow", workflows:workflows})
+
+});
+
+router.get("/all/:filter", async function(req, res, next) {
+
+  let workflows = await Workflow.completeWorkflows(req.params.filter);
   res.render("all",{title:"Phenoflow", workflows:workflows})
 
 });
@@ -47,7 +56,7 @@ router.get("/download/:workflowId", async function(req, res, next) {
 
 router.post("/new", async function(req, res, next) {
 
-  if (!req.body.name || !req.body.author || !req.body.about) return res.sendStatus(500);
+  if(!req.body.name || !req.body.author || !req.body.about) return res.sendStatus(500);
   try {
     let workflow = await models.workflow.create({name:req.body.name, author:req.body.author, about:req.body.about});
     res.send({"id":workflow.id});
@@ -61,7 +70,7 @@ router.post("/new", async function(req, res, next) {
 
 router.post("/update/:id", async function(req, res, next) {
 
-  if (!req.body.name || !req.body.author || !req.body.about) return res.sendStatus(500);
+  if(!req.body.name || !req.body.author || !req.body.about) return res.sendStatus(500);
   try {
     await models.workflow.upsert({id:req.params.id, name: req.body.name, author: req.body.author, about: req.body.about});
     res.sendStatus(200);
@@ -91,7 +100,7 @@ async function generateWorkflow(workflowId, language=null, implementationUnits=n
 
 router.get("/generate/:workflowId/:language", async function(req, res, next) {
 
-  if (req.body.implementationUnits) return res.sendStatus(404);
+  if(req.body.implementationUnits) return res.sendStatus(404);
   try {
     await generateWorkflow(req.params.workflowId, req.params.language, null, res);
     res.sendStatus(200);
@@ -104,7 +113,7 @@ router.get("/generate/:workflowId/:language", async function(req, res, next) {
 
 router.post("/generate/:workflowId", async function(req, res, next) {
 
-  if (!req.body.implementationUnits) return res.sendStatus(404);
+  if(!req.body.implementationUnits) return res.sendStatus(404);
   try {
     await generateWorkflow(req.params.workflowId, null, req.body.implementationUnits, res);
   } catch(error) {

@@ -8,8 +8,9 @@ mixin input(step, id, content, value)
 
 mixin createImplementation(currentLanguage, languages, fileName=null)
   div(class="implementation" style="padding-top: 10px;")
-    if fileName
-      span(class="implementationFileExisting") #{fileName}
+    span(class="implementationFileExisting")
+      if fileName
+        | #{fileName}
     div
       input(class="implementationFile" type="file" style="border: none; width: inherit; height: inherit")
       select(class="implementationLanguage")
@@ -22,19 +23,26 @@ mixin createImplementation(currentLanguage, languages, fileName=null)
 
 mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension, implementations)
   div(id="step" + position style="padding-top: 20px;")
+    div(class="row description highlight")
+      div(class="col highlight")
+        | INPUT
     div(class="row")
       div(class="col")
         +input("step" + position, "inputDoc", "Document", inputDoc)
-        div(class="highlight" style="font-size: 50px; text-align: center;") &#8675;
+        div(class="highlight arrow") &#8675;
+    div(class="row")
+      div(class="col highlight")
+        | STEP
     div(class="row step")
       div(class="box col")
-        each concept in concepts
-          if type==concept
-            input(type="radio" value=concept id="step" + position + concept name="step" + position + "type" class="type input-hidden" checked)
-          else
-            input(type="radio" value=concept id="step" + position + concept name="step" + position + "type" class="type input-hidden")
-          label(for="step" + position + concept, class=concept)
-            +conceptIcon(concept)
+        div(style="text-align: center;")
+          each concept in concepts
+            if type==concept
+              input(type="radio" value=concept id="step" + position + concept name="step" + position + "type" class="type input-hidden" checked)
+            else
+              input(type="radio" value=concept id="step" + position + concept name="step" + position + "type" class="type input-hidden")
+            label(for="step" + position + concept, class=concept)
+              +conceptIcon(concept)
         div
           +input("step" + position, "name", "Name", name)
         div
@@ -50,13 +58,18 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
           +plusButton()
     div(class="row")
       div(class="col")
-        div(class="highlight" style="font-size: 50px; text-align: center;") &#8675;
+        div(class="highlight arrow") &#8675;
+    div(class="row")
+      div(class="col highlight")
+        | OUTPUT
+    div(class="row")
+      div(class="col")
         +input("step" + position, "outputDoc", "Document", outputDoc)
         +input("step" + position, "outputExtension", "Extension", outputExtension)
     div(class="row stepRemove" style=(position==1?"display: none;":""))
       div(class="col")
-        a(onclick="logDeletedStep(this); return false;" style="margin: 10px; color: #17a2b8;")
-          | REMOVE
+        a(onclick="logDeletedStep(this); return false;" style="margin: 10px;")
+          span(class="highlight") REMOVE
 
 block pageJS
   script(src="/javascripts/define.js")

@@ -26,12 +26,12 @@ class Download {
     await Zip.add(archive, workflowInputs, name + "-inputs.yml");
     await Zip.add(archive, "", "replaceMe.csv");
 
-    for ( const step in steps ) {
+    for(const step in steps) {
       await Zip.add(archive, steps[step].content, steps[step].name + ".cwl");
-      await Zip.addFile(archive, "uploads/", (implementationUnits[steps[step].name]?implementationUnits[steps[step].name]:implementationUnits) + "/" + steps[step].fileName);
+      await Zip.addFile(archive, "uploads/" + id + "/", (implementationUnits[steps[step].name]?implementationUnits[steps[step].name]:implementationUnits) + "/" + steps[step].fileName);
     }
 
-    if (visualise) {
+    if(visualise) {
       const timestamp="" + Math.floor(new Date() / 1000);
 			const GIT_SERVER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.HOST") + config.get("gitserver.PORT");
 			await Visualise.commitPushWorkflowRepo(id, timestamp, name, workflow, steps);

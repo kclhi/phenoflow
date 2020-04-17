@@ -65,6 +65,14 @@ function addStep() {
   let original = document.getElementById("step1");
   let clone = original.cloneNode(true);
   clone.id = "step" + ++inputSteps;
+  clone.getElementsByClassName("name")[0].value = "";
+  clone.getElementsByClassName("doc")[0].value = "";
+  for (let type of clone.getElementsByClassName("type")) type.removeAttribute("checked")
+  clone.getElementsByClassName("inputDoc")[0].value = "";
+  clone.getElementsByClassName("outputDoc")[0].value = "";
+  clone.getElementsByClassName("outputExtension")[0].value = "";
+  clone.getElementsByClassName("implementationLanguage")[0].value = "-";
+  clone.getElementsByClassName("implementationFileExisting")[0].style.display = "none";
   clone.getElementsByClassName("stepRemove")[0].style.display = "inline";
   for(let type of clone.getElementsByClassName("type")) {
     type.id = "step" + inputSteps + type.value;

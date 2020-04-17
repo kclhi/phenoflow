@@ -9,6 +9,22 @@ a {
   font-weight:700
 }
 
+label {
+  margin: 10px;
+  cursor: pointer;
+  width: 60px;
+}
+
+input[type=radio]:checked + label>svg {
+  color: #17a2b8!important;
+}
+
+input[type=radio]:checked + label>div {
+  color: #17a2b8!important;
+}
+
+/**/
+
 .button {
   text-align: center;
   width: 50px;
@@ -16,7 +32,7 @@ a {
   cursor: pointer;
   font-size: 15px;
   background-color: #17a2b8;
-  color: rgba(255, 255, 255, .5);
+  color: rgba(255, 255, 255, 1);
   box-shadow: 0 5px 5px -5px rgba(0,0,0,.4);
   border-radius: 12px;
   font-weight: bold;
@@ -30,7 +46,14 @@ a {
 }
 
 .highlight {
-  color: #17a2b8
+  color: #17a2b8;
+  font-weight: bold;
+}
+
+.arrow {
+  font-size: 50px;
+  text-align: center;
+  font-weight: normal;
 }
 
 .box {
@@ -52,24 +75,12 @@ a {
   color: white;
 }
 
-label {
-  margin: 10px;
-  cursor: pointer;
-  width: 60px;
-}
-
 .input-hidden {
   position: absolute;
   left: -9999px;
 }
 
-input[type=radio]:checked + label>svg {
-  color: #17a2b8!important;
-}
-
-input[type=radio]:checked + label>div {
-  color: #17a2b8!important;
-}
+/**/
 
 #pfnav {
   text-align: left;

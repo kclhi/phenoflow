@@ -4,9 +4,13 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
   div(id="step" + position, style="text-align: center;")
     div(class="row")
       div(class="col")
-        div
-          | #{inputDoc}
-        div(class="highlight" style="font-size: 50px;") &#8675;
+        span(class="col highlight")
+          | INPUT
+        | #{inputDoc}
+        div(class="highlight arrow") &#8675;
+    div(class="row")
+      div(class="col highlight")
+        | STEP
     div(class="row step")
       div(class="box col")
         div(style="padding-top: 20px;")
@@ -19,24 +23,27 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
       div(class="col-1")
       div(class="box col")
         div(style="padding-top: 20px;")
-          | Implementation:
+          | Select implementation:
           div
             select(class="implementation", placeholder="about")
               each implementation in implementations
                 option(value=implementation.language, selected=true) #{implementation.language}
     div(class="row")
       div(class="col")
-        div(class="highlight" style="font-size: 50px;") &#8675;
+        div(class="highlight arrow") &#8675;
+        span(class="col highlight")
+          | OUTPUT
         | #{outputDoc}
         | (#{outputExtension})
 
 block pageJS
   script.
     function downloadWorkflow() {
+      document.getElementById("download").style.display = "none";
+      document.getElementById("downloadSpinner").style.display = "inline";
       let implementationUnits = {};
       for (let step of document.getElementsByClassName("step")) {
-        - console.log(step);
-        implementationUnits[step.getElementsByClassName("name")[0].innerText] = step.getElementsByClassName("implementation")[0].value;
+        implementationUnits[step.getElementsByClassName("name")[0].innerText.replace(/\'/g, "")] = step.getElementsByClassName("implementation")[0].value;
       }
       var xhr = new XMLHttpRequest();
       xhr.open("POST", "/phenotype/generate/#{workflow.id}", true);
@@ -51,6 +58,8 @@ block pageJS
           a.href = window.URL.createObjectURL(blob);
           a.download = fileName;
           a.dispatchEvent(new MouseEvent("click"));
+          document.getElementById("download").style.display = "inline";
+          document.getElementById("downloadSpinner").style.display = "none";
         }
       }
       xhr.send(JSON.stringify({"implementationUnits":implementationUnits}));
@@ -59,8 +68,10 @@ block pageJS
 block header
   | Phenotype "#{workflow&&workflow.name?workflow.name:""}"
   | #{workflow&&workflow.about?workflow.about:""}
-  a(onclick="downloadWorkflow(); return false;", style="color: #17a2b8;")
+  a(id="download" onclick="downloadWorkflow(); return false;", style="color: #17a2b8;")
     | DOWNLOAD
+  div(id="downloadSpinner" class="spinner-border text-info" role="status" style="display:none;")
+    span(class="sr-only") Loading...
 
 block content
 

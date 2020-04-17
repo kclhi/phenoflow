@@ -13,7 +13,7 @@ class Zip {
 
     // good practice to catch warnings (ie stat failures and other non-blocking errors)
     archive.on('warning', function(err) {
-      if (err.code === 'ENOENT') {
+      if(err.code==='ENOENT') {
         logger.error(err);
       } else {
         // throw error

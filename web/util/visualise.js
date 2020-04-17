@@ -20,7 +20,7 @@ class Visualise {
     }
 
     await fspromises.writeFile(workflowRepo + "/" + name + ".cwl", workflow);
-    for ( const step in steps ) await fspromises.writeFile(workflowRepo + "/" + steps[step].name + ".cwl", steps[step].content);
+    for(const step in steps) await fspromises.writeFile(workflowRepo + "/" + steps[step].name + ".cwl", steps[step].content);
 
     await git.init({fs, dir: workflowRepo})
     await git.add({fs, dir: workflowRepo, filepath: '.'})
@@ -60,8 +60,6 @@ class Visualise {
       logger.debug("Cannot push to remote (" + id + timestamp + "): " + error);
     }
 
-
-
   }
 
   static async getWorkflowPNGFromViewer(id, file) {
@@ -79,7 +77,7 @@ class Visualise {
 
     logger.debug("Response from get workflow png from viewer: " + png.statusCode);
 
-    if (png.statusCode==200 && pngBuffer) {
+    if(png.statusCode==200 && pngBuffer) {
       return pngBuffer;
     } else {
       return null;
@@ -108,9 +106,9 @@ class Visualise {
 
     logger.debug("Response from add workflow to viewer: " + JSON.stringify(generate.headers) + " " + JSON.stringify(generate.body));
 
-    if (generate && generate.headers && generate.headers.location) {
+    if(generate && generate.headers && generate.headers.location) {
       return generate.headers.location;
-    } else if (generate && generate.body && JSON.parse(generate.body).visualisationPng) {
+    } else if(generate && generate.body && JSON.parse(generate.body).visualisationPng) {
       return await Utils.getWorkflowPNGFromViewer(id, file);
     } else {
       return null;
@@ -120,7 +118,7 @@ class Visualise {
 
   static async getWorkflowFromViewer(id, file, queueLocation, remainingTries=10) {
 
-    if (!queueLocation || (queueLocation && queueLocation.indexOf("queue")==-1)) {
+    if(!queueLocation || (queueLocation && queueLocation.indexOf("queue")==-1)) {
       logger.debug("No queue location specified");
       return null;
     }
@@ -136,11 +134,11 @@ class Visualise {
 
     logger.debug("Response from get workflow from viewer: " + queue.statusCode + " " + JSON.stringify(queue.body));
 
-    if (queue && queue.statusCode==200 && queue.body && JSON.parse(queue.body).cwltoolStatus=="RUNNING" && remainingTries>0) {
+    if(queue && queue.statusCode==200 && queue.body && JSON.parse(queue.body).cwltoolStatus=="RUNNING" && remainingTries>0) {
       logger.debug("Visualisation still processing, trying again.");
       await new Promise(resolve=>setTimeout(resolve, 1000));
       return await Visualise.getWorkflowFromViewer(id, file, queueLocation, remainingTries-1);
-    } else if (queue && queue.statusCode==303 && queue.body && JSON.parse(queue.body).cwltoolStatus=="SUCCESS") {
+    } else if(queue && queue.statusCode==303 && queue.body && JSON.parse(queue.body).cwltoolStatus=="SUCCESS") {
       logger.debug("Visualisation processed, getting PNG.");
       return await Visualise.getWorkflowPNGFromViewer(id, file);
     } else {

@@ -13,7 +13,7 @@ const Workflow = require('./workflow');
 
 describe('t2dm', () => {
 
-	describe('/POST create workflow', () => {
+	describe('/POST create T2DM workflow', () => {
 
 		let workflowId;
 		let name = "t2dm";

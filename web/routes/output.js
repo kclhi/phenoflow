@@ -5,7 +5,7 @@ const models = require('../models');
 
 router.post('/:stepId', async function(req, res, next) {
 
-  if (!req.body.doc || !req.body.extension) return res.status(500).send("Missing parameters.");
+  if(!req.body.doc || !req.body.extension) return res.status(500).send("Missing parameters.");
   try {
     await models.output.upsert({doc:req.body.doc, extension:req.body.extension, stepId:req.params.stepId});
     res.sendStatus(200);
