@@ -1,0 +1,13 @@
+version: "3.7"
+services:
+  webapp-t2dm:
+    build:
+     context: web
+     dockerfile: Dockerfile.test
+    environment:
+      - NODE_EXTRA_CA_CERTS=/home/node/certs/pf.pem
+    command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npx", "mocha", "-g", "covid19", "--exit"]
+networks:
+  default:
+    external:
+      name: martinchapman_network # For proxy.

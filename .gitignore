@@ -266,3 +266,4 @@ output/
 *.enc
 *.sqlite
 web/uploads/
+.htpasswd

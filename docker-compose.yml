@@ -1,15 +1,16 @@
 version: "3.7"
 services:
-  proxy:
-    build:
-      context: ./web/proxy
-    command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
-    ports:
-      - '443:443'
-      - '80:80'
-    depends_on:
-      - webapp
-    restart: unless-stopped
+  # Provided by MC:
+  # proxy:
+  #   build:
+  #     context: ./web/proxy
+  #   command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
+  #   ports:
+  #     - '443:443'
+  #     - '80:80'
+  #   depends_on:
+  #     - webapp
+  #   restart: unless-stopped
   webapp:
     build: web
     environment:
@@ -29,23 +30,11 @@ services:
       MYSQL_PASSWORD: password
     volumes:
       - pf_data:/var/lib/mysql
-  # migration:
-  #   image: phenoflow_webapp:latest
-  #   command: ["./bin/wait-for-it.sh", "--timeout=0", "mariadb:3306", "--", "npm", "run", "migrate"]
-  #   depends_on:
-  #     - mariadb
-  webapp-t2dm:
-    build:
-     context: web
-     dockerfile: Dockerfile.test
-    environment:
-      - NODE_EXTRA_CA_CERTS=/home/node/certs/pf.pem
-    volumes:
-      - pf_uploads:/home/node/uploads
+  migration:
+    image: phenoflow_webapp:latest
+    command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npm", "run", "migrate"]
     depends_on:
-      - webapp
       - mariadb
-    command: ["./bin/wait-for-it.sh", "--timeout=0", "mariadb:3306", "--", "npx", "mocha", "-g", "t2dm", "--exit"]
   generator:
     build:
       context: generator/
@@ -57,4 +46,5 @@ volumes:
   pf_data:
 networks:
   default:
-    name: pf_network
+    external:
+      name: martinchapman_network # For proxy.

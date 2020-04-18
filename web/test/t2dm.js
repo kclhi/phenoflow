@@ -19,7 +19,6 @@ describe('t2dm', () => {
 		let name = "t2dm";
 
 		it('Create T2DM workflow.', async() => {
-			await models.workflow.sync({force:true});
 			workflowId = await Workflow.createWorkflow(name, "martinchapman", "Type 2 Diabetes Mellitus phenotype as a structured phenotype definition, as produced by the Phenoflow architecture");
 		});
 
@@ -28,22 +27,18 @@ describe('t2dm', () => {
 		// 1. read-potential-cases
 
 		it('Add read potential cases step.', async() => {
-			await models.step.sync({force:true});
 			stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases", "Read potential cases", "load");
 		});
 
 		it('Add read potential cases input.', async() => {
-			await models.input.sync({force:true});
 			await Workflow.input(stepId, "Potential cases of this type of diabetes.");
 		});
 
 		it('Add read potential cases output.', async() => {
-			await models.output.sync({force:true});
 			await Workflow.output(stepId, "Initial potential cases, read from disc.", "csv");
 		});
 
 		it('Add read potential cases implementation.', async() => {
-			await models.implementation.sync({force:true});
 			await Workflow.implementation(stepId, "knime", "test/implementation/knime/", "read-potential-cases.knwf");
 		});
 
@@ -204,7 +199,7 @@ describe('t2dm', () => {
 		async function testGenerateEndpoint(workflowId, implementationUnits) {
 			// If service is not running, endpoint cannot be tested.
 			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") return; }
-			let res = await chai.request(server).post('/phenotype/generate/' + workflowId).send({implementationUnits: implementationUnits});
+			let res = await chai.request(server).post('/phenoflow/phenotype/generate/' + workflowId).send({implementationUnits: implementationUnits});
 			res.should.have.status(200);
 			res.body.should.be.a('object');
 			// Handle received ZIP.

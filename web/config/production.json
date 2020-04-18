@@ -3,7 +3,7 @@
     "username": "user",
     "password": "password",
     "database": "database",
-    "host": "mariadb",
+    "host": "phenoflow_mariadb_1",
     "dialect": "mysql"
   },
   "generator": {

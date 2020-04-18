@@ -9,5 +9,5 @@ block content
       each workflow in workflows
         div(class="row" style='white-space:pre;')
           p(style='white-space:pre;')
-            a(href="download/" + workflow.id) #{workflow.name}
+            a(href="/phenoflow/phenotype/download/" + workflow.id) #{workflow.name}
             |  #{workflow.about}
