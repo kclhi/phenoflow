@@ -256,7 +256,8 @@ var migrationCommands = [{
             "implementations",
             ["language", "stepId"],
             {
-                "indicesType": "UNIQUE"
+                "indicesType": "UNIQUE",
+                "unique": true
             }
         ]
     },
@@ -266,7 +267,8 @@ var migrationCommands = [{
             "inputs",
             ["stepId"],
             {
-                "indicesType": "UNIQUE"
+                "indicesType": "UNIQUE",
+                "unique": true
             }
         ]
     },
@@ -276,7 +278,8 @@ var migrationCommands = [{
             "outputs",
             ["stepId"],
             {
-                "indicesType": "UNIQUE"
+                "indicesType": "UNIQUE",
+                "unique": true
             }
         ]
     },
@@ -286,7 +289,8 @@ var migrationCommands = [{
             "steps",
             ["name", "position", "workflowId"],
             {
-                "indicesType": "UNIQUE"
+                "indicesType": "UNIQUE",
+                "unique": true
             }
         ]
     },
@@ -296,7 +300,8 @@ var migrationCommands = [{
             "steps",
             ["name", "workflowId"],
             {
-                "indicesType": "UNIQUE"
+                "indicesType": "UNIQUE",
+                "unique": true
             }
         ]
     },
@@ -306,7 +311,8 @@ var migrationCommands = [{
             "steps",
             ["position", "workflowId"],
             {
-                "indicesType": "UNIQUE"
+                "indicesType": "UNIQUE",
+                "unique": true
             }
         ]
     }
