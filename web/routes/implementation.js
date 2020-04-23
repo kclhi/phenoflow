@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../config/winston');
 const models = require('../models');
+const sanitizeHtml = require('sanitize-html');
+const jwt = require('express-jwt');
+const config = require("config");
 
-router.post('/:stepId/:language', async function(req, res, next) {
+router.post('/:stepId/:language', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   if(!req.files || Object.keys(req.files).length === 0) return res.status(400).send('No files were uploaded.');
 

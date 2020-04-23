@@ -2,13 +2,16 @@ const express = require('express');
 const router = express.Router();
 const logger = require('../config/winston');
 const models = require('../models');
+const sanitizeHtml = require('sanitize-html');
+const jwt = require('express-jwt');
+const config = require("config");
 
-router.post('/:workflowId/:position', async function(req, res, next) {
+router.post('/:workflowId/:position', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   if(!req.body.name || !req.body.doc || !req.body.type) { logger.debug("Missing params"); return res.status(500).send("Missing parameters."); }
 
   try {
-    await models.step.upsert({name:req.body.name, doc: req.body.doc, type:req.body.type, workflowId:req.params.workflowId, position:req.params.position});
+    await models.step.upsert({name:sanitizeHtml(req.body.name), doc: sanitizeHtml(req.body.doc), type:sanitizeHtml(req.body.type), workflowId:req.params.workflowId, position:req.params.position});
     let stepId = await models.step.findOne({where:{workflowId:req.params.workflowId, position:req.params.position}});
     res.send({"id":stepId.id});
   } catch(error) {
@@ -19,7 +22,7 @@ router.post('/:workflowId/:position', async function(req, res, next) {
 
 });
 
-router.post('/delete/:workflowId/:position', async function(req, res, next) {
+router.post('/delete/:workflowId/:position', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY")}), async function(req, res, next) {
 
   try {
     let removedStep = await models.step.destroy({where:{workflowId:req.params.workflowId, position:req.params.position}});

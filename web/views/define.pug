@@ -1,11 +1,5 @@
 extends layout
 
-mixin input(step, id, content, value)
-  div(class="input-group")
-    div(class="input-group-prepend")
-      span(class="input-group-text" id=step+id) #{content}
-    input(value=value type="text" class=id + " form-control" placeholder=content aria-label=content aria-describedby=step+id)
-
 mixin createImplementation(currentLanguage, languages, fileName=null)
   div(class="implementation" style="padding-top: 10px;")
     span(class="implementationFileExisting")
@@ -75,8 +69,9 @@ block pageJS
   script(src="/phenoflow/javascripts/define.js")
 
 block header
-  | Phenotype
-  form(class="form-inline")
+  span(class="authentication")
+    | Define a new phenotype
+  form(class="form-inline restricted")
     +input("", "workflowName", "name", workflow&&workflow.name?workflow.name:"")
     +input("", "workflowAbout", "about", workflow&&workflow.about?workflow.about:"")
     a(onclick="createOrUpdateWorkflow(); return false;" style="margin: 10px; color: #17a2b8;")
@@ -84,13 +79,22 @@ block header
 
 block content
 
-  div(class="container")
-    div(id="steps")
-      if workflow && workflow.steps && workflow.steps[0]
-        each step in workflow.steps
-          +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations)
-      else
-        +createStep(1, "", "", "", "", "", "", "", "", "")
+  span(class="authentication")
+    div(class="container" style="padding-top: 20px;")
+      form
+        +input("", "username", "Username", "")
+        +input("", "password", "Password", "", "password", "current-password")
+      a(onclick="login(); return false;" style="margin: 10px; color: #17a2b8;")
+        | LOGIN
+
+  span(class="restricted")
+    div(class="container")
+      div(id="steps")
+        if workflow && workflow.steps && workflow.steps[0]
+          each step in workflow.steps
+            +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations)
+        else
+          +createStep(1, "", "", "", "", "", "", "", "", "")
 
     div(class="row justify-content-center")
       a(onclick="addStep(); return false;" style="margin: 10px;")

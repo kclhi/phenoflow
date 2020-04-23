@@ -5,6 +5,7 @@ var Sequelize = require('sequelize');
 /**
  * Actions summary:
  *
+ * createTable "users", deps: []
  * createTable "workflows", deps: []
  * createTable "steps", deps: [workflows]
  * createTable "implementations", deps: [steps]
@@ -13,20 +14,50 @@ var Sequelize = require('sequelize');
  * addIndex ["language","stepId"] to table "implementations"
  * addIndex ["stepId"] to table "inputs"
  * addIndex ["stepId"] to table "outputs"
- * addIndex ["name","position","workflowId"] to table "steps"
- * addIndex ["name","workflowId"] to table "steps"
  * addIndex ["position","workflowId"] to table "steps"
+ * addIndex ["name","workflowId"] to table "steps"
+ * addIndex ["name","position","workflowId"] to table "steps"
  *
  **/
 
 var info = {
     "revision": 1,
     "name": "init",
-    "created": "2020-04-17T15:52:31.212Z",
+    "created": "2020-04-23T18:11:14.161Z",
     "comment": ""
 };
 
 var migrationCommands = [{
+        fn: "createTable",
+        params: [
+            "users",
+            {
+                "name": {
+                    "type": Sequelize.STRING,
+                    "field": "name",
+                    "allowNull": false,
+                    "primaryKey": true
+                },
+                "password": {
+                    "type": Sequelize.STRING,
+                    "field": "password",
+                    "allowNull": false
+                },
+                "createdAt": {
+                    "type": Sequelize.DATE,
+                    "field": "createdAt",
+                    "allowNull": false
+                },
+                "updatedAt": {
+                    "type": Sequelize.DATE,
+                    "field": "updatedAt",
+                    "allowNull": false
+                }
+            },
+            {}
+        ]
+    },
+    {
         fn: "createTable",
         params: [
             "workflows",
@@ -287,7 +318,7 @@ var migrationCommands = [{
         fn: "addIndex",
         params: [
             "steps",
-            ["name", "position", "workflowId"],
+            ["position", "workflowId"],
             {
                 "indicesType": "UNIQUE",
                 "unique": true
@@ -309,7 +340,7 @@ var migrationCommands = [{
         fn: "addIndex",
         params: [
             "steps",
-            ["position", "workflowId"],
+            ["name", "position", "workflowId"],
             {
                 "indicesType": "UNIQUE",
                 "unique": true

@@ -2,6 +2,8 @@ function sendPostRequest(endpoint, body, callback, contentType='application/json
   var xhr = new XMLHttpRequest();
   xhr.open("POST", "/phenoflow/" + endpoint, true);
   if (contentType) xhr.setRequestHeader('Content-Type', contentType);
+  const idToken = localStorage.getItem("id_token");
+  if (idToken) xhr.setRequestHeader("Authorization", "Bearer " + idToken);
   xhr.onreadystatechange = function() {
     if(xhr.readyState === XMLHttpRequest.DONE) {
       var status = xhr.status;

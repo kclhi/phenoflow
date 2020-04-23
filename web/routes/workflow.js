@@ -4,6 +4,8 @@ const logger = require("../config/winston");
 const models = require("../models");
 const config = require("config");
 const got = require("got");
+const sanitizeHtml = require('sanitize-html');
+const jwt = require('express-jwt');
 const Workflow = require("../util/workflow");
 const Download = require("../util/download");
 
@@ -52,11 +54,11 @@ router.get("/download/:workflowId", async function(req, res, next) {
 
 });
 
-router.post("/new", async function(req, res, next) {
+router.post("/new", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   if(!req.body.name || !req.body.author || !req.body.about) return res.sendStatus(500);
   try {
-    let workflow = await models.workflow.create({name:req.body.name, author:req.body.author, about:req.body.about});
+    let workflow = await models.workflow.create({name:sanitizeHtml(req.body.name), author:sanitizeHtml(req.body.author), about:sanitizeHtml(req.body.about)});
     res.send({"id":workflow.id});
   } catch(error) {
     error = "Error adding workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
@@ -66,7 +68,7 @@ router.post("/new", async function(req, res, next) {
 
 });
 
-router.post("/update/:id", async function(req, res, next) {
+router.post("/update/:id", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   if(!req.body.name || !req.body.author || !req.body.about) return res.sendStatus(500);
   try {

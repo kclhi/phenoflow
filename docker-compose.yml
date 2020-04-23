@@ -1,5 +1,6 @@
 version: "3.7"
 services:
+
   # Provided by MC:
   # proxy:
   #   build:
@@ -11,6 +12,7 @@ services:
   #   depends_on:
   #     - webapp
   #   restart: unless-stopped
+
   webapp:
     build: web
     environment:
@@ -21,6 +23,7 @@ services:
     depends_on:
       - mariadb
       - generator
+
   mariadb:
     build: web/db
     environment:
@@ -30,20 +33,25 @@ services:
       MYSQL_PASSWORD: password
     volumes:
       - pf_data:/var/lib/mysql
+    restart: unless-stopped
+
   migration:
     image: phenoflow_webapp:latest
     command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npm", "run", "migrate"]
     depends_on:
       - mariadb
+
   generator:
     build:
       context: generator/
     restart: unless-stopped
     environment:
       PORT: 3004
+
 volumes:
   pf_uploads:
   pf_data:
+
 networks:
   default:
     external:

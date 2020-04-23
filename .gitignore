@@ -267,3 +267,4 @@ output/
 *.sqlite
 web/uploads/
 .htpasswd
+addUser.js

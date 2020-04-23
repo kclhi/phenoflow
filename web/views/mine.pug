@@ -4,11 +4,20 @@ block header
   | My Library
 
 block content
-  div(class="container")
-    p(style='white-space:pre;')
-    each workflow in workflows
-      div(class="row")
-        div(style='white-space:pre;')
-          p(style='white-space:pre;')
-            a(href="define/" + workflow.id) #{workflow.name}
-            |  #{workflow.about}
+  span(class="authentication")
+    div(class="container" style="padding-top: 20px;")
+      form
+        +input("", "username", "Username", "")
+        +input("", "password", "Password", "", "password", "current-password")
+      a(onclick="login(); return false;" style="margin: 10px; color: #17a2b8;")
+        | LOGIN
+
+  span(class="restricted")
+    div(class="container")
+      p(style='white-space:pre;')
+      each workflow in workflows
+        div(class="row")
+          div(style='white-space:pre;')
+            p(style='white-space:pre;')
+              a(href="define/" + workflow.id) #{workflow.name}
+              |  #{workflow.about}

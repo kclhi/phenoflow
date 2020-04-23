@@ -53,6 +53,12 @@ describe("basic", () => {
 			await Workflow.implementation(stepId, "js", "test/implementation/js/", "hello-world.js");
 		});
 
+		it("Should be able to add a new user.", async() => {
+			await models.user.sync({force:true});
+			const result = await models.user.create({name: "martinchapman", password: "1234"});
+			result.should.be.a("object");
+		});
+
 		// Update:
 
 		it("Should be able to update a workflow's details.", async() => {

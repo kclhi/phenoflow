@@ -7,13 +7,16 @@ const morgan = require("morgan");
 const logger = require("./config/winston");
 const fileUpload = require("express-fileupload");
 
+require('dotenv').config()
+
+const login = require("./routes/login");
 const workflow = require("./routes/workflow");
 const step = require("./routes/step");
 const input = require("./routes/input");
 const output = require("./routes/output");
 const implementation = require("./routes/implementation");
 
-var app = express();
+const app = express();
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -27,6 +30,7 @@ app.use("/phenoflow", express.static(path.join(__dirname, "public")));
 
 const router = express.Router();
 router.get("/", (req, res, next)=>res.render("index",{title:"Phenoflow"}));
+router.use("/login", login);
 router.use("/phenotype", workflow);
 router.use("/step", step);
 router.use("/input", input);
@@ -54,11 +58,5 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render("error");
 });
-
-try {
-  app.listen(process.env.PORT || "3003")
-} catch(err) {
-  logger.error(err);
-}
 
 module.exports = app;
