@@ -9,6 +9,7 @@ const fileUpload = require("express-fileupload");
 
 require('dotenv').config()
 
+const index = require("./routes");
 const login = require("./routes/login");
 const workflow = require("./routes/workflow");
 const step = require("./routes/step");
@@ -29,7 +30,7 @@ app.use(cookieParser());
 app.use("/phenoflow", express.static(path.join(__dirname, "public")));
 
 const router = express.Router();
-router.get("/", (req, res, next)=>res.render("index",{title:"Portable, workflow-based phenotype representation"}));
+router.use("/", index);
 router.use("/login", login);
 router.use("/phenotype", workflow);
 router.use("/step", step);

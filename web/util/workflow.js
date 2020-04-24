@@ -1,15 +1,14 @@
 const models = require("../models");
 const logger = require('../config/winston');
 const config = require('config');
-const op = require('sequelize').Op;
+const sequelize = require('sequelize');
+const op = sequelize.Op;
 
 class Workflow {
 
-  static async getWorkflow(workflowId) {
+  static async workflow(workflow) {
 
     try {
-      var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
-      if(!workflow) throw "Error finding workflow";
       let steps = await models.step.findAll({where:{workflowId:workflow.id}});
       let mergedSteps = [];
       for(let step of steps) {
@@ -20,6 +19,36 @@ class Workflow {
         mergedSteps.push(mergedStep);
       }
       workflow.steps = mergedSteps;
+    } catch(error) {
+      error = "Error getting workflow: " + error;
+      logger.debug(error);
+      throw error;
+    }
+    return workflow;
+
+  }
+
+  static async getWorkflow(workflowId) {
+
+    try {
+      var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
+      if(!workflow) throw "Error finding workflow";
+      workflow = Workflow.workflow(workflow);
+    } catch(error) {
+      error = "Error getting workflow: " + error;
+      logger.debug(error);
+      throw error;
+    }
+    return workflow;
+
+  }
+
+  static async getRandomWorkflow() {
+
+    try {
+      let workflows = await models.workflow.findAll();
+      if(!workflows) throw "Error finding workflows";
+      var workflow = Workflow.workflow(JSON.parse(JSON.stringify(workflows[Math.floor(Math.random() * workflows.length)])));
     } catch(error) {
       error = "Error getting workflow: " + error;
       logger.debug(error);

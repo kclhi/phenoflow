@@ -262,6 +262,7 @@ dmypy.json
 *.csv
 *.png
 *.gif
+*.ico
 examples/
 output/
 *.enc

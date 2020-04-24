@@ -2,44 +2,44 @@ extends layout
 
 block preheader
   div(class="container")
-    div(class="row")
+    div(class="row align-items-center")
       div(class="col")
-        h1(style="margin-top: 10px; margin-bottom: 10px;") #{title}
-      div(class="col")
-        | &nbsp;
+        h2(style="margin-top: 10px; margin-bottom: 10px;") #{title}
+      div(class="col d-flex justify-content-center")
+        a(href="/phenoflow/phenotype/download" class="a-button") VIEW AN EXAMPLE
 
 block content
-  div(class="container")
+  div(class="container" style="margin-top: 20px;")
     div(class="row align-items-center")
-      div(class="col box")
+      div(class="col")
         a(href="/phenoflow/phenotype/all")
-          img(src="/phenoflow/images/run.gif")
+          img(src="/phenoflow/images/run.gif" class="box")
       div(class="col index-box")
         | Download and immediately execute a phenotype against a local dataset with only two dependencies: <a href="https://github.com/common-workflow-language/cwltool">cwltool</a> and <a href="https://docs.docker.com/get-docker/">docker</a>.
     div(class="row")
       div()
         | &nbsp;
     div(class="row align-items-center")
-      div(class="col box")
+      div(class="col")
         a(href="/phenoflow/phenotype/all")
-          img(src="/phenoflow/images/custom.png")
+          img(src="/phenoflow/images/custom.png" class="box")
       div(class="col index-box")
         | Customise existing phenotype implementations.
     div(class="row")
       div()
         | &nbsp;
     div(class="row align-items-center")
-      div(class="col box")
+      div(class="col")
         a(href="/phenoflow/phenotype/all")
-          img(src="/phenoflow/images/abstract.png")
+          img(src="/phenoflow/images/abstract.png" class="box")
       div(class="col index-box")
         | Understand what is being executed with an intelligible definition powered by <a href="https://github.com/common-workflow-language/cwlviewer">cwl-viewer</a>.
     div(class="row")
       div()
         | &nbsp;
     div(class="row align-items-center")
-      div(class="col box")
+      div(class="col")
         a(href="/phenoflow/phenotype/define")
-          img(src="/phenoflow/images/define.png")
+          img(src="/phenoflow/images/define.png" class="box")
       div(class="col index-box")
         | Graphically author new phenotypes.

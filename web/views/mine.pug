@@ -12,8 +12,7 @@ block content
   span(class="restricted")
     div(class="container" style="padding-top: 20px;")
       each workflow in workflows
-        div(class="row")
+        div(class="row" style="padding-top: 20px;")
           div(class="col")
-            p(style='white-space:pre;')
-              a(href="define/" + workflow.id class="a-button") #{workflow.name}
+              a(href="define/" + workflow.id) #{workflow.name}
               |  #{workflow.about}
