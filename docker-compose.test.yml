@@ -1,4 +1,5 @@
 version: "3.7"
+
 services:
   webapp-t2dm:
     build:
@@ -6,7 +7,13 @@ services:
      dockerfile: Dockerfile.test
     environment:
       - NODE_EXTRA_CA_CERTS=/home/node/certs/pf.pem
+    volumes:
+      - pf_uploads:/home/node/uploads
     command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npx", "mocha", "-g", "t2dm", "--exit"]
+
+volumes:
+  pf_uploads:
+
 networks:
   default:
     external:

@@ -74,7 +74,7 @@ block header
   form(class="form-inline restricted")
     +input("", "workflowName", "name", workflow&&workflow.name?workflow.name:"")
     +input("", "workflowAbout", "about", workflow&&workflow.about?workflow.about:"")
-    a(onclick="createOrUpdateWorkflow(); return false;" style="margin: 10px; color: #17a2b8;")
+    a(onclick="createOrUpdateWorkflow(); return false;" class="a-button" style="margin: 10px;")
       | SAVE
 
 block content
@@ -84,7 +84,7 @@ block content
       form
         +input("", "username", "Username", "")
         +input("", "password", "Password", "", "password", "current-password")
-      a(onclick="login(); return false;" style="margin: 10px; color: #17a2b8;")
+      a(onclick="login(); return false;" class="a-button" style="margin: 10px;")
         | LOGIN
 
   span(class="restricted")

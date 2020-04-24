@@ -28,6 +28,9 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
             select(class="implementation", placeholder="about")
               each implementation in implementations
                 option(value=implementation.language, selected=true) #{implementation.language}
+          div
+            a(onclick="showImplementation(" + workflow.id + "," + position + ")" class="a-button")
+              | VIEW
     div(class="row")
       div(class="col")
         div(class="highlight arrow") &#8675;
@@ -64,11 +67,15 @@ block pageJS
       }
       xhr.send(JSON.stringify({"implementationUnits":implementationUnits}));
     }
+    function showImplementation(workflowId, position) {
+      const language = document.getElementById("step" + position).getElementsByClassName("implementation")[0].value;
+      window.open("/phenoflow/implementation/" + workflowId + "/" + position + "/" + language);
+    }
 
 block header
   | Phenotype "#{workflow&&workflow.name?workflow.name:""}"
   | #{workflow&&workflow.about?workflow.about:""}
-  a(id="download" onclick="downloadWorkflow(); return false;", style="color: #17a2b8;")
+  a(id="download" class="a-button" onclick="downloadWorkflow(); return false;")
     | DOWNLOAD
   div(id="downloadSpinner" class="spinner-border text-info" role="status" style="display:none;")
     span(class="sr-only") Loading...
