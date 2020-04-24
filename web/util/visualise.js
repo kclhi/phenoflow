@@ -5,6 +5,7 @@ const http = require('isomorphic-git/http/node')
 const got = require('got');
 const logger = require('../config/winston');
 const config = require('config');
+const yaml = require('yaml');
 
 class Visualise {
 
@@ -19,8 +20,18 @@ class Visualise {
       logger.error("Error creating repo dir: " + workflowRepo + " " + JSON.stringify(error));
     }
 
-    await fspromises.writeFile(workflowRepo + "/" + name + ".cwl", workflow);
-    for(const step in steps) await fspromises.writeFile(workflowRepo + "/" + steps[step].name + ".cwl", steps[step].content);
+    const yamlWorkflow = yaml.parse(workflow);
+    let lastStepName;
+    for(let step in yamlWorkflow.steps) {
+      if(lastStepName) yamlWorkflow.steps[step].in.potentialCases.source = yamlWorkflow.steps[step].in.potentialCases.source.replace(/([0-9])+/, lastStepName);
+      lastStepName = step + "-" + yamlWorkflow.steps[step].run.replace(".cwl", "");
+      yamlWorkflow.steps[lastStepName] = yamlWorkflow.steps[step];
+      delete yamlWorkflow.steps[step];
+    }
+    yamlWorkflow.outputs.cases.outputSource = yamlWorkflow.outputs.cases.outputSource.replace(/([0-9])+/, lastStepName);
+    
+    await fspromises.writeFile(workflowRepo + "/" + name + ".cwl", yaml.stringify(yamlWorkflow));
+    for(let step of steps) await fspromises.writeFile(workflowRepo + "/" + step.name + ".cwl", step.content);
 
     await git.init({fs, dir: workflowRepo})
     await git.add({fs, dir: workflowRepo, filepath: '.'})
