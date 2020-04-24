@@ -29,7 +29,7 @@ app.use(cookieParser());
 app.use("/phenoflow", express.static(path.join(__dirname, "public")));
 
 const router = express.Router();
-router.get("/", (req, res, next)=>res.render("index",{title:"Phenoflow"}));
+router.get("/", (req, res, next)=>res.render("index",{title:"Portable, workflow-based phenotype representation"}));
 router.use("/login", login);
 router.use("/phenotype", workflow);
 router.use("/step", step);

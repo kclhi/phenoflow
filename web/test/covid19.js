@@ -46,7 +46,7 @@ describe("covid19", () => {
 			let stepId;
 
 			it("Add " + code + " step.", async() => {
-				stepId = await Workflow.upsertStep(workflowId, step, code.replace("-", "").toLowerCase(), code + " codes used to record COVID-19 related events in electronic health records.", "logic");
+				stepId = await Workflow.upsertStep(workflowId, step, code.replace("-", "").toLowerCase(), "Use " + code + " codes to identify COVID-19 related events in a patient's electronic health record.", "logic");
 			});
 
 			it("Add " + code + " input.", async() => {

@@ -261,6 +261,7 @@ dmypy.json
 !requirements.txt
 *.csv
 *.png
+*.gif
 examples/
 output/
 *.enc

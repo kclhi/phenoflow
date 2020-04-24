@@ -5,7 +5,8 @@ body {
 
 a {
   cursor: pointer;
-  font-weight:700
+  font-weight:700;
+  color: #17a2b8;
 }
 
 label {
@@ -46,6 +47,7 @@ input[type=radio]:checked + label>div {
   height: 100%;
   background-color: #fafbfe;
   box-shadow: 0 3px 3px -3px rgba(0,0,0,.2);
+  margin-bottom: 10px;
 }
 
 .highlight {
@@ -67,7 +69,7 @@ input[type=radio]:checked + label>div {
   border: 1px solid #eff0f4;
 }
 
-.box > * {
+.box>* {
   padding: 10px;
 }
 
@@ -86,6 +88,7 @@ input[type=radio]:checked + label>div {
 .restricted {
   display: none;
 }
+
 /**/
 
 #pfnav {

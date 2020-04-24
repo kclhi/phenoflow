@@ -7,16 +7,15 @@ mixin input(step, id, content, value, type=text, autocomplete="")
 doctype html
 html
   head
-    title= title
-
+    - pageTitle="Phenoflow | " + title
+    title=pageTitle
     meta(charset="UTF-8", name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no")
-
     link(rel="icon" href="/phenoflow/images/favicon.ico" type="image/x-icon" sizes="16x16")
 
     link(rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous")
+    link(rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cantarell:wght@400;700&family=Poppins:wght@400;700&display=swap")
     link(rel="stylesheet" href="/phenoflow/stylesheets/navbar-fixed-left.min.css")
     link(rel="stylesheet" href="/phenoflow/stylesheets/style.css")
-    link(rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cantarell:wght@400;700&family=Poppins:wght@400;700&display=swap")
 
     script(src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous")
     script(src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous")
@@ -66,9 +65,15 @@ html
                 path(fill-rule="evenodd" d="M1 8a.5.5 0 01.5-.5h9a.5.5 0 010 1h-9A.5.5 0 011 8z" clip-rule="evenodd")
                 path(fill-rule="evenodd" d="M13.5 14.5A1.5 1.5 0 0015 13V3a1.5 1.5 0 00-1.5-1.5h-8A1.5 1.5 0 004 3v1.5a.5.5 0 001 0V3a.5.5 0 01.5-.5h8a.5.5 0 01.5.5v10a.5.5 0 01-.5.5h-8A.5.5 0 015 13v-1.5a.5.5 0 00-1 0V13a1.5 1.5 0 001.5 1.5h8z" clip-rule="evenodd")
               | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LOGOUT
+          li(class="nav-item fixed-bottom")
+            a(class="nav-link" href="/")
+              | &copy; kclhi 2020
 
-    nav(class="navbar title justify-content-between")
-      block header
+    block preheader
+      nav(class="navbar title justify-content-between")
+        div
+          | #{title}
+        block header
 
     mixin conceptIcon(concept)
       if concept == "load"
@@ -103,3 +108,5 @@ html
           path(fill-rule="evenodd" d="M7.5 8a.5.5 0 01.5-.5h4a.5.5 0 010 1H8.5V12a.5.5 0 01-1 0V8z" clip-rule="evenodd")
 
     block content
+
+    div(style="margin-top: 50px;")

@@ -1,8 +1,5 @@
 extends layout
 
-block header
-  | My Library
-
 block content
   span(class="authentication")
     div(class="container" style="padding-top: 20px;")
@@ -13,11 +10,10 @@ block content
         | LOGIN
 
   span(class="restricted")
-    div(class="container")
-      p(style='white-space:pre;')
+    div(class="container" style="padding-top: 20px;")
       each workflow in workflows
         div(class="row")
-          div(style='white-space:pre;')
+          div(class="col")
             p(style='white-space:pre;')
               a(href="define/" + workflow.id class="a-button") #{workflow.name}
               |  #{workflow.about}

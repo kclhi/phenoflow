@@ -43,7 +43,7 @@ block pageJS
   script.
     function downloadWorkflow() {
       document.getElementById("download").style.display = "none";
-      document.getElementById("downloadSpinner").style.display = "inline";
+      document.getElementById("downloadSpinner").removeAttribute("style")
       let implementationUnits = {};
       for (let step of document.getElementsByClassName("step")) {
         implementationUnits[step.getElementsByClassName("name")[0].innerText.replace(/\'/g, "")] = step.getElementsByClassName("implementation")[0].value;
@@ -61,7 +61,7 @@ block pageJS
           a.href = window.URL.createObjectURL(blob);
           a.download = fileName;
           a.dispatchEvent(new MouseEvent("click"));
-          document.getElementById("download").style.display = "inline";
+          document.getElementById("download").removeAttribute("style")
           document.getElementById("downloadSpinner").style.display = "none";
         }
       }
@@ -73,12 +73,13 @@ block pageJS
     }
 
 block header
-  | Phenotype "#{workflow&&workflow.name?workflow.name:""}"
-  | #{workflow&&workflow.about?workflow.about:""}
-  a(id="download" class="a-button" onclick="downloadWorkflow(); return false;")
-    | DOWNLOAD
-  div(id="downloadSpinner" class="spinner-border text-info" role="status" style="display:none;")
-    span(class="sr-only") Loading...
+  div
+    span "#{workflow&&workflow.name?workflow.name:""}"&nbsp;
+    span #{workflow&&workflow.about?workflow.about:""}&nbsp;
+    a(id="download" class="a-button" onclick="downloadWorkflow(); return false;")
+      | DOWNLOAD
+    span(id="downloadSpinner" class="spinner-border text-info" role="status" style="display:none;")
+      span(class="sr-only") Loading...
 
 block content
 
