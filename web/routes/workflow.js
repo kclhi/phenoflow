@@ -46,7 +46,8 @@ router.get("/define/:workflowId", async function(req, res, next) {
 router.get("/download", async function(req, res, next) {
 
   try {
-    res.render("download", {title:"Phenotype", workflow:await Workflow.getRandomWorkflow()});
+    let workflow = await Workflow.getRandomWorkflow(req.params.workflowId);
+    res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow});
   } catch(error) {
     logger.error("Get workflow error: " + error);
     res.sendStatus(500);
@@ -57,7 +58,8 @@ router.get("/download", async function(req, res, next) {
 router.get("/download/:workflowId", async function(req, res, next) {
 
   try {
-    res.render("download", {title:"Phenotype", workflow:await Workflow.getWorkflow(req.params.workflowId)});
+    let workflow = await Workflow.getWorkflow(req.params.workflowId);
+    res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow});
   } catch(error) {
     logger.error("Get workflow error: " + error);
     res.sendStatus(500);

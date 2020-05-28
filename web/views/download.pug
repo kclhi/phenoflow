@@ -5,12 +5,12 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
     div(class="row")
       div(class="col")
         span(class="col highlight")
-          | INPUT
+          | Input
         | #{inputDoc}
         div(class="highlight arrow") &#8675;
     div(class="row")
       div(class="col highlight")
-        | STEP
+        | Step
     div(class="row step")
       div(class="box col")
         div(style="padding-top: 20px;")
@@ -35,7 +35,7 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
       div(class="col")
         div(class="highlight arrow") &#8675;
         span(class="col highlight")
-          | OUTPUT
+          | Output
         | #{outputDoc}
         | (#{outputExtension})
 
@@ -74,7 +74,6 @@ block pageJS
 
 block header
   div
-    span "#{workflow&&workflow.name?workflow.name:""}"&nbsp;
     span #{workflow&&workflow.about?workflow.about:""}&nbsp;
     a(id="download" class="a-button" onclick="downloadWorkflow(); return false;")
       | DOWNLOAD

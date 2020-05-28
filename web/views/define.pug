@@ -19,14 +19,14 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
   div(id="step" + position style="padding-top: 20px;")
     div(class="row description highlight")
       div(class="col highlight")
-        | INPUT
+        | Input
     div(class="row")
       div(class="col")
-        +input("step" + position, "inputDoc", "Document", inputDoc)
+        +input("step" + position, "inputDoc", "Describe", inputDoc)
         div(class="highlight arrow") &#8675;
     div(class="row")
       div(class="col highlight")
-        | STEP
+        | Step
     div(class="row step")
       div(class="box col")
         div(style="text-align: center;")
@@ -55,10 +55,10 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
         div(class="highlight arrow") &#8675;
     div(class="row")
       div(class="col highlight")
-        | OUTPUT
+        | Output
     div(class="row")
       div(class="col")
-        +input("step" + position, "outputDoc", "Document", outputDoc)
+        +input("step" + position, "outputDoc", "Describe", outputDoc)
         +input("step" + position, "outputExtension", "Extension", outputExtension)
     div(class="row stepRemove" style=(position==1?"display: none;":""))
       div(class="col")

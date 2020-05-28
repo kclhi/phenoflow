@@ -65,4 +65,4 @@ volumes:
 networks:
   default:
     external:
-      name: martinchapman_network # For proxy.
+      name: hi_default # For proxy.

@@ -1,17 +1,14 @@
 version: "3.7"
 services:
 
-  # Provided by MC:
-  # proxy:
-  #   build:
-  #     context: ./web/proxy
-  #   command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
-  #   ports:
-  #     - '443:443'
-  #     - '80:80'
-  #   depends_on:
-  #     - webapp
-  #   restart: unless-stopped
+  proxy:
+    build:
+      context: ./web/proxy
+    command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
+    depends_on:
+      - webapp
+    restart: "no"
+    entrypoint: ["echo", "Service proxy disabled"]
 
   webapp:
     build: web
@@ -40,6 +37,7 @@ services:
     command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npm", "run", "migrate"]
     depends_on:
       - mariadb
+      - webapp
 
   generator:
     build:
@@ -55,4 +53,4 @@ volumes:
 networks:
   default:
     external:
-      name: martinchapman_network # For proxy.
+      name: hi_default # For proxy.
