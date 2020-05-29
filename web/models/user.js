@@ -12,7 +12,9 @@ module.exports = function(sequelize, DataTypes) {
 		password: {
 		 type: DataTypes.STRING,
 		 allowNull: false
-	 }
+	 	},
+	 	verified: DataTypes.BOOLEAN,
+	 	homepage: DataTypes.STRING
 	});
 
 	user.beforeCreate(async (user, options) => {

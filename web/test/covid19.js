@@ -14,11 +14,16 @@ describe("covid19", () => {
 
 	describe("/POST create COVID-19 workflow", async() => {
 
+		it("Should be able to add a new user.", async() => {
+			const result = await models.user.create({name: "covid19-phenomics", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "http://covid19-phenomics.org/"});
+			result.should.be.a("object");
+		});
+
 		let workflowId;
 		let name = "covid19";
 
 		it("Create covid workflow.", async() => {
-			workflowId = await Workflow.createWorkflow(name, "martinchapman", "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.");
+			workflowId = await Workflow.createWorkflow(name, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", "covid19-phenomics");
 		});
 
 		// 1. read-potential-cases

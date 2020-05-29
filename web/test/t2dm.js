@@ -19,7 +19,7 @@ describe('t2dm', () => {
 		let name = "t2dm";
 
 		it('Create T2DM workflow.', async() => {
-			workflowId = await Workflow.createWorkflow(name, "martinchapman", "Type 2 Diabetes Mellitus phenotype as a structured phenotype definition, as produced by the Phenoflow architecture");
+			workflowId = await Workflow.createWorkflow(name, "Type 2 Diabetes Mellitus phenotype as a structured phenotype definition, as produced by the Phenoflow architecture", "martinchapman");
 		});
 
 		let stepId;

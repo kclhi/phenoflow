@@ -3,9 +3,14 @@ module.exports = function(sequelize, DataTypes) {
 
 	var workflow = sequelize.define('workflow', {
 		name: DataTypes.STRING,
-		author: DataTypes.STRING,
 		about: DataTypes.STRING
 	});
+
+	workflow.associate = function(models) {
+
+		workflow.belongsTo(models.user, {onDelete: "CASCADE", foreignKey:{allowNull: false}});
+
+	};
 
 	return workflow;
 

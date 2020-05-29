@@ -1,4 +1,7 @@
 module.exports = {
+  user:{
+    DEFAULT_PASSWORD: process.env.DEFAULT_PASSWORD
+  },
   workflow: {
     LANGUAGES: ["knime", "python", "js"],
     CONCEPTS: ["load", "logic", "boolean", "output"]

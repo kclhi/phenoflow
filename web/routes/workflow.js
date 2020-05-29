@@ -47,7 +47,8 @@ router.get("/download", async function(req, res, next) {
 
   try {
     let workflow = await Workflow.getRandomWorkflow(req.params.workflowId);
-    res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow});
+    let user = await models.user.findOne({where:{name: workflow.userName}});
+    res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow, userName:user.name, verfied:user.verfied});
   } catch(error) {
     logger.error("Get workflow error: " + error);
     res.sendStatus(500);
@@ -59,7 +60,8 @@ router.get("/download/:workflowId", async function(req, res, next) {
 
   try {
     let workflow = await Workflow.getWorkflow(req.params.workflowId);
-    res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow});
+    let user = await models.user.findOne({where:{name: workflow.userName}});
+    res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow, userName:user.name, verified:user.verified, homepage:user.homepage});
   } catch(error) {
     logger.error("Get workflow error: " + error);
     res.sendStatus(500);
@@ -69,9 +71,9 @@ router.get("/download/:workflowId", async function(req, res, next) {
 
 router.post("/new", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
-  if(!req.body.name || !req.body.author || !req.body.about) return res.sendStatus(500);
+  if(!req.body.name || !req.body.about || !req.body.userName) return res.sendStatus(500);
   try {
-    let workflow = await models.workflow.create({name:sanitizeHtml(req.body.name), author:sanitizeHtml(req.body.author), about:sanitizeHtml(req.body.about)});
+    let workflow = await models.workflow.create({name:sanitizeHtml(req.body.name), about:sanitizeHtml(req.body.about), userName:sanitizeHtml(req.body.userName), });
     res.send({"id":workflow.id});
   } catch(error) {
     error = "Error adding workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);

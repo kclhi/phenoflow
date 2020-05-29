@@ -16,6 +16,7 @@ const step = require("./routes/step");
 const input = require("./routes/input");
 const output = require("./routes/output");
 const implementation = require("./routes/implementation");
+const importer = require("./routes/importer");
 
 const app = express();
 
@@ -39,6 +40,7 @@ router.use("/output", output);
 
 router.use(fileUpload({createParentPath:true}));
 router.use("/implementation", implementation);
+router.use("/importer", importer);
 
 app.use("/phenoflow", router);
 

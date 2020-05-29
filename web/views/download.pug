@@ -83,10 +83,15 @@ block header
 block content
 
   div(class="container")
-      div(style="padding-top: 10px;")
-        div(id="steps")
-          if workflow && workflow.steps && workflow.steps[0]
-            each step in workflow.steps
-              +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations)
-          else
-            +createStep(1, "", "", "", "", "", "", "", "", "")
+    div(style="padding-top: 10px;")
+      div(style="text-align: right;")
+        | !{userName}
+        if verified == true
+          a(href=homepage)
+            img(src="/phenoflow/images/verified.png" width=30)
+      div(id="steps")
+        if workflow && workflow.steps && workflow.steps[0]
+          each step in workflow.steps
+            +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations)
+        else
+          +createStep(1, "", "", "", "", "", "", "", "", "")

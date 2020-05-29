@@ -11,10 +11,10 @@ chai.use(require("chai-http"));
 
 class Workflow {
 
-	static async createWorkflow(name, author, about) {
+	static async createWorkflow(name, about, userName) {
 
 		const server = proxyquire('../app', {'./routes/workflow':proxyquire('../routes/workflow', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
-		let res = await chai.request(server).post("/phenoflow/phenotype/new").send({name:name, author:author, about:about});
+		let res = await chai.request(server).post("/phenoflow/phenotype/new").send({name:name, about:about, userName: userName});
 		res.should.have.status(200);
 		res.body.should.be.a("object");
 		return res.body.id;

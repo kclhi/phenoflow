@@ -18,13 +18,19 @@ describe('validation', () => {
 		let workflowId, secondWorkflowId;
 		let name = "workflow";
 
+		it("Should be able to add a new user.", async() => {
+			await models.user.sync({force:true});
+			const result = await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});
+			result.should.be.a("object");
+		});
+
 		it('Should be able to create workflow.', async() => {
 			await models.workflow.sync({force:true});
-			workflowId = await Workflow.createWorkflow(name, "martin", "this is a special phenotype");
+			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "martinchapman");
 		});
 
 		it('Should be able to create second workflow.', async() => {
-			secondWorkflowId = await Workflow.createWorkflow(name, "martin", "this is another special phenotype");
+			secondWorkflowId = await Workflow.createWorkflow(name, "this is another special phenotype", "martinchapman");
 		});
 
 		let stepId;

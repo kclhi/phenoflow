@@ -66,7 +66,7 @@ class Workflow {
         let candidateWorkflow = await Workflow.getWorkflow(workflow.id);
         let validCandidateWorkflow = true;
         for(let step in candidateWorkflow.steps) {
-          if (!candidateWorkflow.steps[step].inputs[0] || !candidateWorkflow.steps[step].outputs[0] || !candidateWorkflow.steps[step].implementations[0]) validCandidateWorkflow = false;
+          if(!candidateWorkflow.steps[step].inputs[0] || !candidateWorkflow.steps[step].outputs[0] || !candidateWorkflow.steps[step].implementations[0]) validCandidateWorkflow = false;
         }
         if(candidateWorkflow.steps[0] && validCandidateWorkflow) completeWorkflows.push(candidateWorkflow);
       }

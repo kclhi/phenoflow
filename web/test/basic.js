@@ -19,12 +19,18 @@ describe("basic", () => {
 
 		// Add:
 
+		it("Should be able to add a new user.", async() => {
+			await models.user.sync({force:true});
+			const result = await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});
+			result.should.be.a("object");
+		});
+
 		let workflowId;
 		let name = "workflow";
 
 		it("Should be able to add a new workflow.", async() => {
 			await models.workflow.sync({force:true});
-			workflowId = await Workflow.createWorkflow(name, "martinchapman", "this is a special phenotype");
+			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "martinchapman");
 		});
 
 		let stepId;
@@ -51,12 +57,6 @@ describe("basic", () => {
 
 		it("Should be able to add an alternative implementation, for a step.", async() => {
 			await Workflow.implementation(stepId, "js", "test/implementation/js/", "hello-world.js");
-		});
-
-		it("Should be able to add a new user.", async() => {
-			await models.user.sync({force:true});
-			const result = await models.user.create({name: "martinchapman", password: "1234"});
-			result.should.be.a("object");
 		});
 
 		// Update:

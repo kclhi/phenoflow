@@ -1,4 +1,7 @@
 module.exports = {
+  user:{
+    DEFAULT_PASSWORD: "1234"
+  },
   dbConfig: {
 	  dialect: "sqlite",
 	  storage: "db.test.sqlite",
