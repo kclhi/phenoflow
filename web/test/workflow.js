@@ -21,10 +21,10 @@ class Workflow {
 
 	}
 
-	static async updateWorkflow(id, name, author, about) {
+	static async updateWorkflow(id, name, about, userName) {
 
 		const server = proxyquire('../app', {'./routes/workflow':proxyquire('../routes/workflow', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
-		let res = await chai.request(server).post("/phenoflow/phenotype/update/" + id).send({name:name, author:author, about:about});
+		let res = await chai.request(server).post("/phenoflow/phenotype/update/" + id).send({name:name, about:about, userName:userName});
 		res.should.have.status(200);
 		res.body.should.be.a("object");
 		return res.body.id;

@@ -251,6 +251,14 @@
                     "field": "password",
                     "seqType": "Sequelize.STRING"
                 },
+                "verified": {
+                    "field": "verified",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
+                "homepage": {
+                    "field": "homepage",
+                    "seqType": "Sequelize.STRING"
+                },
                 "createdAt": {
                     "allowNull": false,
                     "field": "createdAt",
@@ -278,10 +286,6 @@
                     "field": "name",
                     "seqType": "Sequelize.STRING"
                 },
-                "author": {
-                    "field": "author",
-                    "seqType": "Sequelize.STRING"
-                },
                 "about": {
                     "field": "about",
                     "seqType": "Sequelize.STRING"
@@ -295,6 +299,17 @@
                     "allowNull": false,
                     "field": "updatedAt",
                     "seqType": "Sequelize.DATE"
+                },
+                "userName": {
+                    "allowNull": false,
+                    "references": {
+                        "model": "users",
+                        "key": "name"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "userName",
+                    "seqType": "Sequelize.STRING"
                 }
             },
             "indexes": []

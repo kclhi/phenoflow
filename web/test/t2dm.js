@@ -16,7 +16,7 @@ describe('t2dm', () => {
 	describe('/POST create T2DM workflow', () => {
 
 		it("Should be able to add a new user.", async() => {
-			const result = await models.user.create({name: "phekb", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://phekb.org"});
+			const result = await models.user.create({name:"phekb", password:config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://phekb.org"});
 			result.should.be.a("object");
 		});
 

@@ -6,9 +6,9 @@ const sanitizeHtml = require('sanitize-html');
 const jwt = require('express-jwt');
 const config = require("config");
 
-router.get("/", function(req, res, next) {
-  
-  res.render("index", {title:"Portable, workflow-based phenotype definitions"});
+router.get("/", async function(req, res, next) {
+
+  res.render("index", {title:"Portable, workflow-based phenotype definitions", count: await models.workflow.count()});
 
 });
 

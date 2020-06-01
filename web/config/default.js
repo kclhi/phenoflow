@@ -3,9 +3,6 @@ module.exports = {
     PAGE_OFFSET: 10,
     PAGE_LIMIT: 10
   },
-  user:{
-    DEFAULT_PASSWORD: process.env.DEFAULT_PASSWORD
-  },
   workflow: {
     LANGUAGES: ["knime", "python", "js"],
     CONCEPTS: ["load", "logic", "boolean", "output"]

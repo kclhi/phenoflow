@@ -6,7 +6,7 @@ var Sequelize = require('sequelize');
  * Actions summary:
  *
  * createTable "users", deps: []
- * createTable "workflows", deps: []
+ * createTable "workflows", deps: [users]
  * createTable "steps", deps: [workflows]
  * createTable "implementations", deps: [steps]
  * createTable "inputs", deps: [steps]
@@ -23,7 +23,7 @@ var Sequelize = require('sequelize');
 var info = {
     "revision": 1,
     "name": "init",
-    "created": "2020-04-23T18:11:14.161Z",
+    "created": "2020-06-01T15:02:30.768Z",
     "comment": ""
 };
 
@@ -42,6 +42,14 @@ var migrationCommands = [{
                     "type": Sequelize.STRING,
                     "field": "password",
                     "allowNull": false
+                },
+                "verified": {
+                    "type": Sequelize.BOOLEAN,
+                    "field": "verified"
+                },
+                "homepage": {
+                    "type": Sequelize.STRING,
+                    "field": "homepage"
                 },
                 "createdAt": {
                     "type": Sequelize.DATE,
@@ -73,10 +81,6 @@ var migrationCommands = [{
                     "type": Sequelize.STRING,
                     "field": "name"
                 },
-                "author": {
-                    "type": Sequelize.STRING,
-                    "field": "author"
-                },
                 "about": {
                     "type": Sequelize.STRING,
                     "field": "about"
@@ -89,6 +93,17 @@ var migrationCommands = [{
                 "updatedAt": {
                     "type": Sequelize.DATE,
                     "field": "updatedAt",
+                    "allowNull": false
+                },
+                "userName": {
+                    "type": Sequelize.STRING,
+                    "field": "userName",
+                    "onUpdate": "CASCADE",
+                    "onDelete": "CASCADE",
+                    "references": {
+                        "model": "users",
+                        "key": "name"
+                    },
                     "allowNull": false
                 }
             },

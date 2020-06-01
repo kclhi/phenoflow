@@ -1,10 +1,13 @@
 module.exports = {
   dbConfig: {
-    username: "user",
-    password: "password",
-    database: "database",
+    username: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
     host: "phenoflow_mariadb_1",
     dialect: "mysql"
+  },
+  user:{
+    DEFAULT_PASSWORD: process.env.DEFAULT_PASSWORD
   },
   generator: {
     URL: "http://generator:3004"
