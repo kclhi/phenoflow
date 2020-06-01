@@ -17,6 +17,7 @@ const implementation = require("./routes/implementation");
 const importer = require("./routes/importer");
 
 const app = express();
+app.enable('strict routing');
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));

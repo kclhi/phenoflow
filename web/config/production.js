@@ -1,3 +1,6 @@
+const fs = require('fs');
+const raw = require('config/raw').raw;
+
 module.exports = {
   dbConfig: {
     username: process.env.MYSQL_USER,
@@ -22,7 +25,6 @@ module.exports = {
     PORT: ":7005"
   },
   jwt: {
-    RSA_PRIVATE_KEY: process.env.RSA_PRIVATE_KEY,
-    RSA_PUBLIC_KEY: process.env.RSA_PUBLIC_KEY
+    RSA_PRIVATE_KEY: raw(fs.readFileSync("/run/secrets/rsa-private-key", "utf-8"))
   }
 }

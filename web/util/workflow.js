@@ -62,7 +62,7 @@ class Workflow {
 
     let completeWorkflows = [];
     try {
-      for(let workflow of await models.workflow.findAll({where:{about:{[op.like]: "%" + category + "%"}}, offset:offset, limit:limit})) {
+      for(let workflow of await models.workflow.findAll({where:{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}, offset:offset, limit:limit})) {
         let candidateWorkflow = await Workflow.getWorkflow(workflow.id);
         let validCandidateWorkflow = true;
         for(let step in candidateWorkflow.steps) {

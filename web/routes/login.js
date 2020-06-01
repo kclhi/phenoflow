@@ -4,6 +4,7 @@ const logger = require("../config/winston");
 const models = require("../models");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const config = require("config");
 
 router.post("/", async function(req, res, next) {
 
@@ -13,12 +14,12 @@ router.post("/", async function(req, res, next) {
     if(!user || !user.password) return res.sendStatus(401);
     const result = await bcrypt.compare(req.body.password, user.password);
     if(!result) return res.sendStatus(401);
-    const jwtBearerToken = jwt.sign({}, process.env.RSA_PRIVATE_KEY, {algorithm:"RS256", expiresIn:3600, subject:req.body.user});
+    const jwtBearerToken = jwt.sign({}, config.get("jwt.RSA_PRIVATE_KEY"), {algorithm:"RS256", expiresIn:3600, subject:req.body.user});
     res.status(200).json({idToken:jwtBearerToken, expiresIn:300});
   } catch(error) {
     error = "Error logging in: " + error;
     logger.debug(error);
-    throw error;
+    return res.sendStatus(401);
   }
 
 });

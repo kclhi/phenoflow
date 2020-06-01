@@ -5,7 +5,7 @@ const models = require("../models");
 const sanitizeHtml = require("sanitize-html");
 const jwt = require("express-jwt");
 const config = require("config");
-const fs = require("fs")
+const fs = require("fs").promises;
 
 router.post("/:stepId/:language", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:["RS256"]}), async function(req, res, next) {
 
@@ -57,7 +57,7 @@ router.get("/:workflowId/:position/:language", async function(req, res, next) {
   }
   if (!implementation) return res.sendStatus(404);
   try {
-    file = fs.readFileSync("uploads/" + step.workflowId + "/" + req.params.language + "/" + implementation.fileName, "utf8");
+    file = await fs.readFile("uploads/" + step.workflowId + "/" + req.params.language + "/" + implementation.fileName, "utf8");
   } catch(error) {
     error = "Error reading implementation: " + error;
     logger.debug(error);

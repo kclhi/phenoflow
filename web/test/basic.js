@@ -62,7 +62,7 @@ describe("basic", () => {
 		// Update:
 
 		it("Should be able to update a workflow's details.", async() => {
-			await Workflow.updateWorkflow(workflowId, name, "martinchapman", "this is an updated special phenotype");
+			await Workflow.updateWorkflow(workflowId, name, "this is an updated special phenotype", "martinchapman");
 		});
 
 		it("Should be able to update a steps's details.", async() => {

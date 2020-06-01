@@ -14,8 +14,6 @@ services:
     build: web
     environment:
       DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
-      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
-      RSA_PUBLIC_KEY: ${RSA_PUBLIC_KEY}
       NODE_EXTRA_CA_CERTS: ${NODE_EXTRA_CA_CERTS}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
@@ -23,6 +21,8 @@ services:
     restart: unless-stopped
     volumes:
       - pf_uploads:/home/node/uploads
+    secrets:
+      - rsa-private-key
     depends_on:
       - mariadb
       - generator
@@ -64,3 +64,7 @@ networks:
   default:
     external:
       name: hi_default # For proxy.
+
+secrets:
+  rsa-private-key:
+    file: ${HOST_RSA_PRIVATE_KEY_PATH}

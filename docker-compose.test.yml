@@ -7,14 +7,14 @@ services:
      dockerfile: Dockerfile.test
     environment:
       DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
-      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
-      RSA_PUBLIC_KEY: ${RSA_PUBLIC_KEY}
       NODE_EXTRA_CA_CERTS: ${NODE_EXTRA_CA_CERTS}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - pf_uploads:/home/node/uploads
+    secrets:
+      - rsa-private-key
     command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npx", "mocha", "-g", "importer", "--exit"]
 
 volumes:
@@ -24,3 +24,7 @@ networks:
   default:
     external:
       name: hi_default # For proxy.
+
+secrets:
+  rsa-private-key:
+    file: ${HOST_RSA_PRIVATE_KEY_PATH}
