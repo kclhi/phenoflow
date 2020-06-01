@@ -1,3 +1,5 @@
+# martinchapman, 2020.
+
 import sys, csv
 
 with open(sys.argv[1], 'r') as file_in, open('covid-cases.csv', 'w', newline='') as file_out:

@@ -80,9 +80,9 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   // Add data read
   try {
-    await createStep(WORKFLOW_ID, "read-potential-cases", "Read potential cases", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", LANGUAGE, "templates/read-potential-cases.py", {"PHENOTYPE": NAME.toLowerCase().replace(/ /g, "-")});
+    await createStep(WORKFLOW_ID, "read-potential-cases", "Read potential cases", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", LANGUAGE, "templates/read-potential-cases.py", {"PHENOTYPE":NAME.toLowerCase().replace(/ /g, "-")});
   } catch(error) {
-    logger.debug("Error: " + error);
+    logger.debug("Error creating first step from import: " + error);
     return res.status(500).send(error);
   }
 
@@ -107,6 +107,14 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
     }
 
     position++;
+  }
+
+  // Add file write
+  try {
+    await createStep(WORKFLOW_ID, "output-cases", "Output cases", "output", position, "Potential cases of " + NAME, "Output containing patients flagged as having this type of " + NAME, OUTPUT_EXTENSION, "output-cases.py", LANGUAGE, "templates/output-cases.py", {"PHENOTYPE":NAME.toLowerCase().replace(/ /g, "-")});
+  } catch(error) {
+    logger.debug("Error creating last step from import: " + error);
+    return res.status(500).send(error);
   }
 
   res.sendStatus(200);

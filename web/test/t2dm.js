@@ -15,11 +15,16 @@ describe('t2dm', () => {
 
 	describe('/POST create T2DM workflow', () => {
 
+		it("Should be able to add a new user.", async() => {
+			const result = await models.user.create({name: "phekb", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://phekb.org"});
+			result.should.be.a("object");
+		});
+
 		let workflowId;
 		let name = "t2dm";
 
 		it('Create T2DM workflow.', async() => {
-			workflowId = await Workflow.createWorkflow(name, "Type 2 Diabetes Mellitus phenotype as a structured phenotype definition, as produced by the Phenoflow architecture", "martinchapman");
+			workflowId = await Workflow.createWorkflow(name, "Type 2 Diabetes Mellitus", "phekb");
 		});
 
 		let stepId;
@@ -165,7 +170,7 @@ describe('t2dm', () => {
 		});
 
 		it('Add output-cases output.', async() => {
-			await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv");
+			await Workflow.output(stepId, "Output containing patients flagged as having this type of diabetes.", "csv");
 		});
 
 		it('Add output-cases implementation.', async() => {

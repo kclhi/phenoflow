@@ -1,3 +1,5 @@
+# covid19-phenomics, 2020.
+
 import sys, csv
 
 codes = ["EMISNQEX58", 	"EMISNQSU106", "EMISNQTE31", "EMISNQCO303", "EMISNQEX59"];

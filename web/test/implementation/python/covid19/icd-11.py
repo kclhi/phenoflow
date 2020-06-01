@@ -1,3 +1,5 @@
+# covid19-phenomics, 2020.
+
 import sys, csv
 
 codes = ["RA01.0", "RA01.2"];
