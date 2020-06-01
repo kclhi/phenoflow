@@ -1,12 +1,8 @@
 function ready(callback){
 
-  if (document.readyState!='loading') {
-    callback();
-  } else if (document.addEventListener) {
-    document.addEventListener('DOMContentLoaded', callback)
-  } else {
-    document.attachEvent('onreadystatechange', function(){ if(document.readyState=='complete') callback();});
-  }
+  if (document.readyState!='loading') callback();
+  else if (document.addEventListener) document.addEventListener('DOMContentLoaded', callback)
+  else document.attachEvent('onreadystatechange', function(){ if(document.readyState=='complete') callback();});
 
 }
 
@@ -45,6 +41,14 @@ function login() {
 
   const user = document.getElementsByClassName("username")[0].value;
   const password = document.getElementsByClassName("password")[0].value;
-  if(username && password) sendPostRequest("login", JSON.stringify({"user": user, "password": password}), function(authResult) { if(authResult) setSession(JSON.parse(authResult)); });
+  if(username && password) sendPostRequest("login", JSON.stringify({"user": user, "password": password}), function(authResult) {
+
+    if(authResult) {
+      setSession(JSON.parse(authResult));
+      document.getElementsByClassName("username")[0].value = "";
+      document.getElementsByClassName("password")[0].value = "";
+    }
+
+  });
 
 }

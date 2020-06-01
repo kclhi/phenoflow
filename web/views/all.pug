@@ -1,11 +1,4 @@
 extends layout
 
 block content
-  div(class="container" style="padding-top: 20px;")
-      each workflow in workflows
-        div(class="row")
-          div(class="col" style="padding-top: 20px;")
-              a(href="/phenoflow/phenotype/download/" + workflow.id) #{workflow.name}
-              |  #{workflow.about}
-          div(class="col-1" style="padding-top: 20px;")
-              a(href="/phenoflow/phenotype/download/" + workflow.id)  VIEW
+  include list.pug

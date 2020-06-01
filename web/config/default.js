@@ -1,4 +1,8 @@
 module.exports = {
+  ui: {
+    PAGE_OFFSET: 10,
+    PAGE_LIMIT: 10
+  },
   user:{
     DEFAULT_PASSWORD: process.env.DEFAULT_PASSWORD
   },

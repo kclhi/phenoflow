@@ -79,13 +79,7 @@ block header
 
 block content
 
-  span(class="authentication")
-    div(class="container" style="padding-top: 20px;")
-      form
-        +input("", "username", "Username", "")
-        +input("", "password", "Password", "", "password", "current-password")
-      a(onclick="login(); return false;" class="a-button" style="margin: 10px;")
-        | LOGIN
+  include authentication.pug
 
   span(class="restricted")
     div(class="container")

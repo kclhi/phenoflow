@@ -9,24 +9,43 @@ const jwt = require('express-jwt');
 const Workflow = require("../util/workflow");
 const Download = require("../util/download");
 
-router.get("/all", async function(req, res, next) {
+function processOffset(offsetParam) {
 
-  let workflows = await Workflow.completeWorkflows();
-  res.render("all",{title:"Library", workflows:workflows})
+  try {
+    var offset = offsetParam?parseInt(sanitizeHtml(offsetParam)):0;
+    if (isNaN(offset)) throw Error("Param is not a number.");
+    return offset;
+  } catch(error) {
+    logger.debug("Error getting offset: " + error);
+    return false;
+  }
+
+}
+
+router.get("/all/:offset?", async function(req, res, next) {
+
+  let offset = processOffset(req.params.offset);
+  if(offset===false) return next();
+  let workflows = await Workflow.completeWorkflows("", offset);
+  res.render("all",{title:"Library", workflows:workflows, listPrefix:"/phenoflow/phenotype/download/", previous:offset-config.get("ui.PAGE_OFFSET"), next:offset+config.get("ui.PAGE_OFFSET")})
 
 });
 
-router.get("/all/:filter", async function(req, res, next) {
+router.get("/all/:filter/:offset?", async function(req, res, next) {
 
-  let workflows = await Workflow.completeWorkflows(req.params.filter);
-  res.render("all",{title:"Library of '" + req.params.filter + "' phenotypes", workflows:workflows})
+  let offset = processOffset(req.params.offset);
+  if(offset===false) return res.sendStatus(404);
+  let workflows = await Workflow.completeWorkflows(req.params.filter, offset);
+  res.render("all",{title:"Library of '" + req.params.filter + "' phenotypes", workflows:workflows, listPrefix:"/phenoflow/phenotype/download/", previous:offset-config.get("ui.PAGE_OFFSET"), next:offset+config.get("ui.PAGE_OFFSET")})
 
 });
 
-router.get("/mine", async function(req, res, next) {
+router.get("/mine/:offset?", async function(req, res, next) {
 
-  let workflows = await models.workflow.findAll({where:{author:"martinchapman"}});
-  res.render("mine",{title:"My library", workflows:workflows})
+  let offset = processOffset(req.params.offset);
+  if(offset===false) return res.sendStatus(404);
+  let workflows = await models.workflow.findAll({where:{userName:"martinchapman"}, offset:offset, limit:config.get("ui.PAGE_LIMIT")});
+  res.render("mine",{title:"My library", workflows:workflows, listPrefix: "/phenoflow/phenotype/define/", previous:offset-config.get("ui.PAGE_OFFSET"), next:offset+config.get("ui.PAGE_OFFSET")})
 
 });
 

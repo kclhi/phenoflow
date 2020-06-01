@@ -1,20 +1,7 @@
 extends layout
 
 block content
-  span(class="authentication")
-    div(class="container" style="padding-top: 20px;")
-      form
-        +input("", "username", "Username", "")
-        +input("", "password", "Password", "", "password", "current-password")
-      a(onclick="login(); return false;" style="margin: 10px;" class="a-button")
-        | LOGIN
+  include authentication.pug
 
   span(class="restricted")
-    div(class="container" style="padding-top: 20px;")
-      each workflow in workflows
-        div(class="row" style="padding-top: 20px;")
-          div(class="col")
-              a(href="define/" + workflow.id) #{workflow.name}
-              |  #{workflow.about}
-          div(class="col-1")
-              a(href="define/" + workflow.id)  VIEW
+    include list.pug

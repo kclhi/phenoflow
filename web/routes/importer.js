@@ -63,7 +63,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
     return res.status(500).send("Missing params.");
   }
 
-  const NAME = sanitizeHtml(req.body.name);
+  const NAME = sanitizeHtml(req.body.name).replace(/\//g, "");
   const ABOUT = sanitizeHtml(req.body.about);
 
   try {

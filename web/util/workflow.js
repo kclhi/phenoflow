@@ -58,11 +58,11 @@ class Workflow {
 
   }
 
-  static async completeWorkflows(category="") {
+  static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
 
     let completeWorkflows = [];
     try {
-      for(let workflow of await models.workflow.findAll({where:{about:{[op.like]: "%" + category + "%"}}})) {
+      for(let workflow of await models.workflow.findAll({where:{about:{[op.like]: "%" + category + "%"}}, offset:offset, limit:limit})) {
         let candidateWorkflow = await Workflow.getWorkflow(workflow.id);
         let validCandidateWorkflow = true;
         for(let step in candidateWorkflow.steps) {
