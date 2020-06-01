@@ -1,3 +1,5 @@
+# [AUTHOR], [YEAR].
+
 import sys, csv
 
 codes = [[CODE_LIST]];

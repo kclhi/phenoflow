@@ -99,7 +99,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
     let fileName = code.toLowerCase().replace(/ /g, "-") + ".py";
 
     try {
-      await createStep(WORKFLOW_ID, stepName, stepDoc, stepType, position, inputDoc, outputDoc, OUTPUT_EXTENSION, fileName, LANGUAGE, "templates/codelist.py", {"PHENOTYPE":NAME.toLowerCase().replace(/ /g, "-"), "CODE_CATEGORY":code.toLowerCase().replace(/ /g, "-"), "CODE_LIST":'"' + CODE_CATEGORIES[code].join('","') + '"'});
+      await createStep(WORKFLOW_ID, stepName, stepDoc, stepType, position, inputDoc, outputDoc, OUTPUT_EXTENSION, fileName, LANGUAGE, "templates/codelist.py", {"PHENOTYPE":NAME.toLowerCase().replace(/ /g, "-"), "CODE_CATEGORY":code.toLowerCase().replace(/ /g, "-"), "CODE_LIST":'"' + CODE_CATEGORIES[code].join('","') + '"', "AUTHOR":req.body.userName, "YEAR":new Date().getFullYear()});
     } catch(error) {
       error = "Error creating imported step: " + error;
       logger.debug(error);
