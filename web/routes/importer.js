@@ -68,9 +68,9 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
   const ABOUT = sanitizeHtml(req.body.about);
 
   try {
-    var workflow = await models.workflow.create({name:NAME, about:ABOUT, userName:sanitizeHtml(req.body.userName), });
+    var workflow = await models.workflow.create({name:NAME, about:ABOUT, userName:sanitizeHtml(req.body.userName)});
   } catch(error) {
-    error = "Error parsing CSV to workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+    error = "Error creating workflow for CSV: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
     logger.debug(error);
     res.status(500).send(error);
   }

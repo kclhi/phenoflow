@@ -290,6 +290,13 @@
                     "field": "about",
                     "seqType": "Sequelize.STRING"
                 },
+                "complete": {
+                    "defaultValue": {
+                        "value": false
+                    },
+                    "field": "complete",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
                 "createdAt": {
                     "allowNull": false,
                     "field": "createdAt",

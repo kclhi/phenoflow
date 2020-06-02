@@ -15,7 +15,7 @@ services:
       - pf_uploads:/home/node/uploads
     secrets:
       - rsa-private-key
-    command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npx", "mocha", "-g", "importer", "--exit"]
+    command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npx", "mocha", "-g", "covid19", "--exit"]
 
 volumes:
   pf_uploads:

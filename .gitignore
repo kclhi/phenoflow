@@ -607,6 +607,7 @@ dmypy.json
 *.dot
 *.txt
 !requirements.txt
+!README.txt
 
 examples/
 output/

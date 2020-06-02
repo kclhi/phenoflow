@@ -92,7 +92,7 @@ router.post("/new", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['
 
   if(!req.body.name || !req.body.about || !req.body.userName) return res.sendStatus(500);
   try {
-    let workflow = await models.workflow.create({name:sanitizeHtml(req.body.name), about:sanitizeHtml(req.body.about), userName:sanitizeHtml(req.body.userName), });
+    let workflow = await models.workflow.create({name:sanitizeHtml(req.body.name), about:sanitizeHtml(req.body.about), userName:sanitizeHtml(req.body.userName)});
     res.send({"id":workflow.id});
   } catch(error) {
     error = "Error adding workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);

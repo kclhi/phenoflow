@@ -23,7 +23,7 @@ var Sequelize = require('sequelize');
 var info = {
     "revision": 1,
     "name": "init",
-    "created": "2020-06-01T15:02:30.768Z",
+    "created": "2020-06-02T21:55:54.885Z",
     "comment": ""
 };
 
@@ -84,6 +84,11 @@ var migrationCommands = [{
                 "about": {
                     "type": Sequelize.STRING,
                     "field": "about"
+                },
+                "complete": {
+                    "type": Sequelize.BOOLEAN,
+                    "field": "complete",
+                    "defaultValue": false
                 },
                 "createdAt": {
                     "type": Sequelize.DATE,
