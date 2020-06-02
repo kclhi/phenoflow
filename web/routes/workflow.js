@@ -67,7 +67,7 @@ router.get("/download", async function(req, res, next) {
   try {
     let workflow = await Workflow.getRandomWorkflow(req.params.workflowId);
     let user = await models.user.findOne({where:{name: workflow.userName}});
-    res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow, userName:user.name, verfied:user.verfied});
+    res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow, userName:user.name, verified:user.verified});
   } catch(error) {
     logger.error("Get workflow error: " + error);
     res.sendStatus(500);
