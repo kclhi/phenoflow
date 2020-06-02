@@ -11,8 +11,6 @@ function setSession(authResult) {
   const expiresAt = moment().add(authResult.expiresIn,"second");
   localStorage.setItem("id_token", authResult.idToken);
   localStorage.setItem("expires_at", JSON.stringify(expiresAt.valueOf()) );
-  for(let authentication of document.getElementsByClassName("authentication")) authentication.style.display = "none";
-  for(let restricted of document.getElementsByClassName("restricted")) restricted.style.display = "inherit";
 
 }
 
@@ -41,12 +39,16 @@ function login() {
 
   const user = document.getElementsByClassName("username")[0].value;
   const password = document.getElementsByClassName("password")[0].value;
-  if(username && password) sendPostRequest("login", JSON.stringify({"user": user, "password": password}), function(authResult) {
+  if(username && password) sendPostRequest("login", JSON.stringify({"user":user, "password":password}), function(authResult) {
 
     if(authResult) {
       setSession(JSON.parse(authResult));
+      localStorage.setItem("user", user);
       document.getElementsByClassName("username")[0].value = "";
       document.getElementsByClassName("password")[0].value = "";
+      for(let authentication of document.getElementsByClassName("authentication")) authentication.style.display = "none";
+      for(let restricted of document.getElementsByClassName("restricted")) restricted.style.display = "inherit";
+      if(typeof postLogin === "function") postLogin();
     }
 
   });

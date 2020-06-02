@@ -27,7 +27,7 @@ router.get("/all/:offset?", async function(req, res, next) {
   let offset = processOffset(req.params.offset);
   if(offset===false) return next();
   let workflows = await Workflow.completeWorkflows("", offset);
-  res.render("all",{title:"Library", workflows:workflows, listPrefix:"/phenoflow/phenotype/download/", previous:offset-config.get("ui.PAGE_OFFSET"), next:offset+config.get("ui.PAGE_OFFSET")})
+  res.render("all",{title:"Library", workflows:workflows, listPrefix:"/phenoflow/phenotype/download/", limit:config.get("ui.PAGE_LIMIT"), previous:offset-config.get("ui.PAGE_LIMIT"), next:offset+config.get("ui.PAGE_LIMIT")})
 
 });
 
@@ -36,7 +36,7 @@ router.get("/all/:filter/:offset?", async function(req, res, next) {
   let offset = processOffset(req.params.offset);
   if(offset===false) return res.sendStatus(404);
   let workflows = await Workflow.completeWorkflows(req.params.filter, offset);
-  res.render("all",{title:"Library of '" + req.params.filter + "' phenotypes", workflows:workflows, listPrefix:"/phenoflow/phenotype/download/", previous:offset-config.get("ui.PAGE_OFFSET"), next:offset+config.get("ui.PAGE_OFFSET")})
+  res.render("all",{title:"Library of '" + req.params.filter + "' phenotypes", workflows:workflows, listPrefix:"/phenoflow/phenotype/download/", limit:config.get("ui.PAGE_LIMIT"), previous:offset-config.get("ui.PAGE_LIMIT"), next:offset+config.get("ui.PAGE_LIMIT")})
 
 });
 
@@ -44,8 +44,8 @@ router.get("/mine/:offset?", async function(req, res, next) {
 
   let offset = processOffset(req.params.offset);
   if(offset===false) return res.sendStatus(404);
-  let workflows = await models.workflow.findAll({where:{userName:"martinchapman"}, offset:offset, limit:config.get("ui.PAGE_LIMIT")});
-  res.render("mine",{title:"My library", workflows:workflows, listPrefix: "/phenoflow/phenotype/define/", previous:offset-config.get("ui.PAGE_OFFSET"), next:offset+config.get("ui.PAGE_OFFSET")})
+  var workflows = await models.workflow.findAll({order: [['name', 'ASC']]});
+  res.render("mine",{title:"My library", workflows:workflows, listPrefix:"/phenoflow/phenotype/define/", limit:config.get("ui.PAGE_LIMIT")})
 
 });
 
@@ -104,9 +104,12 @@ router.post("/new", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['
 
 router.post("/update/:id", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
-  if(!req.body.name || !req.body.author || !req.body.about) return res.sendStatus(500);
+  if(!req.body.name||!req.user.sub||!req.body.about) return res.sendStatus(500);
+
   try {
-    await models.workflow.upsert({id:req.params.id, name: req.body.name, author: req.body.author, about: req.body.about});
+    let workflow = await models.workflow.findOne({where:{id:req.params.id}});
+    if(!(workflow.userName==req.user.sub)) return res.sendStatus(500);
+    await models.workflow.upsert({id:req.params.id, name:req.body.name, author:req.user.sub, about:req.body.about});
     res.sendStatus(200);
   } catch(error) {
     error = "Error updating workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);

@@ -3,7 +3,11 @@ module.exports = function(sequelize, DataTypes) {
 
 	var workflow = sequelize.define('workflow', {
 		name: DataTypes.STRING,
-		about: DataTypes.STRING
+		about: DataTypes.STRING,
+		complete: {
+			type: DataTypes.BOOLEAN,
+			defaultValue: false
+		}
 	});
 
 	workflow.associate = function(models) {

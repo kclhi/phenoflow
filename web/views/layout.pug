@@ -24,10 +24,12 @@ html
     script(src="/phenoflow/javascripts/pf.js")
 
     script.
+
       ready(function(event) {
         if (isLoggedIn()) {
           for(let authentication of document.getElementsByClassName("authentication")) authentication.style.display = "none";
           for(let restricted of document.getElementsByClassName("restricted")) restricted.style.display = "inherit";
+          if(typeof postLogin === "function") postLogin();
         }
       });
 

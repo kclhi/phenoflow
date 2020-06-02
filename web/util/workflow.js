@@ -60,22 +60,37 @@ class Workflow {
 
   static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
 
-    let completeWorkflows = [];
     try {
-      for(let workflow of await models.workflow.findAll({where:{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}, offset:offset, limit:limit})) {
-        let candidateWorkflow = await Workflow.getWorkflow(workflow.id);
-        let validCandidateWorkflow = true;
-        for(let step in candidateWorkflow.steps) {
-          if(!candidateWorkflow.steps[step].inputs[0] || !candidateWorkflow.steps[step].outputs[0] || !candidateWorkflow.steps[step].implementations[0]) validCandidateWorkflow = false;
-        }
-        if(candidateWorkflow.steps[0] && validCandidateWorkflow) completeWorkflows.push(candidateWorkflow);
-      }
+      return await models.workflow.findAll({where:{[op.and]:[{complete:true},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}]}, offset:offset, limit:limit, order: [['name', 'ASC']]});
     } catch(error) {
       error = "Error getting complete workflows: " + error;
       logger.debug(error);
       throw error;
     }
-    return completeWorkflows;
+
+  }
+
+  static async workflowComplete(workflowId) {
+
+    try {
+      let candidateWorkflow = await Workflow.getWorkflow(workflowId);
+      let completeWorkflow = true;
+      for(let step in candidateWorkflow.steps) {
+        if((candidateWorkflow.steps[step].inputs&&!candidateWorkflow.steps[step].inputs[0])||(candidateWorkflow.steps[step].outputs&&!candidateWorkflow.steps[step].outputs[0])||(candidateWorkflow.steps[step].implementations&&!candidateWorkflow.steps[step].implementations[0])) {
+          completeWorkflow = false;
+          break;
+        }
+      }
+      if(candidateWorkflow.steps[0]&&completeWorkflow) {
+        await models.workflow.update({complete:true}, {where:{id:workflowId}});
+      } else {
+        await models.workflow.update({complete:false}, {where:{id:workflowId}});
+      }
+    } catch(error) {
+      error = "Error marking workflow as (in)complete: " + error;
+      logger.debug(error);
+      throw error;
+    }
 
   }
 

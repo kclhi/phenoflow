@@ -1,7 +1,6 @@
 module.exports = {
   ui: {
-    PAGE_OFFSET: 10,
-    PAGE_LIMIT: 10
+    PAGE_LIMIT: 100
   },
   workflow: {
     LANGUAGES: ["knime", "python", "js"],

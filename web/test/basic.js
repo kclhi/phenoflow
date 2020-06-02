@@ -30,28 +30,28 @@ describe("basic", () => {
 
 		it("Should be able to add a new workflow.", async() => {
 			await models.workflow.sync({force:true});
+			await models.step.sync({force:true});
+			await models.input.sync({force:true});
+			await models.output.sync({force:true});
+			await models.implementation.sync({force:true});
 			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "martinchapman");
 		});
 
 		let stepId;
 
 		it("Should be able to add a new step, for a workflow.", async() => {
-			await models.step.sync({force:true});
 			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "doc", "type");
 		});
 
 		it("Should be able to add a new input, for a step.", async() => {
-			await models.input.sync({force:true});
 			await Workflow.input(stepId, "doc");
 		});
 
 		it("Should be able to add a new output, for a step.", async() => {
-			await models.output.sync({force:true});
 			await Workflow.output(stepId, "doc", "csv");
 		});
 
 		it("Should be able to add a new implementation, for a step.", async() => {
-			await models.implementation.sync({force:true});
 			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
 		});
 
@@ -83,19 +83,17 @@ describe("basic", () => {
 
 		// Add second (and completness checks):
 
-		async function incomplete() {
-			let completeWorkflows = await require("../util/workflow").completeWorkflows();
-			let completeWorkflowIds = [];
-			for(let completeWorkflow of completeWorkflows) completeWorkflowIds.push(completeWorkflow.id);
-			expect(completeWorkflowIds).to.not.have.members([workflowId]);
-		}
-
 		it("Should be able to add second step.", async() => {
 			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2", "secondStepDoc", "secondStepType");
 		});
 
 		it("Incomplete workflow (just step) should be marked as such", async() => {
-			await incomplete();
+			let incompleteResult = true;
+			try {
+				let workflow = await models.workflow.findOne({where:{id:workflowId}});
+				incompleteResult = workflow.complete;
+			} catch(error) {};
+			expect(incompleteResult).to.be.false;
 		});
 
 		it("Should be able to add input to second step", async() => {
@@ -103,7 +101,12 @@ describe("basic", () => {
 		});
 
 		it("Incomplete workflow (just step + input) should be marked as such", async() => {
-			await incomplete();
+			let incompleteResult = true;
+			try {
+				let workflow = await models.workflow.findOne({where:{id:workflowId}});
+				incompleteResult = workflow.complete;
+			} catch(error) {};
+			expect(incompleteResult).to.be.false;
 		});
 
 		it("Should be able to add output to second step.", async() => {
@@ -119,10 +122,12 @@ describe("basic", () => {
 		});
 
 		it("Complete workflow should be marked as such", async() => {
-			let completeWorkflows = await require("../util/workflow").completeWorkflows();
-			let completeWorkflowIds = [];
-			for(let completeWorkflow of completeWorkflows) completeWorkflowIds.push(completeWorkflow.id);
-			expect(completeWorkflowIds).to.have.members([workflowId]);
+			let completeResult = false;
+			try {
+				let workflow = await models.workflow.findOne({where:{id:workflowId}});
+				completeResult = workflow.complete;
+			} catch(error) {};
+			expect(completeResult).to.be.true;
 		});
 
 		// Delete:
@@ -150,7 +155,7 @@ describe("basic", () => {
 			try { await got(GIT_SERVER_URL, {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }
 			await Visualise.commitPushWorkflowRepo(workflowId, timestamp, name, workflow, steps);
 			expect(fs.existsSync('output/' + workflowId + "/.git")).to.be.true
-		}).timeout(120000);
+		}).timeout(0);
 
 		it("Create visualisation from generated CWL.", async() => {
 			// If endpoint is unreachable test can't be performed.
@@ -161,7 +166,7 @@ describe("basic", () => {
 				png = await Visualise.getWorkflowFromViewer(workflowId + timestamp, name, queueLocation);
 			}
 			expect(png).to.not.be.null;
-		}).timeout(120000);
+		}).timeout(0);
 
 		it("Construct ZIP from generated CWL.", async() => {
 			let visualise=true;
@@ -177,7 +182,7 @@ describe("basic", () => {
 				visualise
 			);
 			expect(fs.existsSync("dist/" + name + ".zip")).to.be.true
-		}).timeout(120000);
+		}).timeout(0);
 
 		it("Generate endpoint should be reachable.", async() => {
 			// If service is not running, endpoint cannot be tested.
@@ -185,7 +190,7 @@ describe("basic", () => {
 			let res = await chai.request(server).post("/phenoflow/phenotype/generate/" + workflowId).send({ implementationUnits: implementationUnits });
 			res.should.have.status(200);
 			res.body.should.be.a("object");
-		}).timeout(120000);
+		}).timeout(0);
 
 	});
 

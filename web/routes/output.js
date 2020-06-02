@@ -5,12 +5,20 @@ const models = require('../models');
 const sanitizeHtml = require('sanitize-html');
 const jwt = require('express-jwt');
 const config = require("config");
+const Workflow = require("../util/workflow");
 
 router.post('/:stepId', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
-  if(!req.body.doc || !req.body.extension) return res.status(500).send("Missing parameters.");
+  if(!req.body.doc||!req.body.extension||!req.user.sub) return res.status(500).send("Missing parameters.");
+
   try {
+    let step = await models.step.findOne({where:{id:req.params.stepId}});
+    if (!step) return res.status(500).send("");
+    let workflow = await models.workflow.findOne({where:{id:step.workflowId}});
+    if (!workflow) return res.status(500).send("");
+    if(!(workflow.userName==req.user.sub)) return res.sendStatus(500);
     await models.output.upsert({doc:sanitizeHtml(req.body.doc), extension:sanitizeHtml(req.body.extension), stepId:req.params.stepId});
+    await Workflow.workflowComplete(workflow.id);
     res.sendStatus(200);
   } catch(error) {
     error = "Error adding output: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);

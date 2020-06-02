@@ -1,5 +1,12 @@
 extends layout
 
+block pageJS
+  script.
+    function postLogin() {
+      for(let workflow of document.getElementsByClassName("workflow")) workflow.style.display="none";
+      for(let userContent of document.getElementsByClassName(localStorage.getItem("user"))) userContent.style.display="inherit";
+    }
+
 block content
   include authentication.pug
 

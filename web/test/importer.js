@@ -61,7 +61,7 @@ describe("importer", () => {
 				}
 			}
 			const server = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
-			let res = await chai.request(server).post("/phenoflow/importer").send({name:markdownContent.name, about:markdownContent.title, codeCategories:codeCategories, userName: "phenotype.id"});
+			let res = await chai.request(server).post("/phenoflow/importer").send({name:markdownContent.name, about:markdownContent.title, codeCategories:codeCategories, userName:"phenotype.id"});
 			res.should.have.status(200);
 			res.body.should.be.a("object");
 

@@ -6,6 +6,7 @@ const jwt = require('express-jwt');
 const fs = require('fs').promises;
 const sanitizeHtml = require('sanitize-html');
 const config = require("config");
+const Workflow = require("../util/workflow");
 
 async function createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, implementationTemplatePath, substitutions) {
 
@@ -116,6 +117,8 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
     logger.debug("Error creating last step from import: " + error);
     return res.status(500).send(error);
   }
+
+  await Workflow.workflowComplete(WORKFLOW_ID);
 
   res.sendStatus(200);
 
