@@ -2,6 +2,8 @@
 
 [https://kclhi.org/phenoflow](https://kclhi.org/phenoflow)
 
+[![StackShare](http://img.shields.io/badge/tech-stack-0690fa.svg?style=flat)](https://stackshare.io/martinchapman/phenoflow)
+
 ## Prerequisites
 
 1. [Docker (machine)](https://docs.docker.com/machine/install-machine/).
