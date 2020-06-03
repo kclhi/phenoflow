@@ -18,6 +18,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
     restart: unless-stopped
     volumes:
       - pf_uploads:/home/node/app/uploads
@@ -44,6 +45,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
     secrets:
       - rsa-private-key
     command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npm", "run", "migrate"]

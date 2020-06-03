@@ -57,6 +57,12 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
 
 }
 
+function clean(input, spaces=false) {
+  input = input.replace(/\//g, "").replace(/(\s)?\(.*\)/g, "");
+  if(!spaces) input = input.replace(/ /g, "-");
+  return input;
+}
+
 router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   if(!req.body.name || !req.body.about || !req.body.codeCategories || !req.body.userName) {
@@ -64,7 +70,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
     return res.status(500).send("Missing params.");
   }
 
-  const NAME = sanitizeHtml(req.body.name).replace(/\//g, "");
+  const NAME = clean(sanitizeHtml(req.body.name));
   const ABOUT = sanitizeHtml(req.body.about);
 
   try {
@@ -81,7 +87,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   // Add data read
   try {
-    await createStep(WORKFLOW_ID, "read-potential-cases", "Read potential cases", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", LANGUAGE, "templates/read-potential-cases.py", {"PHENOTYPE":NAME.toLowerCase().replace(/ /g, "-")});
+    await createStep(WORKFLOW_ID, "read-potential-cases", "Read potential cases", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", LANGUAGE, "templates/read-potential-cases.py", {"PHENOTYPE":clean(NAME.toLowerCase())});
   } catch(error) {
     logger.debug("Error creating first step from import: " + error);
     return res.status(500).send(error);
@@ -92,15 +98,15 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   // For each code set
   for(var code in CODE_CATEGORIES) {
-    let stepName = code.toLowerCase().replace(/ /g, "-");
-    let stepDoc = "Identify " + code;
+    let stepName = clean(code.toLowerCase());
+    let stepDoc = "Identify " + clean(code, true);
     let stepType = "logic";
     let inputDoc = "Potential cases of " + NAME;
     let outputDoc = "Patients with read codes indicating " + NAME + " related events in electronic health record.";
-    let fileName = code.toLowerCase().replace(/ /g, "-") + ".py";
+    let fileName = clean(code.toLowerCase());
 
     try {
-      await createStep(WORKFLOW_ID, stepName, stepDoc, stepType, position, inputDoc, outputDoc, OUTPUT_EXTENSION, fileName, LANGUAGE, "templates/codelist.py", {"PHENOTYPE":NAME.toLowerCase().replace(/ /g, "-"), "CODE_CATEGORY":code.toLowerCase().replace(/ /g, "-"), "CODE_LIST":'"' + CODE_CATEGORIES[code].join('","') + '"', "AUTHOR":req.body.userName, "YEAR":new Date().getFullYear()});
+      await createStep(WORKFLOW_ID, stepName, stepDoc, stepType, position, inputDoc, outputDoc, OUTPUT_EXTENSION, fileName, LANGUAGE, "templates/codelist.py", {"PHENOTYPE":NAME.toLowerCase().replace(/ /g, "-"), "CODE_CATEGORY":clean(code.toLowerCase()), "CODE_LIST":'"' + CODE_CATEGORIES[code].join('","') + '"', "AUTHOR":req.body.userName, "YEAR":new Date().getFullYear()});
     } catch(error) {
       error = "Error creating imported step: " + error;
       logger.debug(error);
@@ -112,7 +118,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   // Add file write
   try {
-    await createStep(WORKFLOW_ID, "output-cases", "Output cases", "output", position, "Potential cases of " + NAME, "Output containing patients flagged as having this type of " + NAME, OUTPUT_EXTENSION, "output-cases.py", LANGUAGE, "templates/output-cases.py", {"PHENOTYPE":NAME.toLowerCase().replace(/ /g, "-")});
+    await createStep(WORKFLOW_ID, "output-cases", "Output cases", "output", position, "Potential cases of " + NAME, "Output containing patients flagged as having this type of " + NAME, OUTPUT_EXTENSION, "output-cases.py", LANGUAGE, "templates/output-cases.py", {"PHENOTYPE":clean(NAME.toLowerCase())});
   } catch(error) {
     logger.debug("Error creating last step from import: " + error);
     return res.status(500).send(error);
