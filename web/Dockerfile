@@ -7,5 +7,5 @@ COPY --chown=$user:$user package*.json ./
 RUN npm install --only=production
 COPY --chown=$user:$user . .
 ENV NODE_ENV production
-EXPOSE 3001
+EXPOSE 3003
 CMD ["npm", "start"]

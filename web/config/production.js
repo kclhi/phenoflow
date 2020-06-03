@@ -25,6 +25,6 @@ module.exports = {
     PORT: ":7005"
   },
   jwt: {
-    RSA_PRIVATE_KEY: raw(fs.readFileSync("/run/secrets/rsa-private-key", "utf-8"))
+    RSA_PRIVATE_KEY: raw(fs.readFileSync("/run/secrets/" + process.env.RSA_PRIVATE_KEY, "utf-8"))
   }
 }

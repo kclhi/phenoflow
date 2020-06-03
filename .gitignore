@@ -599,17 +599,20 @@ dmypy.json
 
 # End of https://www.gitignore.io/api/git,node,data,latex,python,images,dropbox,certificates,archlinuxpackages
 
+!requirements.txt
+!README.txt
+!logo.png
+!architecture.png
+
+.htpasswd
+
 *.csr
 *.srl
-.htpasswd
 *.enc
 *.sqlite
 *.dot
 *.txt
-!requirements.txt
-!README.txt
 
 examples/
 output/
 web/uploads/
-addUser.js
