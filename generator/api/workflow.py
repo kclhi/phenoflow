@@ -11,8 +11,9 @@ def createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_fil
     cwl_tool.requirements.append(cwl_tool_docker);
     implementation_input_file = cwlgen.CommandInputParameter("inputModule", param_type='File', input_binding=implementation_file_binding, doc=language[0].upper() + language[1:] + " implementation unit");
     cwl_tool.inputs.append(implementation_input_file)
-    data_input_file = cwlgen.CommandInputParameter("potentialCases", param_type='File', input_binding=cases_file_binding, doc=input_doc);
-    cwl_tool.inputs.append(data_input_file)
+    if("external" not in type):
+        data_input_file = cwlgen.CommandInputParameter("potentialCases", param_type='File', input_binding=cases_file_binding, doc=input_doc);
+        cwl_tool.inputs.append(data_input_file)
     workflow_output_binding = cwlgen.CommandOutputBinding(glob="*." + extension);
     output = cwlgen.CommandOutputParameter('output', doc=output_doc, param_type="File", output_binding=workflow_output_binding)
     cwl_tool.outputs.append(output)
@@ -27,23 +28,23 @@ def createKNIMEStep(id, type, doc, input_doc, extension, output_doc):
     cases_file_binding = cwlgen.CommandLineBinding(prefix="-workflow.variable=dm_potential_cases,file://", separate=False, value_from=" $(inputs.potentialCases.path),String");
     return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, "knime");
 
-def createGenericStep(id, base_command, type, doc, input_doc, extension, output_doc):
+def createGenericStep(id, docker_image, base_command, type, doc, input_doc, extension, output_doc):
 
     cwl_tool = cwlgen.CommandLineTool(tool_id=id, base_command=base_command);
-    cwl_tool_docker = cwlgen.DockerRequirement(docker_pull = base_command + ":latest");
+    cwl_tool_docker = cwlgen.DockerRequirement(docker_pull = docker_image);
     implementation_file_binding = cwlgen.CommandLineBinding(position=1);
     cases_file_binding = cwlgen.CommandLineBinding(position=2);
     return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, base_command);
 
 def createPythonStep(id, type, doc, input_doc, extension, output_doc):
 
-    return createGenericStep(id, "python", type, doc, input_doc, extension, output_doc);
+    return createGenericStep(id, "python:latest", "python", type, doc, input_doc, extension, output_doc);
 
 def createJSStep(id, type, doc, input_doc, extension, output_doc):
 
-    return createGenericStep(id, "node", type, doc, input_doc, extension, output_doc);
+    return createGenericStep(id, "kclhi/node:latest", "node", type, doc, input_doc, extension, output_doc);
 
-def createWorkflowStep(workflow, position, id, language="KNIME", extension=None):
+def createWorkflowStep(workflow, position, id, type, language="KNIME", extension=None):
 
     file_binding = cwlgen.CommandLineBinding();
 
@@ -52,10 +53,11 @@ def createWorkflowStep(workflow, position, id, language="KNIME", extension=None)
     workflow_step = cwlgen.WorkflowStep(str(position), id + ".cwl");
     workflow_step.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule" + str(position)));
 
-    if ( position == 1 ):
-        workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", "potentialCases"))
-    else:
-        workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=str(position - 1) + "/output"))
+    if (not "external" in type):
+        if (position==1):
+            workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", "potentialCases"))
+        else:
+            workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=str(position - 1) + "/output"))
 
     # Individual step output
 
@@ -64,7 +66,7 @@ def createWorkflowStep(workflow, position, id, language="KNIME", extension=None)
 
     # Overall workflow input
 
-    if ( position == 1 ):
+    if (position==1 and (not "external" in type)):
         workflow_input = cwlgen.InputParameter("potentialCases", param_type='File', input_binding=file_binding, doc="Input of potential cases for processing");
         workflow.inputs.append(workflow_input);
 

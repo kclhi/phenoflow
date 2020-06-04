@@ -10,7 +10,7 @@ with open(sys.argv[1], 'r') as file_in, open('[PHENOTYPE]-potential-cases.csv', 
     for row in csv_reader:
         newRow = row.copy();
         for cell in row:
-            if (row[cell] in codes):
+            if ([value for value in row[cell].split(",") if value in codes]):
                 newRow["[CODE_CATEGORY]-identified"] = "CASE";
                 break;
             else:

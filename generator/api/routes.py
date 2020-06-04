@@ -9,7 +9,6 @@ app = Starlette(debug=True)
 async def generate(request):
     generatedWorkflow = workflow.initWorkflow();
     generatedWorkflowInputs = {};
-    generatedWorkflowInputs["potentialCases"] = {'class':'File', 'path':'replaceMe.csv'};
     generatedSteps = [];
 
     try:
@@ -17,7 +16,10 @@ async def generate(request):
     except:
         steps = None;
 
-    if ( steps ):
+    if (steps):
+
+        if (not "external" in steps[0]['type']): generatedWorkflowInputs["potentialCases"] = {'class':'File', 'path':'replaceMe.csv'};
+
         for step in steps:
             # Send extension of last step output to signify workflow output
             extension = None;
@@ -25,7 +27,7 @@ async def generate(request):
 
             if (step==steps[len(steps) - 1]): extension = step['outputs'][0]['extension'];
 
-            generatedWorkflow = workflow.createWorkflowStep(generatedWorkflow, step['position'], step['name'], language, extension);
+            generatedWorkflow = workflow.createWorkflowStep(generatedWorkflow, step['position'], step['name'], step['type'], language, extension);
             generatedWorkflowInputs["inputModule" + str(step['position'])] = {'class':'File', 'path':language + "/" + step['implementation']['fileName']};
 
             # ~MDC For now, we only assume one variable input to each step, the potential cases; and one variable output, the filtered potential cases.
@@ -39,6 +41,6 @@ async def generate(request):
                 # Handle unknown language
                 generatedStep = "";
 
-            generatedSteps.append({"name": step['name'], "content": generatedStep, "fileName": step['implementation']['fileName']});
+            generatedSteps.append({"name":step['name'], "type":step['type'], "content":generatedStep, "fileName":step['implementation']['fileName']});
 
     return JSONResponse({"workflow": yaml.dump(generatedWorkflow.get_dict(), default_flow_style=False), "steps": generatedSteps, "workflowInputs": yaml.dump(generatedWorkflowInputs, default_flow_style=False)})

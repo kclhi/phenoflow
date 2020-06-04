@@ -11,6 +11,6 @@ module.exports = {
     DEFAULT_PASSWORD: "1234"
   },
   jwt: {
-    RSA_PRIVATE_KEY: "abc"
+    RSA_PRIVATE_KEY: "abcd"
   }
 }

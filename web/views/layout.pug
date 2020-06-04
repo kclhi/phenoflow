@@ -78,7 +78,7 @@ html
         block header
 
     mixin conceptIcon(concept)
-      if concept == "load"
+      if concept == "load" || concept == "external"
         svg(class="bi bi-file-earmark-spreadsheet" width="2em" height="2em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg")
           path(fill-rule="evenodd" d="M13 9H3V8h10v1zm0 3H3v-1h10v1z" clip-rule="evenodd")
           path(fill-rule="evenodd" d="M5 14V9h1v5H5zm4 0V9h1v5H9z" clip-rule="evenodd")

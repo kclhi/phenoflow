@@ -11,7 +11,7 @@ with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', n
     for row in csv_reader:
         newRow = row.copy();
         for cell in row:
-            if (row[cell] in codes):
+            if ([value for value in row[cell].split(",") if value in codes]):
                 newRow["snomed-uk-identified"] = "CASE";
                 break;
             else:
