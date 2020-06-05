@@ -22,6 +22,7 @@ router.post('/:workflowId/:position', jwt({secret:config.get("jwt.RSA_PRIVATE_KE
     await models.step.upsert({name:sanitizeHtml(req.body.name), doc: sanitizeHtml(req.body.doc), type:sanitizeHtml(req.body.type), workflowId:req.params.workflowId, position:req.params.position});
     let stepId = await models.step.findOne({where:{workflowId:req.params.workflowId, position:req.params.position}});
     await Workflow.workflowComplete(workflow.id);
+    await Workflow.workflowChild(workflow.id);
     res.send({"id":stepId.id});
   } catch(error) {
     error = "Error adding step: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);

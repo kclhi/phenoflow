@@ -20,7 +20,7 @@ describe("basic", () => {
 		// Add:
 
 		it("Should be able to add a new user.", async() => {
-			await models.user.sync({force:true});
+			await models.sequelize.sync({force:true});
 			const result = await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});
 			result.should.be.a("object");
 		});
@@ -29,11 +29,6 @@ describe("basic", () => {
 		let name = "workflow";
 
 		it("Should be able to add a new workflow.", async() => {
-			await models.workflow.sync({force:true});
-			await models.step.sync({force:true});
-			await models.input.sync({force:true});
-			await models.output.sync({force:true});
-			await models.implementation.sync({force:true});
 			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "martinchapman");
 		});
 
@@ -77,7 +72,7 @@ describe("basic", () => {
 			await Workflow.output(stepId, "updatedOutputDoc", "csv");
 		});
 
-		it("Should be able to update an implementation's details", async() => {
+		it("Should be able to update an implementation's details.", async() => {
 			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-there.py");
 		});
 
@@ -87,7 +82,7 @@ describe("basic", () => {
 			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2", "secondStepDoc", "secondStepType");
 		});
 
-		it("Incomplete workflow (just step) should be marked as such", async() => {
+		it("Incomplete workflow (just step) should be marked as such.", async() => {
 			let incompleteResult = true;
 			try {
 				let workflow = await models.workflow.findOne({where:{id:workflowId}});
@@ -96,11 +91,11 @@ describe("basic", () => {
 			expect(incompleteResult).to.be.false;
 		});
 
-		it("Should be able to add input to second step", async() => {
+		it("Should be able to add input to second step.", async() => {
 			await Workflow.input(stepId, "secondInputDoc");
 		});
 
-		it("Incomplete workflow (just step + input) should be marked as such", async() => {
+		it("Incomplete workflow (just step + input) should be marked as such.", async() => {
 			let incompleteResult = true;
 			try {
 				let workflow = await models.workflow.findOne({where:{id:workflowId}});
@@ -113,15 +108,15 @@ describe("basic", () => {
 			await Workflow.output(stepId, "secondOutputDoc", "csv");
 		});
 
-		it("Should be able to add implementation to second step", async() => {
+		it("Should be able to add implementation to second step.", async() => {
 			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
 		});
 
-		it("Should be able to add alternative implementation to second step", async() => {
+		it("Should be able to add alternative implementation to second step.", async() => {
 			await Workflow.implementation(stepId, "js", "test/implementation/js/", "hello-world.js");
 		});
 
-		it("Complete workflow should be marked as such", async() => {
+		it("Complete workflow should be marked as such.", async() => {
 			let completeResult = false;
 			try {
 				let workflow = await models.workflow.findOne({where:{id:workflowId}});
@@ -130,11 +125,92 @@ describe("basic", () => {
 			expect(completeResult).to.be.true;
 		});
 
+		// Child workflows:
+
+		it("Should be able to add a second workflow.", async() => {
+			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "martinchapman");
+		});
+
+		it("Should be able to add second step (of a second workflow).", async() => {
+			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2-second", "secondStepDoc", "secondStepType");
+		});
+
+		it("Should be able to add input to second step (of a second workflow).", async() => {
+			await Workflow.input(stepId, "secondInputDoc");
+		});
+
+		it("Should be able to add output to second step (of a second workflow).", async() => {
+			await Workflow.output(stepId, "secondOutputDoc", "csv");
+		});
+
+		it("Should be able to add implementation to second step (of a second workflow).", async() => {
+			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+		});
+
+		let workflows;
+
+		it("Second workflow should not be marked as a child of the first (non-overlapping workflows should not be marked as such).", async() => {
+			workflows = await models.workflow.findAll();
+			expect(await workflows.filter((workflow)=>{return workflow.id==1})[0].countChild()).equal(0);
+			expect(await workflows.filter((workflow)=>{return workflow.id==2})[0].countParent()).equal(0);
+		});
+
+		it("Should be able to add a new step, for a second workflow.", async() => {
+			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "updatedStepDoc", "updatedStepType");
+		});
+
+		it("Should be able to add a new input, for a step (of a second workflow).", async() => {
+			await Workflow.input(stepId, "updatedInputDoc");
+		});
+
+		it("Should be able to add a new output, for a step (of a second workflow).", async() => {
+			await Workflow.output(stepId, "updatedOutputDoc", "csv");
+		});
+
+		it("Should be able to add a new implementation, for a step (of a second workflow).", async() => {
+			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+		});
+
+		it("Second workflow should be marked as a child of the first (overlapping workflows should be marked as such).", async() => {
+			expect(await workflows.filter((workflow)=>{return workflow.id==1})[0].countChild()).equal(1);
+			expect(await workflows.filter((workflow)=>{return workflow.id==2})[0].countParent()).equal(1);
+		});
+
+		//
+
+		it("Should be able to add a third workflow.", async() => {
+			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "martinchapman");
+		});
+
+		it("Should be able to add second step (of a third workflow).", async() => {
+			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2", "secondStepDoc", "secondStepType");
+		});
+
+		it("Should be able to add input to second step (of a third workflow).", async() => {
+			await Workflow.input(stepId, "secondInputDoc");
+		});
+
+		it("Should be able to add output to second step (of a third workflow).", async() => {
+			await Workflow.output(stepId, "secondOutputDoc", "csv");
+		});
+
+		it("Should be able to add implementation to second step (of a third workflow).", async() => {
+			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+		});
+
+		it("Identical workflows should also be children.", async() => {
+			workflows = await models.workflow.findAll();
+			expect(await workflows.filter((workflow)=>{return workflow.id==1})[0].countChild()).equal(2);
+			expect(await workflows.filter((workflow)=>{return workflow.id==3})[0].countParent()).equal(1);
+		});
+
 		// Delete:
 
 		it("Should be able to delete second step.", async() => {
 			await Workflow.deleteStep(workflowId, 2);
 		});
+
+		// Other service interaction:
 
 		let workflow = "class: Workflow\ncwlVersion: v1.0\ninputs:\n  inputModule1:\n    doc: Python implementation unit\n    id: inputModule1\n    type: File\n  inputModule2:\n    doc: Python implementation unit\n    id: inputModule2\n    type: File\n  potentialCases:\n    doc: Input of potential cases for processing\n    id: potentialCases\n    type: File\noutputs:\n  cases:\n    id: cases\n    outputBinding:\n      glob: '*.extension'\n    outputSource: 2/output\n    type: File\nrequirements:\n  SubworkflowFeatureRequirement: {}\nsteps:\n  '1':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule1\n      potentialCases:\n        id: potentialCases\n        source: potentialCases\n    out:\n      - output\n    run: stepName1.cwl\n  '2':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule2\n      potentialCases:\n        id: potentialCases\n        source: 1/output\n    out:\n     - output\n    run: stepName2.cwl\n";
 		let workflowInput = "inputModule1:\n  class: File\n  path: python/hello-world.py\ninputModule2:\n  class: File\n  path: python/hello-world.py\npotentialCases:\n  class: File\n  path: replaceMe.csv\n";

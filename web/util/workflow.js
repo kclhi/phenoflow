@@ -94,6 +94,45 @@ class Workflow {
 
   }
 
+  // A workflow is defined as being a child of another if all but one of their steps overlap OR if all of their steps overlap.
+  static async workflowChild(workflowId) {
+
+    const workflows = await models.workflow.findAll({where:{complete:true}});
+    if(!workflows.filter((workflow)=>{return workflow.id==workflowId}).length) return;
+    const candidateChildSteps = await models.step.findAll({where:{workflowId:workflowId}});
+    if (!candidateChildSteps) throw new Error(ERROR_PREFIX + "Error getting candidate workflow steps.");
+    let matchingSteps = 0;
+    let parents = [];
+    for(let workflow of workflows) {
+      if(workflowId!=workflow.id) {
+        const ERROR_PREFIX = "Unable to identify workflow intersection: ";
+        const workflowSteps = await models.step.findAll({where:{workflowId:workflow.id}});
+        if(!workflowSteps) throw new Error(ERROR_PREFIX + "Error getting other workflow steps.");
+        for(let candidateChildStep of candidateChildSteps) {
+          let workflowStep = null;
+          if((workflowStep=workflowSteps.filter((step)=>{return candidateChildStep.name==step.name&&candidateChildStep.doc==step.doc&&candidateChildStep.type==step.type})) && workflowStep.length) {
+            // ~MDC Again, eventually there may be multiple inputs and outputs.
+            let candidateChildStepInput=await models.input.findOne({where:{stepId:candidateChildStep.id}});
+            if(!candidateChildStepInput) throw new Error(ERROR_PREFIX + "Error getting candidate child step input.");
+            let candidateChildStepOutput=await models.output.findOne({where:{stepId:candidateChildStep.id}});
+            if(!candidateChildStepOutput) throw new Error(ERROR_PREFIX + "Error getting candidate child step output.");
+            let workflowStepInput = await models.input.findOne({where:{stepId:workflowStep[0].id}});
+            if(!workflowStepInput) throw new Error(ERROR_PREFIX + "Error getting workflow step input.");
+            let workflowStepOutput = await models.output.findOne({where:{stepId:workflowStep[0].id}});
+            if(!workflowStepOutput) throw new Error(ERROR_PREFIX + "Error getting workflow step output.");
+            if(candidateChildStepInput.doc==workflowStepInput.doc&&candidateChildStepOutput.doc==workflowStepOutput.doc&&candidateChildStepOutput.extension==workflowStepOutput.extension) matchingSteps++;
+          }
+        }
+        if(matchingSteps==candidateChildSteps.length||matchingSteps==workflowSteps.length-1) {
+          await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow);
+          await workflow.addChild(workflows.filter((workflow)=>{return workflow.id==workflowId})[0]);
+          matchingSteps=0;
+        }
+      }
+    }
+
+  }
+
   static async getFullWorkflow(workflowId, language=null, implementationUnits=null) {
 
     try {

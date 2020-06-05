@@ -32,6 +32,7 @@ router.post("/:stepId/:language", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
     try {
       await models.implementation.upsert({fileName:uploadedFile.name, language:req.params.language, stepId:req.params.stepId});
       await Workflow.workflowComplete(workflow.id);
+      await Workflow.workflowChild(workflow.id);
       res.sendStatus(200);
     } catch(error) {
       error = "Error adding implementation: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
