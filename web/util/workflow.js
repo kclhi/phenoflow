@@ -9,7 +9,7 @@ class Workflow {
   static async workflow(workflow) {
 
     try {
-      let steps = await models.step.findAll({where:{workflowId:workflow.id}});
+      let steps = await models.step.findAll({where:{workflowId:workflow.id}, order: [['position', 'ASC']]});
       let mergedSteps = [];
       for(let step of steps) {
         let mergedStep = JSON.parse(JSON.stringify(step));
@@ -61,9 +61,30 @@ class Workflow {
   static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
 
     try {
-      return await models.workflow.findAll({where:{[op.and]:[{complete:true},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}]}, offset:offset, limit:limit, order: [['name', 'ASC']]});
+      let workflows = await models.workflow.findAll({where:{[op.and]:[{complete:true},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}]}, offset:offset, limit:limit, order: [['name', 'ASC']]});
+      let parents = await models.parents.findAll().map((parent)=>{return parent.workflowId;});
+      return workflows.filter((workflow)=>{return parents.indexOf(workflow.id) < 0;});
     } catch(error) {
       error = "Error getting complete workflows: " + error;
+      logger.debug(error);
+      throw error;
+    }
+
+  }
+
+  static async addChildrenToStep(workflow) {
+
+    try {
+      let children = await models.children.findAll({where:{workflowId:workflow.id}});
+      for(let child of children) {
+        if(child.distinctStepPosition&&child.distinctStepName) {
+          if(!workflow.steps[child.distinctStepPosition-1].children) workflow.steps[child.distinctStepPosition-1].children = [];
+          workflow.steps[child.distinctStepPosition-1].children.push({workflowId:child.childId, stepName:child.distinctStepName});
+        }
+      }
+      return workflow;
+    } catch(error) {
+      error = "Error getting workflow siblings: " + error;
       logger.debug(error);
       throw error;
     }
@@ -108,6 +129,7 @@ class Workflow {
         const ERROR_PREFIX = "Unable to identify workflow intersection: ";
         const workflowSteps = await models.step.findAll({where:{workflowId:workflow.id}});
         if(!workflowSteps) throw new Error(ERROR_PREFIX + "Error getting other workflow steps.");
+        let distinctStepName, distinctStepPosition;
         for(let candidateChildStep of candidateChildSteps) {
           let workflowStep = null;
           if((workflowStep=workflowSteps.filter((step)=>{return candidateChildStep.name==step.name&&candidateChildStep.doc==step.doc&&candidateChildStep.type==step.type})) && workflowStep.length) {
@@ -120,12 +142,17 @@ class Workflow {
             if(!workflowStepInput) throw new Error(ERROR_PREFIX + "Error getting workflow step input.");
             let workflowStepOutput = await models.output.findOne({where:{stepId:workflowStep[0].id}});
             if(!workflowStepOutput) throw new Error(ERROR_PREFIX + "Error getting workflow step output.");
-            if(candidateChildStepInput.doc==workflowStepInput.doc&&candidateChildStepOutput.doc==workflowStepOutput.doc&&candidateChildStepOutput.extension==workflowStepOutput.extension) matchingSteps++;
+            if(candidateChildStepInput.doc==workflowStepInput.doc&&candidateChildStepOutput.doc==workflowStepOutput.doc&&candidateChildStepOutput.extension==workflowStepOutput.extension) {
+              matchingSteps++;
+              continue;
+            }
           }
+          distinctStepName = candidateChildStep.name;
+          distinctStepPosition = candidateChildStep.position;
         }
         if(matchingSteps==candidateChildSteps.length||matchingSteps==workflowSteps.length-1) {
           await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow);
-          await workflow.addChild(workflows.filter((workflow)=>{return workflow.id==workflowId})[0]);
+          await workflow.addChild(workflows.filter((workflow)=>{return workflow.id==workflowId})[0], {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
           matchingSteps=0;
         }
       }

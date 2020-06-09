@@ -79,6 +79,7 @@ router.get("/download/:workflowId", async function(req, res, next) {
 
   try {
     let workflow = await Workflow.getWorkflow(req.params.workflowId);
+    workflow = await Workflow.addChildrenToStep(workflow);
     let user = await models.user.findOne({where:{name: workflow.userName}});
     res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow, userName:user.name, verified:user.verified, homepage:user.homepage});
   } catch(error) {
@@ -125,12 +126,17 @@ async function generateWorkflow(workflowId, language=null, implementationUnits=n
   try {
     var generate = await got.post(config.get("generator.URL") + "/generate", {json:workflow.steps, responseType:"json"});
   } catch(error) {
-    throw "Error contacting generator: " + error + " " + JSON.stringify(workflow.steps);
+    logger.debug("Error contacting generator: " + error + " " + JSON.stringify(workflow.steps));
+    return false;
   }
-  if (generate.statusCode==200 && generate.body && generate.body.workflow && generate.body.workflowInputs && generate.body.steps) {
-    await Download.createPFZipResponse(res, workflowId, workflow.name, generate.body.workflow, generate.body.workflowInputs, language?language:implementationUnits, generate.body.steps, workflow.about);
+  if(generate.statusCode==200&&generate.body&&generate.body.workflow&&generate.body.workflowInputs&&generate.body.steps) {
+    if(!await Download.createPFZipResponse(res, workflowId, workflow.name, generate.body.workflow, generate.body.workflowInputs, language?language:implementationUnits, generate.body.steps, workflow.about)) {
+      logger.debug("Error generating workflow.")
+      return false;
+    }
   } else {
-    throw "Error generating workflow.";
+    logger.debug("Error generating workflow.");
+    return false;
   }
 
 }
@@ -139,11 +145,11 @@ router.get("/generate/:workflowId/:language", async function(req, res, next) {
 
   if(req.body.implementationUnits) return res.sendStatus(404);
   try {
-    await generateWorkflow(req.params.workflowId, req.params.language, null, res);
+    if(!await generateWorkflow(req.params.workflowId, req.params.language, null, res)) return res.sendStatus(500);
     res.sendStatus(200);
   } catch(error) {
     logger.debug("Generate workflow error: " + error);
-    res.sendStatus(500);
+    return res.sendStatus(500);
   }
 
 });
@@ -152,10 +158,11 @@ router.post("/generate/:workflowId", async function(req, res, next) {
 
   if(!req.body.implementationUnits) return res.sendStatus(404);
   try {
-    await generateWorkflow(req.params.workflowId, null, req.body.implementationUnits, res);
+    if (!await generateWorkflow(req.params.workflowId, null, req.body.implementationUnits, res)) return res.sendStatus(500);
+    res.sendStatus(200);
   } catch(error) {
     logger.debug("Error generating worflow: " + error);
-    res.sendStatus(500);
+    return res.sendStatus(500);
   }
 
 });

@@ -208,6 +208,7 @@ describe("basic", () => {
 
 		it("Should be able to delete second step.", async() => {
 			await Workflow.deleteStep(workflowId, 2);
+			workflowId=workflowId-2; // Reset to first workflow.
 		});
 
 		// Other service interaction:
@@ -235,7 +236,7 @@ describe("basic", () => {
 
 		it("Create visualisation from generated CWL.", async() => {
 			// If endpoint is unreachable test can't be performed.
-			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }
+			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if(error.code&&error.code=="ECONNREFUSED" ) return; }
 			let png = await Visualise.getWorkflowPNGFromViewer(workflowId + timestamp, name);
 			if (!png) {
 				let queueLocation = await Visualise.addWorkflowToViewer(workflowId + timestamp, name);
@@ -246,7 +247,7 @@ describe("basic", () => {
 
 		it("Construct ZIP from generated CWL.", async() => {
 			let visualise=true;
-			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) visualise=false; }
+			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if (error.code&&error.code=="ECONNREFUSED") visualise=false; }
 			await Download.createPFZipFile(
 				workflowId,
 				name,
@@ -262,8 +263,8 @@ describe("basic", () => {
 
 		it("Generate endpoint should be reachable.", async() => {
 			// If service is not running, endpoint cannot be tested.
-			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") return; }
-			let res = await chai.request(server).post("/phenoflow/phenotype/generate/" + workflowId).send({ implementationUnits: implementationUnits });
+			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if(error.code&&error.code=="ECONNREFUSED") return; }
+			let res = await chai.request(server).post("/phenoflow/phenotype/generate/" + workflowId).send({implementationUnits: implementationUnits});
 			res.should.have.status(200);
 			res.body.should.be.a("object");
 		}).timeout(0);

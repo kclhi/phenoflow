@@ -36,11 +36,11 @@ function patientToCodes(patients, patient, code) {
   let patients = {};
   for(let patient of PRIMARY_PATIENTS) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
   for(let patient of SECONDARY_PATIENTS) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
-  await fs.appendFile('covid-potential-cases.csv', "patient-id,codes\n");
+  await fs.appendFile('[PHENOTYPE]-potential-cases.csv', "patient-id,codes\n");
   for(let patient in patients) {
 
     try {
-      await fs.appendFile('covid-potential-cases.csv', patient+",\""+Array.from(patients[patient]).join(",")+"\"\n");
+      await fs.appendFile('[PHENOTYPE]-potential-cases.csv', patient+",\""+Array.from(patients[patient]).join(",")+"\"\n");
     } catch(error) {
       console.log(error);
     }

@@ -7,10 +7,12 @@ var Sequelize = require('sequelize');
  *
  * createTable "users", deps: []
  * createTable "workflows", deps: [users]
+ * createTable "children", deps: [workflows, workflows]
  * createTable "steps", deps: [workflows]
  * createTable "implementations", deps: [steps]
  * createTable "inputs", deps: [steps]
  * createTable "outputs", deps: [steps]
+ * createTable "parents", deps: [workflows, workflows]
  * addIndex ["language","stepId"] to table "implementations"
  * addIndex ["stepId"] to table "inputs"
  * addIndex ["stepId"] to table "outputs"
@@ -23,7 +25,7 @@ var Sequelize = require('sequelize');
 var info = {
     "revision": 1,
     "name": "init",
-    "created": "2020-06-02T21:55:54.885Z",
+    "created": "2020-06-09T09:33:11.951Z",
     "comment": ""
 };
 
@@ -110,6 +112,59 @@ var migrationCommands = [{
                         "key": "name"
                     },
                     "allowNull": false
+                }
+            },
+            {}
+        ]
+    },
+    {
+        fn: "createTable",
+        params: [
+            "children",
+            {
+                "name": {
+                    "type": Sequelize.STRING,
+                    "field": "name"
+                },
+                "distinctStepName": {
+                    "type": Sequelize.STRING,
+                    "field": "distinctStepName"
+                },
+                "distinctStepPosition": {
+                    "type": Sequelize.INTEGER,
+                    "field": "distinctStepPosition"
+                },
+                "createdAt": {
+                    "type": Sequelize.DATE,
+                    "field": "createdAt",
+                    "allowNull": false
+                },
+                "updatedAt": {
+                    "type": Sequelize.DATE,
+                    "field": "updatedAt",
+                    "allowNull": false
+                },
+                "workflowId": {
+                    "type": Sequelize.INTEGER,
+                    "field": "workflowId",
+                    "onUpdate": "CASCADE",
+                    "onDelete": "CASCADE",
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "primaryKey": true
+                },
+                "childId": {
+                    "type": Sequelize.INTEGER,
+                    "field": "childId",
+                    "onUpdate": "CASCADE",
+                    "onDelete": "CASCADE",
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "primaryKey": true
                 }
             },
             {}
@@ -296,6 +351,47 @@ var migrationCommands = [{
                         "key": "id"
                     },
                     "allowNull": false
+                }
+            },
+            {}
+        ]
+    },
+    {
+        fn: "createTable",
+        params: [
+            "parents",
+            {
+                "createdAt": {
+                    "type": Sequelize.DATE,
+                    "field": "createdAt",
+                    "allowNull": false
+                },
+                "updatedAt": {
+                    "type": Sequelize.DATE,
+                    "field": "updatedAt",
+                    "allowNull": false
+                },
+                "workflowId": {
+                    "type": Sequelize.INTEGER,
+                    "field": "workflowId",
+                    "onUpdate": "CASCADE",
+                    "onDelete": "CASCADE",
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "primaryKey": true
+                },
+                "parentId": {
+                    "type": Sequelize.INTEGER,
+                    "field": "parentId",
+                    "onUpdate": "CASCADE",
+                    "onDelete": "CASCADE",
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "primaryKey": true
                 }
             },
             {}

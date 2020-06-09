@@ -73,7 +73,7 @@ describe("importer", () => {
 		});
 
 		it("Should be able to import all phenotype CSVs.", async() => {
-			return true;
+			//return true;
 			try {
 				for(let phenotypeFile of await fs.readdir("test/phenotype-id.github.io/_phenotypes/")) if(!await importPhenotype(phenotypeFile)) continue;
 			} catch(error) {

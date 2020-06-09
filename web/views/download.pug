@@ -1,6 +1,6 @@
 extends layout
 
-mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension, implementations)
+mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension, implementations, children)
   div(id="step" + position, style="text-align: center;")
     div(class="row")
       div(class="col")
@@ -31,6 +31,12 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
           div
             a(onclick="showImplementation(" + workflow.id + "," + position + ")" class="a-button")
               | VIEW
+    if children
+      div(class="row")
+        | Switch to:&nbsp;
+        each child in children
+          a(href="/phenoflow/phenotype/download/" + child.workflowId)
+            | #{child.stepName}
     div(class="row")
       div(class="col")
         div(class="highlight arrow") &#8675;
@@ -92,6 +98,6 @@ block content
       div(id="steps")
         if workflow && workflow.steps && workflow.steps[0]
           each step in workflow.steps
-            +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations)
+            +createStep(step.position?step.position:"", step.name?step.name:"", step.doc?step.doc:"", step.type?step.type:"", step.inputs[0]&&step.inputs[0].doc?step.inputs[0].doc:"", step.outputs[0]&&step.outputs[0].doc?step.outputs[0].doc:"", step.outputs[0]&&step.outputs[0].extension?step.outputs[0].extension:"", step.implementations, step.children?step.children:"")
         else
           +createStep(1, "", "", "", "", "", "", "", "", "")

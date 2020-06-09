@@ -13,8 +13,8 @@ module.exports = function(sequelize, DataTypes) {
 	workflow.associate = function(models) {
 
 		workflow.belongsTo(models.user, {onDelete:"CASCADE", foreignKey:{allowNull: false}});
-		workflow.belongsToMany(models.workflow, {onDelete:"CASCADE", as:"parent", through:"parents"});
-		workflow.belongsToMany(models.workflow, {onDelete:"CASCADE", as:"child", through:"children"});
+		workflow.belongsToMany(models.workflow, {onDelete:"CASCADE", as:"parent", through:models.parents});
+		workflow.belongsToMany(models.workflow, {onDelete:"CASCADE", as:"child", through:models.children});
 
 	};
 

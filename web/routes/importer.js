@@ -21,7 +21,7 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
   try {
     await models.input.create({doc:inputDoc, stepId:step.id});
   } catch(error) {
-    error = "Error impirting step input: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+    error = "Error importing step input: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
     logger.debug(error);
     throw error;
   }
@@ -58,55 +58,41 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
 }
 
 function clean(input, spaces=false) {
+
   input = input.replace(/\//g, "").replace(/(\s)?\(.*\)/g, "");
   if(!spaces) input = input.replace(/ /g, "-");
   return input;
+
 }
 
-router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
-
-  if(!req.body.name || !req.body.about || !req.body.codeCategories || !req.body.userName) {
-    logger.debug("Missing params.");
-    return res.status(500).send("Missing params.");
-  }
-
-  const NAME = clean(sanitizeHtml(req.body.name));
-  const ABOUT = sanitizeHtml(req.body.about);
+async function createWorkflow(name, about, userName) {
 
   try {
-    var workflow = await models.workflow.create({name:NAME, about:ABOUT, userName:sanitizeHtml(req.body.userName)});
+    var workflow = await models.workflow.create({name:name, about:about, userName:sanitizeHtml(userName)});
+    return workflow.id;
   } catch(error) {
     error = "Error creating workflow for CSV: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
     logger.debug(error);
     res.status(500).send(error);
   }
 
-  const WORKFLOW_ID = workflow.id;
-  const LANGUAGE = "python";
-  const OUTPUT_EXTENSION = "csv";
+}
 
-  // Add data read
-  try {
-    await createStep(WORKFLOW_ID, "read-potential-cases", "Read potential cases", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", LANGUAGE, "templates/read-potential-cases.py", {"PHENOTYPE":clean(NAME.toLowerCase())});
-  } catch(error) {
-    logger.debug("Error creating first step from import: " + error);
-    return res.status(500).send(error);
-  }
+async function createWorkflowSteps(workflowId, name, language, outputExtension, userName, codeCategories) {
 
-  var position = 2;
-  const CODE_CATEGORIES = req.body.codeCategories;
+  let position = 2;
 
   // For each code set
-  for(var code in CODE_CATEGORIES) {
+  for(var code in codeCategories) {
     let stepName = clean(code.toLowerCase());
     let stepDoc = "Identify " + clean(code, true);
     let stepType = "logic";
-    let inputDoc = "Potential cases of " + NAME;
-    let outputDoc = "Patients with read codes indicating " + NAME + " related events in electronic health record.";
-    let fileName = clean(code.toLowerCase());
+    let inputDoc = "Potential cases of " + name;
+    let outputDoc = "Patients with read codes indicating " + name + " related events in electronic health record.";
+    let fileName = clean(code.toLowerCase()) + ".py";
 
     try {
-      await createStep(WORKFLOW_ID, stepName, stepDoc, stepType, position, inputDoc, outputDoc, OUTPUT_EXTENSION, fileName, LANGUAGE, "templates/codelist.py", {"PHENOTYPE":NAME.toLowerCase().replace(/ /g, "-"), "CODE_CATEGORY":clean(code.toLowerCase()), "CODE_LIST":'"' + CODE_CATEGORIES[code].join('","') + '"', "AUTHOR":req.body.userName, "YEAR":new Date().getFullYear()});
+      await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, "templates/codelist.py", {"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CODE_CATEGORY":clean(code.toLowerCase()), "CODE_LIST":'"' + codeCategories[code].join('","') + '"', "AUTHOR":userName, "YEAR":new Date().getFullYear()});
     } catch(error) {
       error = "Error creating imported step: " + error;
       logger.debug(error);
@@ -118,14 +104,50 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   // Add file write
   try {
-    await createStep(WORKFLOW_ID, "output-cases", "Output cases", "output", position, "Potential cases of " + NAME, "Output containing patients flagged as having this type of " + NAME, OUTPUT_EXTENSION, "output-cases.py", LANGUAGE, "templates/output-cases.py", {"PHENOTYPE":clean(NAME.toLowerCase())});
+    await createStep(workflowId, "output-cases", "Output cases", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, "output-cases.py", language, "templates/output-cases.py", {"PHENOTYPE":clean(name.toLowerCase())});
   } catch(error) {
     logger.debug("Error creating last step from import: " + error);
     return res.status(500).send(error);
   }
 
-  await Workflow.workflowComplete(WORKFLOW_ID);
+  await Workflow.workflowComplete(workflowId);
+  await Workflow.workflowChild(workflowId);
 
+}
+
+router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
+
+  if(!req.body.name || !req.body.about || !req.body.codeCategories || !req.body.userName) {
+    logger.debug("Missing params.");
+    return res.status(500).send("Missing params.");
+  }
+  const NAME = clean(sanitizeHtml(req.body.name));
+  const ABOUT = sanitizeHtml(req.body.about);
+  let workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
+  let language = "python";
+  const OUTPUT_EXTENSION = "csv";
+
+  // Add data read (csv)
+  try {
+    await createStep(workflowId, "read-potential-cases", "Read potential cases", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", language, "templates/read-potential-cases.py", {"PHENOTYPE":clean(NAME.toLowerCase())});
+  } catch(error) {
+    logger.debug("Error creating first step from import: " + error);
+    return res.status(500).send(error);
+  }
+
+  await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+  workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
+  language = "js";
+
+  // Add data read (i2b2)
+  try {
+    await createStep(workflowId, "read-potential-cases-i2b2", "Read potential cases from i2b2", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from i2b2.", OUTPUT_EXTENSION, "read-potential-cases-i2b2.js", language, "templates/read-potential-cases-i2b2.js", {"PHENOTYPE":clean(NAME.toLowerCase())});
+  } catch(error) {
+    logger.debug("Error creating first step from import: " + error);
+    return res.status(500).send(error);
+  }
+
+  await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
   res.sendStatus(200);
 
 });

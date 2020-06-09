@@ -1,5 +1,55 @@
 {
     "tables": {
+        "children": {
+            "tableName": "children",
+            "schema": {
+                "name": {
+                    "field": "name",
+                    "seqType": "Sequelize.STRING"
+                },
+                "distinctStepName": {
+                    "field": "distinctStepName",
+                    "seqType": "Sequelize.STRING"
+                },
+                "distinctStepPosition": {
+                    "field": "distinctStepPosition",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "workflowId": {
+                    "primaryKey": true,
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "workflowId",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "childId": {
+                    "primaryKey": true,
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "childId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": []
+        },
         "implementations": {
             "tableName": "implementations",
             "schema": {
@@ -152,6 +202,44 @@
                     }
                 }
             }
+        },
+        "parents": {
+            "tableName": "parents",
+            "schema": {
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "workflowId": {
+                    "primaryKey": true,
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "workflowId",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "parentId": {
+                    "primaryKey": true,
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "parentId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": []
         },
         "steps": {
             "tableName": "steps",

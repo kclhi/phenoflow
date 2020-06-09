@@ -117,7 +117,7 @@ npm start
 
 ## Deployment
 
-If using remote machine, ensure it is activated:
+Deployment is via Docker. If using remote machine, ensure it is activated:
 
 ```
 eval $(docker-machine env [machine-name])

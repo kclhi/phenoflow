@@ -18,9 +18,14 @@ class Visualise {
       await fspromises.mkdir(workflowRepo, {recursive:true});
     } catch(error) {
       logger.error("Error creating repo dir: " + workflowRepo + " " + JSON.stringify(error));
+      return false;
     }
 
     const yamlWorkflow = yaml.parse(workflow);
+    if(!yamlWorkflow.steps) {
+      logger.debug("Error creating visualisation: no steps passed: " + JSON.stringify(workflow));
+      return false;
+    }
     let lastStepName;
     for(let step in yamlWorkflow.steps) {
       if(lastStepName) yamlWorkflow.steps[step].in.potentialCases.source = yamlWorkflow.steps[step].in.potentialCases.source.replace(/([0-9])+/, lastStepName);
@@ -28,14 +33,16 @@ class Visualise {
       yamlWorkflow.steps[lastStepName] = yamlWorkflow.steps[step];
       delete yamlWorkflow.steps[step];
     }
-    yamlWorkflow.outputs.cases.outputSource = yamlWorkflow.outputs.cases.outputSource.replace(/([0-9])+/, lastStepName);
-    
+    if(yamlWorkflow.outputs&&yamlWorkflow.outputs.cases) {
+      yamlWorkflow.outputs.cases.outputSource = yamlWorkflow.outputs.cases.outputSource.replace(/([0-9])+/, lastStepName);
+    } else {
+      logger.error("Error adding outputSource: " + JSON.stringify(yamlWorkflow.outputs?yamlWorkflow.outputs:"") + " " + JSON.stringify(workflow));
+      return false;
+    }
     await fspromises.writeFile(workflowRepo + "/" + name + ".cwl", yaml.stringify(yamlWorkflow));
     for(let step of steps) await fspromises.writeFile(workflowRepo + "/" + step.name + ".cwl", step.content);
-
     await git.init({fs, dir: workflowRepo})
     await git.add({fs, dir: workflowRepo, filepath: '.'})
-
     let sha = await git.commit({
       fs,
       dir: workflowRepo,
@@ -55,7 +62,8 @@ class Visualise {
         url: GIT_SERVER_URL + "/workflow" + id + timestamp + ".git"
       });
     } catch(error) {
-      logger.debug("Cannot add remote (" + workflow + id + timestamp + "): " + error);
+      logger.error("Cannot add remote (" + workflow + id + timestamp + "): " + error);
+      return false;
     }
 
     try {
@@ -68,7 +76,8 @@ class Visualise {
       });
       logger.debug("Pushed to: " + id + timestamp);
     } catch(error) {
-      logger.debug("Cannot push to remote (" + id + timestamp + "): " + error);
+      logger.error("Cannot push to remote (" + id + timestamp + "): " + error);
+      return false;
     }
 
   }
