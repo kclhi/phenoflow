@@ -32,7 +32,7 @@ describe("importer", () => {
 			try {
 				await fs.stat(PATH)
 			} catch(error) {
-				return true; // Can't perform test if file doesn't exist.
+				return false; // Can't perform test if file doesn't exist.
 			}
 
 			var markdownContent = JSON.parse(m2js.parse([PATH], {width: 0}))[phenotypeFile.replace(".md", "")];
@@ -68,17 +68,19 @@ describe("importer", () => {
 		}
 
 		it("Should be able to import a phenotype CSV.", async() => {
-			return true;
 			await importPhenotype("dementia.md");
-		});
+			return true;
+		}).timeout(0);
 
 		it("Should be able to import all phenotype CSVs.", async() => {
-			//return true;
+
 			try {
 				for(let phenotypeFile of await fs.readdir("test/phenotype-id.github.io/_phenotypes/")) if(!await importPhenotype(phenotypeFile)) continue;
 			} catch(error) {
 				return true;
 			}
+
+			return true;
 
 		}).timeout(0);
 

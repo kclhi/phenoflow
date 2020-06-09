@@ -61,9 +61,9 @@ class Workflow {
   static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
 
     try {
-      let workflows = await models.workflow.findAll({where:{[op.and]:[{complete:true},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}]}, offset:offset, limit:limit, order: [['name', 'ASC']]});
+      let workflows = await models.workflow.findAll({where:{[op.and]:[{complete:true},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}]}, order: [['name', 'ASC']]});
       let parents = await models.parents.findAll().map((parent)=>{return parent.workflowId;});
-      return workflows.filter((workflow)=>{return parents.indexOf(workflow.id) < 0;});
+      return workflows.filter((workflow)=>{return parents.indexOf(workflow.id) < 0;}).slice(offset, offset+limit);
     } catch(error) {
       error = "Error getting complete workflows: " + error;
       logger.debug(error);
