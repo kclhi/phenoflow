@@ -80,6 +80,7 @@ router.get("/download/:workflowId", async function(req, res, next) {
   try {
     let workflow = await Workflow.getWorkflow(req.params.workflowId);
     workflow = await Workflow.addChildrenToStep(workflow);
+    if(!workflow) res.sendStatus(500);
     let user = await models.user.findOne({where:{name: workflow.userName}});
     res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow, userName:user.name, verified:user.verified, homepage:user.homepage});
   } catch(error) {

@@ -9,7 +9,7 @@ class Workflow {
   static async workflow(workflow) {
 
     try {
-      let steps = await models.step.findAll({where:{workflowId:workflow.id}, order: [['position', 'ASC']]});
+      let steps = await models.step.findAll({where:{workflowId:workflow.id}, order:[['position', 'ASC']]});
       let mergedSteps = [];
       for(let step of steps) {
         let mergedStep = JSON.parse(JSON.stringify(step));
@@ -61,9 +61,8 @@ class Workflow {
   static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
 
     try {
-      let workflows = await models.workflow.findAll({where:{[op.and]:[{complete:true},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}]}, order: [['name', 'ASC']]});
-      let parents = await models.parents.findAll().map((parent)=>{return parent.workflowId;});
-      return workflows.filter((workflow)=>{return parents.indexOf(workflow.id) < 0;}).slice(offset, offset+limit);
+      let workflows = await models.workflow.findAll({where:{complete:true, [op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}], order:[['name', 'ASC']]})
+      return workflows.slice(offset, offset+limit);
     } catch(error) {
       error = "Error getting complete workflows: " + error;
       logger.debug(error);
@@ -75,11 +74,11 @@ class Workflow {
   static async addChildrenToStep(workflow) {
 
     try {
-      let children = await models.children.findAll({where:{workflowId:workflow.id}});
+      let children = await models.child.findAll({where:{parentId:workflow.id}});
       for(let child of children) {
         if(child.distinctStepPosition&&child.distinctStepName) {
           if(!workflow.steps[child.distinctStepPosition-1].children) workflow.steps[child.distinctStepPosition-1].children = [];
-          workflow.steps[child.distinctStepPosition-1].children.push({workflowId:child.childId, stepName:child.distinctStepName});
+          workflow.steps[child.distinctStepPosition-1].children.push({workflowId:child.workflowId, stepName:child.distinctStepName});
         }
       }
       return workflow;
@@ -118,12 +117,11 @@ class Workflow {
   // A workflow is defined as being a child of another if all but one of their steps overlap OR if all of their steps overlap.
   static async workflowChild(workflowId) {
 
-    const workflows = await models.workflow.findAll({where:{complete:true}});
+    const workflows = await models.workflow.findAll({where:{complete:true, [op.or]:[{'$parent.child.parentId$':{[op.not]:workflowId}}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}]});
     if(!workflows.filter((workflow)=>{return workflow.id==workflowId}).length) return;
     const candidateChildSteps = await models.step.findAll({where:{workflowId:workflowId}});
     if (!candidateChildSteps) throw new Error(ERROR_PREFIX + "Error getting candidate workflow steps.");
     let matchingSteps = 0;
-    let parents = [];
     for(let workflow of workflows) {
       if(workflowId!=workflow.id) {
         const ERROR_PREFIX = "Unable to identify workflow intersection: ";
@@ -151,8 +149,7 @@ class Workflow {
           distinctStepPosition = candidateChildStep.position;
         }
         if(matchingSteps==candidateChildSteps.length||matchingSteps==workflowSteps.length-1) {
-          await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow);
-          await workflow.addChild(workflows.filter((workflow)=>{return workflow.id==workflowId})[0], {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
+          await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
           matchingSteps=0;
         }
       }

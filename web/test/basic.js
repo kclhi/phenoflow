@@ -12,6 +12,7 @@ const config = require("config");
 const Visualise = require("../util/visualise");
 const Download = require("../util/download");
 const Workflow = require("./workflow");
+const WorkflowUtils = require("../util/workflow");
 
 describe("basic", () => {
 
@@ -150,8 +151,8 @@ describe("basic", () => {
 		let workflows;
 
 		it("Second workflow should not be marked as a child of the first (non-overlapping workflows should not be marked as such).", async() => {
+			await WorkflowUtils.workflowChild(workflowId);
 			workflows = await models.workflow.findAll();
-			expect(await workflows.filter((workflow)=>{return workflow.id==1})[0].countChild()).equal(0);
 			expect(await workflows.filter((workflow)=>{return workflow.id==2})[0].countParent()).equal(0);
 		});
 
@@ -172,7 +173,7 @@ describe("basic", () => {
 		});
 
 		it("Second workflow should be marked as a child of the first (overlapping workflows should be marked as such).", async() => {
-			expect(await workflows.filter((workflow)=>{return workflow.id==1})[0].countChild()).equal(1);
+			await WorkflowUtils.workflowChild(workflowId);
 			expect(await workflows.filter((workflow)=>{return workflow.id==2})[0].countParent()).equal(1);
 		});
 
@@ -199,8 +200,8 @@ describe("basic", () => {
 		});
 
 		it("Identical workflows should also be children.", async() => {
+			await WorkflowUtils.workflowChild(workflowId);
 			workflows = await models.workflow.findAll();
-			expect(await workflows.filter((workflow)=>{return workflow.id==1})[0].countChild()).equal(2);
 			expect(await workflows.filter((workflow)=>{return workflow.id==3})[0].countParent()).equal(1);
 		});
 

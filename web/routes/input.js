@@ -19,7 +19,6 @@ router.post('/:stepId', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithm
     if(!(workflow.userName==req.user.sub)) return res.sendStatus(500);
     await models.input.upsert({doc:sanitizeHtml(req.body.doc), stepId:req.params.stepId});
     await Workflow.workflowComplete(workflow.id);
-    await Workflow.workflowChild(workflow.id);
     res.sendStatus(200);
   } catch(error) {
     error = "Error adding input: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);

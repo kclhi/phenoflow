@@ -36,7 +36,7 @@
                     "field": "workflowId",
                     "seqType": "Sequelize.INTEGER"
                 },
-                "childId": {
+                "parentId": {
                     "primaryKey": true,
                     "references": {
                         "model": "workflows",
@@ -44,7 +44,7 @@
                     },
                     "onDelete": "CASCADE",
                     "onUpdate": "CASCADE",
-                    "field": "childId",
+                    "field": "parentId",
                     "seqType": "Sequelize.INTEGER"
                 }
             },
@@ -62,6 +62,7 @@
                 },
                 "language": {
                     "field": "language",
+                    "unique": true,
                     "seqType": "Sequelize.STRING"
                 },
                 "fileName": {
@@ -203,44 +204,6 @@
                 }
             }
         },
-        "parents": {
-            "tableName": "parents",
-            "schema": {
-                "createdAt": {
-                    "allowNull": false,
-                    "field": "createdAt",
-                    "seqType": "Sequelize.DATE"
-                },
-                "updatedAt": {
-                    "allowNull": false,
-                    "field": "updatedAt",
-                    "seqType": "Sequelize.DATE"
-                },
-                "workflowId": {
-                    "primaryKey": true,
-                    "references": {
-                        "model": "workflows",
-                        "key": "id"
-                    },
-                    "onDelete": "CASCADE",
-                    "onUpdate": "CASCADE",
-                    "field": "workflowId",
-                    "seqType": "Sequelize.INTEGER"
-                },
-                "parentId": {
-                    "primaryKey": true,
-                    "references": {
-                        "model": "workflows",
-                        "key": "id"
-                    },
-                    "onDelete": "CASCADE",
-                    "onUpdate": "CASCADE",
-                    "field": "parentId",
-                    "seqType": "Sequelize.INTEGER"
-                }
-            },
-            "indexes": []
-        },
         "steps": {
             "tableName": "steps",
             "schema": {
@@ -254,6 +217,7 @@
                 "name": {
                     "allowNull": false,
                     "field": "name",
+                    "unique": true,
                     "seqType": "Sequelize.STRING"
                 },
                 "doc": {
@@ -267,6 +231,7 @@
                 "position": {
                     "allowNull": false,
                     "field": "position",
+                    "unique": true,
                     "seqType": "Sequelize.INTEGER"
                 },
                 "createdAt": {

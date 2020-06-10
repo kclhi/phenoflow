@@ -111,7 +111,6 @@ async function createWorkflowSteps(workflowId, name, language, outputExtension, 
   }
 
   await Workflow.workflowComplete(workflowId);
-  await Workflow.workflowChild(workflowId);
 
 }
 

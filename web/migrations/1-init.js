@@ -12,20 +12,19 @@ var Sequelize = require('sequelize');
  * createTable "implementations", deps: [steps]
  * createTable "inputs", deps: [steps]
  * createTable "outputs", deps: [steps]
- * createTable "parents", deps: [workflows, workflows]
  * addIndex ["language","stepId"] to table "implementations"
  * addIndex ["stepId"] to table "inputs"
  * addIndex ["stepId"] to table "outputs"
- * addIndex ["position","workflowId"] to table "steps"
- * addIndex ["name","workflowId"] to table "steps"
  * addIndex ["name","position","workflowId"] to table "steps"
+ * addIndex ["name","workflowId"] to table "steps"
+ * addIndex ["position","workflowId"] to table "steps"
  *
  **/
 
 var info = {
     "revision": 1,
     "name": "init",
-    "created": "2020-06-09T09:33:11.951Z",
+    "created": "2020-06-09T23:18:07.300Z",
     "comment": ""
 };
 
@@ -155,9 +154,9 @@ var migrationCommands = [{
                     },
                     "primaryKey": true
                 },
-                "childId": {
+                "parentId": {
                     "type": Sequelize.INTEGER,
-                    "field": "childId",
+                    "field": "parentId",
                     "onUpdate": "CASCADE",
                     "onDelete": "CASCADE",
                     "references": {
@@ -357,47 +356,6 @@ var migrationCommands = [{
         ]
     },
     {
-        fn: "createTable",
-        params: [
-            "parents",
-            {
-                "createdAt": {
-                    "type": Sequelize.DATE,
-                    "field": "createdAt",
-                    "allowNull": false
-                },
-                "updatedAt": {
-                    "type": Sequelize.DATE,
-                    "field": "updatedAt",
-                    "allowNull": false
-                },
-                "workflowId": {
-                    "type": Sequelize.INTEGER,
-                    "field": "workflowId",
-                    "onUpdate": "CASCADE",
-                    "onDelete": "CASCADE",
-                    "references": {
-                        "model": "workflows",
-                        "key": "id"
-                    },
-                    "primaryKey": true
-                },
-                "parentId": {
-                    "type": Sequelize.INTEGER,
-                    "field": "parentId",
-                    "onUpdate": "CASCADE",
-                    "onDelete": "CASCADE",
-                    "references": {
-                        "model": "workflows",
-                        "key": "id"
-                    },
-                    "primaryKey": true
-                }
-            },
-            {}
-        ]
-    },
-    {
         fn: "addIndex",
         params: [
             "implementations",
@@ -434,7 +392,7 @@ var migrationCommands = [{
         fn: "addIndex",
         params: [
             "steps",
-            ["position", "workflowId"],
+            ["name", "position", "workflowId"],
             {
                 "indicesType": "UNIQUE",
                 "unique": true
@@ -456,7 +414,7 @@ var migrationCommands = [{
         fn: "addIndex",
         params: [
             "steps",
-            ["name", "position", "workflowId"],
+            ["position", "workflowId"],
             {
                 "indicesType": "UNIQUE",
                 "unique": true

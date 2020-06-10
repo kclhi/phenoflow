@@ -13,7 +13,7 @@ const Workflow = require("./workflow");
 describe("covid19", () => {
 
 	let workflowId, stepId;
-	const name = "covid19";
+	const NAME = "covid19";
 	const USERNAME = "covid19-phenomics";
 
 	describe("/POST create COVID-19 workflow", async() => {
@@ -78,7 +78,7 @@ describe("covid19", () => {
 		// First COVID phenotype
 
 		it("Create covid workflow.", async() => {
-			workflowId = await Workflow.createWorkflow(name, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
+			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
 		});
 
 		// 1. read-potential-cases
@@ -104,7 +104,7 @@ describe("covid19", () => {
 		// Second COVID phenotype
 
 		it("Create covid workflow (i2b2).", async() => {
-			workflowId = await Workflow.createWorkflow(name, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
+			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
 		});
 
 		// 1. read-potential-cases (i2b2)
@@ -122,7 +122,7 @@ describe("covid19", () => {
 		});
 
 		it("Add read potential cases implementation (i2b2).", async() => {
-			await Workflow.implementation(stepId, "js", "test/implementation/js/covid19/", "read-potential-cases-i2b2.js", USERNAME);
+			await Workflow.implementation(stepId, "js", "test/implementation/js/", "read-potential-cases-i2b2.js", USERNAME);
 		});
 
 		createCOVIDPhenotype();

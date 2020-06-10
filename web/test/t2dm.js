@@ -15,21 +15,154 @@ describe('t2dm', () => {
 
 	describe('/POST create T2DM workflow', () => {
 
+		let workflowId, stepId;
+		const NAME = "t2dm";
 		const USERNAME = "phekb";
+
+		async function createT2DMPhenotype() {
+
+			// 2. abnormal-lab
+
+			it('Add abnormal lab step.', async() => {
+				stepId = await Workflow.upsertStep(workflowId, 2, "abnormal-lab", "An abnormal lab value is defined as one of three different exacerbations in blood sugar level.", "logic", USERNAME);
+			});
+
+			it('Add abnormal lab input.', async() => {
+				await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
+			});
+
+			it('Add abnormal lab output.', async() => {
+				await Workflow.output(stepId, "Output of patients flagged as having an abnormal lab result.", "csv", USERNAME);
+			});
+
+			it('Add abnormal lab implementation.', async() => {
+				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "abnormal-lab.knwf", USERNAME);
+			});
+
+			// 3. rx_t2dm_med-abnormal-lab
+
+			it('Add rx_t2dm_med-abnormal-lab (case rule 1) step.', async() => {
+				stepId = await Workflow.upsertStep(workflowId, 3, "rx_t2dm_med-abnormal-lab", "An abnormal lab value is defined as one of three different exacerbations in blood sugar level.", "boolean", USERNAME);
+			});
+
+			it('Add rx_t2dm_med-abnormal-lab input.', async() => {
+				await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
+			});
+
+			it('Add rx_t2dm_med-abnormal-lab output.', async() => {
+				await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
+			});
+
+			it('Add rx_t2dm_med-abnormal-lab implementation.', async() => {
+				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "rx_t2dm_med-abnormal-lab.knwf", USERNAME);
+			});
+
+			it('Add rx_t2dm_med-abnormal-lab alternative implementation.', async() => {
+				await Workflow.implementation(stepId, "python", "test/implementation/python/t2dm/", "rx_t2dm_med-abnormal-lab.py", USERNAME);
+			});
+
+			// 4. dx_t2dm-abnormal-lab
+
+			it('Add dx_t2dm-abnormal-lab (case rule 2) step.', async() => {
+				stepId = await Workflow.upsertStep(workflowId, 4, "dx_t2dm-abnormal-lab", "A case is identified in the presence of an abnormal lab value (defined as one of three different exacerbations in blood sugar level) AND if a diagnosis of T2DM is identified.", "boolean", USERNAME);
+			});
+
+			it('Add dx_t2dm-abnormal-lab input.', async() => {
+				await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
+			});
+
+			it('Add dx_t2dm-abnormal-lab output.', async() => {
+				await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
+			});
+
+			it('Add dx_t2dm-abnormal-lab implementation.', async() => {
+				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-abnormal-lab.knwf", USERNAME);
+			});
+
+			// 5. dx_t2dm-rx_t2dm_med
+
+			it('Add dx_t2dm-rx_t2dm_med (case rule 3) step.', async() => {
+				stepId = await Workflow.upsertStep(workflowId, 5, "dx_t2dm-rx_t2dm_med", "Diagnosis of this type of diabetes AND a prescription of medication for it.", "boolean", USERNAME);
+			});
+
+			it('Add dx_t2dm-rx_t2dm_med input.', async() => {
+				await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
+			});
+
+			it('Add dx_t2dm-rx_t2dm_med output.', async() => {
+				await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
+			});
+
+			it('Add dx_t2dm-rx_t2dm_med implementation.', async() => {
+				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-rx_t2dm_med.knwf", USERNAME);
+			});
+
+			// 6. dx_t2dm-rx_tdm_med-prec
+
+			it('Add dx_t2dm-rx_tdm_med-prec (case rule 4) step.', async() => {
+				stepId = await Workflow.upsertStep(workflowId, 6, "dx_t2dm-rx_tdm_med-prec", "Diagnosis of this type of diabetes (by at least two physicians) AND a prescription of medication for both this type, and type 1, of diabetes AND type 1 prescribed prior.", "boolean", USERNAME);
+			});
+
+			it('Add dx_t2dm-rx_tdm_med-precinput.', async() => {
+				await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
+			});
+
+			it('Add dx_t2dm-rx_tdm_med-prec output.', async() => {
+				await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
+			});
+
+			it('Add dx_t2dm-rx_tdm_med-prec implementation.', async() => {
+				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-rx_tdm_med-prec.knwf", USERNAME);
+			});
+
+			// 7. dx_t2dm-rx_t1dm_med-dx2
+
+			it('Add dx_t2dm-rx_t1dm_med-dx2 (case rule 5) step.', async() => {
+				stepId = await Workflow.upsertStep(workflowId, 7, "dx_t2dm-rx_t1dm_med-dx2", "Diagnosis of this type of diabetes (by at least two physicians) AND a prescription of medication for type 1 of this type of diabetes.", "boolean", USERNAME);
+			});
+
+			it('Add dx_t2dm-rx_t1dm_med-dx2 input.', async() => {
+				await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
+			});
+
+			it('Add dx_t2dm-rx_t1dm_med-dx2 output.', async() => {
+				await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
+			});
+
+			it('Add dx_t2dm-rx_t1dm_med-dx2 implementation.', async() => {
+				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-rx_t1dm_med-dx2.knwf", USERNAME);
+			});
+
+			// 8. output-cases
+
+			it('Add output-cases step.', async() => {
+				stepId = await Workflow.upsertStep(workflowId, 8, "output-cases", "Output cases.", "output", USERNAME);
+			});
+
+			it('Add output-cases input.', async() => {
+				await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
+			});
+
+			it('Add output-cases output.', async() => {
+				await Workflow.output(stepId, "Output containing patients flagged as having this type of diabetes.", "csv", USERNAME);
+			});
+
+			it('Add output-cases implementation.', async() => {
+				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "output-cases.knwf", USERNAME);
+			});
+
+		}
 
 		it("Should be able to add a new user.", async() => {
 			const result = await models.user.create({name:"phekb", password:config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://phekb.org"});
 			result.should.be.a("object");
 		});
 
-		let workflowId;
-		let name = "t2dm";
+		// First T2DM phenotype
 
 		it('Create T2DM workflow.', async() => {
-			workflowId = await Workflow.createWorkflow(name, "Type 2 Diabetes Mellitus", "phekb", USERNAME);
+			workflowId = await Workflow.createWorkflow(NAME, "Type 2 Diabetes Mellitus", "phekb", USERNAME);
 		});
-
-		let stepId;
 
 		// 1. read-potential-cases
 
@@ -49,135 +182,35 @@ describe('t2dm', () => {
 			await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "read-potential-cases.knwf", USERNAME);
 		});
 
-		// 2. abnormal-lab
+		createT2DMPhenotype();
 
-		it('Add abnormal lab step.', async() => {
-			stepId = await Workflow.upsertStep(workflowId, 2, "abnormal-lab", "An abnormal lab value is defined as one of three different exacerbations in blood sugar level.", "logic", USERNAME);
+		// Second T2DM phenotype
+
+		it('Create T2DM workflow.', async() => {
+			workflowId = await Workflow.createWorkflow(NAME, "Type 2 Diabetes Mellitus", "phekb", USERNAME);
 		});
 
-		it('Add abnormal lab input.', async() => {
+		// 1. read-potential-cases (i2b2)
+
+		it("Add read potential cases step (i2b2).", async() => {
+			stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases-i2b2", "Read potential cases from i2b2", "external", USERNAME);
+		});
+
+		it("Add read potential cases input (i2b2).", async() => {
 			await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
 		});
 
-		it('Add abnormal lab output.', async() => {
-			await Workflow.output(stepId, "Output of patients flagged as having an abnormal lab result.", "csv", USERNAME);
+		it("Add read potential cases output (i2b2).", async() => {
+			await Workflow.output(stepId, "Initial potential cases, read from i2b2 instance.", "csv", USERNAME);
 		});
 
-		it('Add abnormal lab implementation.', async() => {
-			await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "abnormal-lab.knwf", USERNAME);
+		it("Add read potential cases implementation (i2b2).", async() => {
+			await Workflow.implementation(stepId, "js", "test/implementation/js/", "read-potential-cases-i2b2.js", USERNAME);
 		});
 
-		// 3. rx_t2dm_med-abnormal-lab
+		createT2DMPhenotype();
 
-		it('Add rx_t2dm_med-abnormal-lab (case rule 1) step.', async() => {
-			stepId = await Workflow.upsertStep(workflowId, 3, "rx_t2dm_med-abnormal-lab", "An abnormal lab value is defined as one of three different exacerbations in blood sugar level.", "boolean", USERNAME);
-		});
-
-		it('Add rx_t2dm_med-abnormal-lab input.', async() => {
-			await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
-		});
-
-		it('Add rx_t2dm_med-abnormal-lab output.', async() => {
-			await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
-		});
-
-		it('Add rx_t2dm_med-abnormal-lab implementation.', async() => {
-			await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "rx_t2dm_med-abnormal-lab.knwf", USERNAME);
-		});
-
-		it('Add rx_t2dm_med-abnormal-lab alternative implementation.', async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/t2dm/", "rx_t2dm_med-abnormal-lab.py", USERNAME);
-		});
-
-		// 4. dx_t2dm-abnormal-lab
-
-		it('Add dx_t2dm-abnormal-lab (case rule 2) step.', async() => {
-			stepId = await Workflow.upsertStep(workflowId, 4, "dx_t2dm-abnormal-lab", "A case is identified in the presence of an abnormal lab value (defined as one of three different exacerbations in blood sugar level) AND if a diagnosis of T2DM is identified.", "boolean", USERNAME);
-		});
-
-		it('Add dx_t2dm-abnormal-lab input.', async() => {
-			await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
-		});
-
-		it('Add dx_t2dm-abnormal-lab output.', async() => {
-			await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
-		});
-
-		it('Add dx_t2dm-abnormal-lab implementation.', async() => {
-			await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-abnormal-lab.knwf", USERNAME);
-		});
-
-		// 5. dx_t2dm-rx_t2dm_med
-
-		it('Add dx_t2dm-rx_t2dm_med (case rule 3) step.', async() => {
-			stepId = await Workflow.upsertStep(workflowId, 5, "dx_t2dm-rx_t2dm_med", "Diagnosis of this type of diabetes AND a prescription of medication for it.", "boolean", USERNAME);
-		});
-
-		it('Add dx_t2dm-rx_t2dm_med input.', async() => {
-			await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
-		});
-
-		it('Add dx_t2dm-rx_t2dm_med output.', async() => {
-			await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
-		});
-
-		it('Add dx_t2dm-rx_t2dm_med implementation.', async() => {
-			await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-rx_t2dm_med.knwf", USERNAME);
-		});
-
-		// 6. dx_t2dm-rx_tdm_med-prec
-
-		it('Add dx_t2dm-rx_tdm_med-prec (case rule 4) step.', async() => {
-			stepId = await Workflow.upsertStep(workflowId, 6, "dx_t2dm-rx_tdm_med-prec", "Diagnosis of this type of diabetes (by at least two physicians) AND a prescription of medication for both this type, and type 1, of diabetes AND type 1 prescribed prior.", "boolean", USERNAME);
-		});
-
-		it('Add dx_t2dm-rx_tdm_med-precinput.', async() => {
-			await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
-		});
-
-		it('Add dx_t2dm-rx_tdm_med-prec output.', async() => {
-			await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
-		});
-
-		it('Add dx_t2dm-rx_tdm_med-prec implementation.', async() => {
-			await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-rx_tdm_med-prec.knwf", USERNAME);
-		});
-
-		// 7. dx_t2dm-rx_t1dm_med-dx2
-
-		it('Add dx_t2dm-rx_t1dm_med-dx2 (case rule 5) step.', async() => {
-			stepId = await Workflow.upsertStep(workflowId, 7, "dx_t2dm-rx_t1dm_med-dx2", "Diagnosis of this type of diabetes (by at least two physicians) AND a prescription of medication for type 1 of this type of diabetes.", "boolean", USERNAME);
-		});
-
-		it('Add dx_t2dm-rx_t1dm_med-dx2 input.', async() => {
-			await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
-		});
-
-		it('Add dx_t2dm-rx_t1dm_med-dx2 output.', async() => {
-			await Workflow.output(stepId, "Output containing patients flagged as having this case of diabetes.", "csv", USERNAME);
-		});
-
-		it('Add dx_t2dm-rx_t1dm_med-dx2 implementation.', async() => {
-			await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-rx_t1dm_med-dx2.knwf", USERNAME);
-		});
-
-		// 8. output-cases
-
-		it('Add output-cases step.', async() => {
-			stepId = await Workflow.upsertStep(workflowId, 8, "output-cases", "Output cases.", "output", USERNAME);
-		});
-
-		it('Add output-cases input.', async() => {
-			await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
-		});
-
-		it('Add output-cases output.', async() => {
-			await Workflow.output(stepId, "Output containing patients flagged as having this type of diabetes.", "csv", USERNAME);
-		});
-
-		it('Add output-cases implementation.', async() => {
-			await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "output-cases.knwf", USERNAME);
-		});
+		workflowId--;
 
 		let workflow = // ~MDC This is obviously sub-optimal...
 		"class: Workflow\ncwlVersion: v1.0\ninputs:\n  inputModule1:\n    doc: KNIME implementation unit\n    id: inputModule1\n    type: File\n  inputModule2:\n    doc: KNIME implementation unit\n    id: inputModule2\n    type: File\n  inputModule3:\n    doc: KNIME implementation unit\n    id: inputModule3\n    type: File\n  inputModule4:\n    doc: KNIME implementation unit\n    id: inputModule4\n    type: File\n  inputModule5:\n    doc: KNIME implementation unit\n    id: inputModule5\n    type: File\n  inputModule6:\n    doc: KNIME implementation unit\n    id: inputModule6\n    type: File\n  inputModule7:\n    doc: KNIME implementation unit\n    id: inputModule7\n    type: File\n  inputModule8:\n    doc: KNIME implementation unit\n    id: inputModule8\n    type: File\n  potentialCases:\n    doc: Input of potential cases for processing\n    id: potentialCases\n    type: File\noutputs:\n  cases:\n    id: cases\n    outputBinding:\n      glob: '*.csv'\n    outputSource: 8/output\n    type: File\nrequirements:\n  SubworkflowFeatureRequirement: {}\nsteps:\n  '1':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule1\n      potentialCases:\n        id: potentialCases\n        source: potentialCases\n    out:\n    - output\n    run: read-potential-cases.cwl\n  '2':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule2\n      potentialCases:\n        id: potentialCases\n        source: 1/output\n    out:\n    - output\n    run: abnormal-lab.cwl\n  '3':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule3\n      potentialCases:\n        id: potentialCases\n        source: 2/output\n    out:\n    - output\n    run: rx_t2dm_med-abnormal-lab.cwl\n  '4':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule4\n      potentialCases:\n        id: potentialCases\n        source: 3/output\n    out:\n    - output\n    run: dx_t2dm-abnormal-lab.cwl\n  '5':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule5\n      potentialCases:\n        id: potentialCases\n        source: 4/output\n    out:\n    - output\n    run: dx_t2dm-rx_t2dm_med.cwl\n  '6':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule6\n      potentialCases:\n        id: potentialCases\n        source: 5/output\n    out:\n    - output\n    run: dx_t2dm-rx_tdm_med-prec.cwl\n  '7':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule7\n      potentialCases:\n        id: potentialCases\n        source: 6/output\n    out:\n    - output\n    run: dx_t2dm-rx_t1dm_med-dx2.cwl\n  '8':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule8\n      potentialCases:\n        id: potentialCases\n        source: 7/output\n    out:\n    - output\n    run: output-cases.cwl\n";
@@ -224,7 +257,7 @@ describe('t2dm', () => {
 		}).timeout(120000);
 
 		it("Construct ZIP from generated CWL.", async() => {
-			await constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps);
+			await constructZIPFromGeneratedCWL(workflowId, NAME, workflow, workflowInput, implementationUnits, steps);
 		}).timeout(120000);
 
 		workflowInput = workflowInput.replace("knime/rx_t2dm_med-abnormal-lab.knwf", "python/rx_t2dm_med-abnormal-lab.py");
@@ -236,7 +269,7 @@ describe('t2dm', () => {
 		}).timeout(120000);
 
 		it("Construct ZIP from generated CWL (alternative implementation).", async() => {
-			await constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps);
+			await constructZIPFromGeneratedCWL(workflowId, NAME, workflow, workflowInput, implementationUnits, steps);
 		}).timeout(120000);
 
 	});

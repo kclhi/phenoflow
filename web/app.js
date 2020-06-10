@@ -6,7 +6,9 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const logger = require("./config/winston");
 const fileUpload = require("express-fileupload");
+const cron = require("node-cron");
 
+const models = require("./models");
 const index = require("./routes");
 const login = require("./routes/login");
 const workflow = require("./routes/workflow");
@@ -15,6 +17,7 @@ const input = require("./routes/input");
 const output = require("./routes/output");
 const implementation = require("./routes/implementation");
 const importer = require("./routes/importer");
+const workflowUtils = require("./util/workflow");
 
 const app = express();
 app.enable('strict routing');
@@ -59,6 +62,12 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render("error");
+});
+
+cron.schedule("0 * * * *", async function() {
+  for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) {
+    await workflowUtils.workflowChild(workflow.id);
+  }
 });
 
 module.exports = app;
