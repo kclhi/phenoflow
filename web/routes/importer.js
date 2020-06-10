@@ -146,6 +146,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
     return res.status(500).send(error);
   }
 
+  language = "python";
   await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
   res.sendStatus(200);
 
