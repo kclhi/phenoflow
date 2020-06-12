@@ -611,6 +611,7 @@ dmypy.json
 examples/
 output/
 web/uploads/
+web/provenance-templates/*.json
 
 !requirements.txt
 !README.txt

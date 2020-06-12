@@ -3,7 +3,7 @@ from datetime import datetime
 
 def createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, language="knime"):
 
-    cwl_tool.namespaces.s = "https://phekb.org/";
+    cwl_tool.namespaces.s = "http://phenomics.kcl.ac.uk/phenoflow/";
     metadata = {'type': type}
     cwl_tool.metadata = cwlgen.Metadata(**metadata)
     cwl_tool.doc = doc
