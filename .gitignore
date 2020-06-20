@@ -612,6 +612,9 @@ examples/
 output/
 web/uploads/
 web/provenance-templates/*.json
+web/test/implementation/js/omop/db/cdm/
+web/test/implementation/js/omop/db/data/
+web/test/implementation/js/omop/db/vocabulary/
 
 !requirements.txt
 !README.txt

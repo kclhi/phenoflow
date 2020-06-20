@@ -205,7 +205,7 @@ describe('t2dm', () => {
 		});
 
 		it("Add read potential cases implementation (i2b2).", async() => {
-			await Workflow.implementation(stepId, "js", "test/implementation/js/", "read-potential-cases-i2b2.js", USERNAME);
+			await Workflow.implementation(stepId, "js", "test/implementation/js/i2b2/", "read-potential-cases-i2b2.js", USERNAME);
 		});
 
 		createT2DMPhenotype();

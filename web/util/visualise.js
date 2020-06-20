@@ -80,6 +80,8 @@ class Visualise {
       return false;
     }
 
+    return true;
+
   }
 
   static async getWorkflowPNGFromViewer(id, file) {
