@@ -9,14 +9,14 @@ class Download {
   static async createPFZipFile(id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise=false) {
 
     let archive = await Zip.createFile(name);
-    await Download.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise)
+    return await Download.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise)
 
   }
 
   static async createPFZipResponse(res, id, name, workflow, workflowInputs, implementationUnits, steps, about) {
 
     let archive = await Zip.createResponse(name, res);
-    await Download.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, true)
+    return await Download.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, true)
 
   }
 
@@ -55,6 +55,7 @@ class Download {
     license = license.replace(/\[year\]/g, new Date().getFullYear());
     await Zip.add(archive, license, "LICENSE.md");
     await Zip.output(archive);
+    return true;
 
   }
 

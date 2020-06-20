@@ -132,13 +132,14 @@ async function generateWorkflow(workflowId, language=null, implementationUnits=n
   }
   if(generate.statusCode==200&&generate.body&&generate.body.workflow&&generate.body.workflowInputs&&generate.body.steps) {
     if(!await Download.createPFZipResponse(res, workflowId, workflow.name, generate.body.workflow, generate.body.workflowInputs, language?language:implementationUnits, generate.body.steps, workflow.about)) {
-      logger.debug("Error generating workflow.")
+      logger.debug("Error generating workflow.");
       return false;
     }
   } else {
     logger.debug("Error generating workflow.");
     return false;
   }
+  return true;
 
 }
 
@@ -147,7 +148,6 @@ router.get("/generate/:workflowId/:language", async function(req, res, next) {
   if(req.body.implementationUnits) return res.sendStatus(404);
   try {
     if(!await generateWorkflow(req.params.workflowId, req.params.language, null, res)) return res.sendStatus(500);
-    res.sendStatus(200);
   } catch(error) {
     logger.debug("Generate workflow error: " + error);
     return res.sendStatus(500);
@@ -160,7 +160,6 @@ router.post("/generate/:workflowId", async function(req, res, next) {
   if(!req.body.implementationUnits) return res.sendStatus(404);
   try {
     if (!await generateWorkflow(req.params.workflowId, null, req.body.implementationUnits, res)) return res.sendStatus(500);
-    res.sendStatus(200);
   } catch(error) {
     logger.debug("Error generating worflow: " + error);
     return res.sendStatus(500);
