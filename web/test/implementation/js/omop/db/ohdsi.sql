@@ -19,7 +19,5 @@ INSERT INTO ohdsi.source_daimon(source_daimon_id, source_id, daimon_type, table_
 
 -- https://forums.ohdsi.org/t/cohort-generation-in-atlas-with-generation-status-failed/5690/25
 ALTER TABLE ohdsi.cohort_inclusion_result ADD mode_id int NOT NULL DEFAULT 0;
-
 ALTER TABLE ohdsi.cohort_inclusion_stats ADD mode_id int NOT NULL DEFAULT 0;
-
 ALTER TABLE ohdsi.cohort_summary_stats ADD mode_id int NOT NULL DEFAULT 0;
