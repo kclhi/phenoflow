@@ -615,6 +615,7 @@ web/provenance-templates/*.json
 web/test/implementation/js/omop/db/cdm/
 web/test/implementation/js/omop/db/data/
 web/test/implementation/js/omop/db/vocabulary/
+web/test/implementation/js/omop/db/results.sql
 web/test/implementation/js/omop/etl/data/
 web/test/implementation/js/omop/etl/vocabulary/
 
