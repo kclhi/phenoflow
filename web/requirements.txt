@@ -1,6 +1,7 @@
 archiver
 bcrypt
 body-parser
+chai
 config
 cookie-parser
 debug
@@ -13,13 +14,17 @@ got
 http-errors
 isomorphic-git
 jsonwebtoken
+markdown-to-json
+mocha
 morgan
 mysql2
+neat-csv
+node-cron
 proxyquire
 pug
-request
 sanitize-html
 sequelize
 sequelize-cli
+sqlite3
 winston
 yaml

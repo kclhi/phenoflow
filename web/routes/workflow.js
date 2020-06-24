@@ -106,12 +106,12 @@ router.post("/new", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['
 
 router.post("/update/:id", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
-  if(!req.body.name||!req.user.sub||!req.body.about) return res.sendStatus(500);
+  if(!req.body.name||!req.body.about||!req.user.sub) return res.sendStatus(500);
 
   try {
     let workflow = await models.workflow.findOne({where:{id:req.params.id}});
     if(!(workflow.userName==req.user.sub)) return res.sendStatus(500);
-    await models.workflow.upsert({id:req.params.id, name:req.body.name, author:req.user.sub, about:req.body.about});
+    await models.workflow.upsert({id:req.params.id, name:req.body.name, about:req.body.about, userName:req.user.sub,});
     res.sendStatus(200);
   } catch(error) {
     error = "Error updating workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);

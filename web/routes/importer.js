@@ -156,7 +156,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   // Add data read (omop)
   try {
-    await createStep(workflowId, "read-potential-cases-omop", "Read potential cases from OMOP DB.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from OMOP DB.", OUTPUT_EXTENSION, "read-potential-cases-omop.js", language, "templates/read-potential-cases-omop.js", {"PHENOTYPE":clean(NAME.toLowerCase())});
+    await createStep(workflowId, "read-potential-cases-omop", "Read potential cases from OMOP DB.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from an OMOP DB.", OUTPUT_EXTENSION, "read-potential-cases-omop.js", language, "templates/read-potential-cases-omop.js", {"PHENOTYPE":clean(NAME.toLowerCase())});
   } catch(error) {
     logger.debug("Error creating first step from import: " + error);
     return res.status(500).send(error);
