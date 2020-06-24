@@ -153,6 +153,28 @@ describe('t2dm', () => {
 
 		}
 
+		async function createInput(targetDatasource, implementationLangauge, implementationLangaugeExtension) {
+
+			// 1. read-potential-cases
+
+			it("Add read potential cases step (" + targetDatasource + ").", async() => {
+				stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases", "Read potential cases from " + targetDatasource, "load", USERNAME);
+			});
+
+			it("Add read potential cases input (" + targetDatasource + ").", async() => {
+				await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
+			});
+
+			it("Add read potential cases output (" + targetDatasource + ").", async() => {
+				await Workflow.output(stepId, "Initial potential cases, read from " + targetDatasource + ".", "csv", USERNAME);
+			});
+
+			it("Add read potential cases implementation (" + targetDatasource + ").", async() => {
+				await Workflow.implementation(stepId, implementationLangauge, "test/implementation/" + implementationLangauge + "/t2dm/" + targetDatasource + "/", "read-potential-cases-" + targetDatasource + "." + implementationLangaugeExtension, USERNAME);
+			});
+
+		}
+
 		it("Should be able to add a new user.", async() => {
 			const result = await models.user.create({name:"phekb", password:config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://phekb.org"});
 			result.should.be.a("object");
@@ -164,49 +186,7 @@ describe('t2dm', () => {
 			workflowId = await Workflow.createWorkflow(NAME, "Type 2 Diabetes Mellitus", "phekb", USERNAME);
 		});
 
-		// 1. read-potential-cases
-
-		it('Add read potential cases step.', async() => {
-			stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases", "Read potential cases", "load", USERNAME);
-		});
-
-		it('Add read potential cases input.', async() => {
-			await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
-		});
-
-		it('Add read potential cases output.', async() => {
-			await Workflow.output(stepId, "Initial potential cases, read from disc.", "csv", USERNAME);
-		});
-
-		it('Add read potential cases implementation.', async() => {
-			await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "read-potential-cases.knwf", USERNAME);
-		});
-
-		createT2DMPhenotype();
-
-		// Second T2DM phenotype
-
-		it('Create T2DM workflow.', async() => {
-			workflowId = await Workflow.createWorkflow(NAME, "Type 2 Diabetes Mellitus", "phekb", USERNAME);
-		});
-
-		// 1. read-potential-cases (i2b2)
-
-		it("Add read potential cases step (i2b2).", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases-i2b2", "Read potential cases from i2b2", "external", USERNAME);
-		});
-
-		it("Add read potential cases input (i2b2).", async() => {
-			await Workflow.input(stepId, "Potential cases of this type of diabetes.", USERNAME);
-		});
-
-		it("Add read potential cases output (i2b2).", async() => {
-			await Workflow.output(stepId, "Initial potential cases, read from i2b2 instance.", "csv", USERNAME);
-		});
-
-		it("Add read potential cases implementation (i2b2).", async() => {
-			await Workflow.implementation(stepId, "js", "test/implementation/js/i2b2/", "read-potential-cases-i2b2.js", USERNAME);
-		});
+		createInput("disc", "knime", "knwf")
 
 		createT2DMPhenotype();
 

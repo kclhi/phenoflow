@@ -122,11 +122,12 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
   }
   const NAME = clean(sanitizeHtml(req.body.name));
   const ABOUT = sanitizeHtml(req.body.about);
+  // Disc
   let workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
   let language = "python";
   const OUTPUT_EXTENSION = "csv";
 
-  // Add data read (csv)
+  // Add data read
   try {
     await createStep(workflowId, "read-potential-cases", "Read potential cases", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", language, "templates/read-potential-cases.py", {"PHENOTYPE":clean(NAME.toLowerCase())});
   } catch(error) {
@@ -135,6 +136,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
   }
 
   await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+  // i2b2
   workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
   language = "js";
 
@@ -148,6 +150,21 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   language = "python";
   await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+  // omop
+  workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
+  language = "js";
+
+  // Add data read (omop)
+  try {
+    await createStep(workflowId, "read-potential-cases-omop", "Read potential cases from OMOP DB.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from OMOP DB.", OUTPUT_EXTENSION, "read-potential-cases-omop.js", language, "templates/read-potential-cases-omop.js", {"PHENOTYPE":clean(NAME.toLowerCase())});
+  } catch(error) {
+    logger.debug("Error creating first step from import: " + error);
+    return res.status(500).send(error);
+  }
+
+  language = "python";
+  await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+
   res.sendStatus(200);
 
 });

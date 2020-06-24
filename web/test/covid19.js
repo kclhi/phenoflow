@@ -70,6 +70,28 @@ describe("covid19", () => {
 
 		}
 
+		async function createInput(targetDatasource, implementationLangauge, implementationLangaugeExtension) {
+
+			// 1. read-potential-cases
+
+			it("Add read potential cases step (" + targetDatasource + ").", async() => {
+				stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases", "Read potential cases from " + targetDatasource, "load", USERNAME);
+			});
+
+			it("Add read potential cases input (" + targetDatasource + ").", async() => {
+				await Workflow.input(stepId, "Potential cases of covid-19.", USERNAME);
+			});
+
+			it("Add read potential cases output (" + targetDatasource + ").", async() => {
+				await Workflow.output(stepId, "Initial potential cases, read from " + targetDatasource + ".", "csv", USERNAME);
+			});
+
+			it("Add read potential cases implementation (" + targetDatasource + ").", async() => {
+				await Workflow.implementation(stepId, implementationLangauge, "test/implementation/" + implementationLangauge + "/covid19/" + targetDatasource + "/", "read-potential-cases-" + targetDatasource + "." + implementationLangaugeExtension, USERNAME);
+			});
+
+		}
+
 		it("Should be able to add a new user.", async() => {
 			const result = await models.user.create({name: USERNAME, password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "http://covid19-phenomics.org/"});
 			result.should.be.a("object");
@@ -81,23 +103,7 @@ describe("covid19", () => {
 			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
 		});
 
-		// 1. read-potential-cases
-
-		it("Add read potential cases step.", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases", "Read potential cases", "load", USERNAME);
-		});
-
-		it("Add read potential cases input.", async() => {
-			await Workflow.input(stepId, "Potential cases of covid-19.", USERNAME);
-		});
-
-		it("Add read potential cases output.", async() => {
-			await Workflow.output(stepId, "Initial potential cases, read from disc.", "csv", USERNAME);
-		});
-
-		it("Add read potential cases implementation.", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/covid19/", "read-potential-cases.py", USERNAME);
-		});
+		createInput("disc", "python", "py");
 
 		createCOVIDPhenotype();
 
@@ -107,23 +113,17 @@ describe("covid19", () => {
 			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
 		});
 
-		// 1. read-potential-cases (i2b2)
+		createInput("i2b2", "js", "js");
 
-		it("Add read potential cases step (i2b2).", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases-i2b2", "Read potential cases from i2b2", "external", USERNAME);
+		createCOVIDPhenotype();
+
+		// Third COVID phenotype
+
+		it("Create covid workflow (omop).", async() => {
+			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
 		});
 
-		it("Add read potential cases input (i2b2).", async() => {
-			await Workflow.input(stepId, "Potential cases of covid-19.", USERNAME);
-		});
-
-		it("Add read potential cases output (i2b2).", async() => {
-			await Workflow.output(stepId, "Initial potential cases, read from i2b2 instance.", "csv", USERNAME);
-		});
-
-		it("Add read potential cases implementation (i2b2).", async() => {
-			await Workflow.implementation(stepId, "js", "test/implementation/js/i2b2/", "read-potential-cases-i2b2.js", USERNAME);
-		});
+		createInput("omop", "js", "js");
 
 		createCOVIDPhenotype();
 
