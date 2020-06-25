@@ -36,7 +36,11 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
         | Switch to:&nbsp;
         each child in children
           a(href="/phenoflow/phenotype/download/" + child.workflowId)
-            | #{child.stepName}&nbsp;
+            | #{child.stepName}
+          if children.indexOf(child) != children.length-1
+            | ,&nbsp;
+          else
+            | .
     div(class="row")
       div(class="col")
         div(class="highlight arrow") &#8675;

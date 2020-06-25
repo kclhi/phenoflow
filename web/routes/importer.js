@@ -129,7 +129,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   // Add data read
   try {
-    await createStep(workflowId, "read-potential-cases", "Read potential cases", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", language, "templates/read-potential-cases.py", {"PHENOTYPE":clean(NAME.toLowerCase())});
+    await createStep(workflowId, "read-potential-cases-disc", "Read potential cases from disc", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", language, "templates/read-potential-cases-disc.py", {"PHENOTYPE":clean(NAME.toLowerCase())});
   } catch(error) {
     logger.debug("Error creating first step from import: " + error);
     return res.status(500).send(error);
@@ -156,7 +156,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   // Add data read (omop)
   try {
-    await createStep(workflowId, "read-potential-cases-omop", "Read potential cases from OMOP DB.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from an OMOP DB.", OUTPUT_EXTENSION, "read-potential-cases-omop.js", language, "templates/read-potential-cases-omop.js", {"PHENOTYPE":clean(NAME.toLowerCase())});
+    await createStep(workflowId, "read-potential-cases-omop", "Read potential cases from an OMOP db.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from an OMOP DB.", OUTPUT_EXTENSION, "read-potential-cases-omop.js", language, "templates/read-potential-cases-omop.js", {"PHENOTYPE":clean(NAME.toLowerCase())});
   } catch(error) {
     logger.debug("Error creating first step from import: " + error);
     return res.status(500).send(error);

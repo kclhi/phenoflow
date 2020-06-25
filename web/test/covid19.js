@@ -75,7 +75,7 @@ describe("covid19", () => {
 			// 1. read-potential-cases
 
 			it("Add read potential cases step (" + targetDatasource + ").", async() => {
-				stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases", "Read potential cases from " + targetDatasource, "load", USERNAME);
+				stepId = await Workflow.upsertStep(workflowId, 1, "read-potential-cases-" + targetDatasource, "Read potential cases from " + targetDatasource, "load", USERNAME);
 			});
 
 			it("Add read potential cases input (" + targetDatasource + ").", async() => {

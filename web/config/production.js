@@ -7,7 +7,8 @@ module.exports = {
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
     host: "phenoflow_mariadb_1",
-    dialect: "mysql"
+    dialect: "mysql",
+    logging: false
   },
   user:{
     DEFAULT_PASSWORD: process.env.DEFAULT_PASSWORD

@@ -117,8 +117,11 @@ class Workflow {
   // A workflow is defined as being a child of another if all but one of their steps overlap OR if all of their steps overlap.
   static async workflowChild(workflowId) {
 
-    const workflows = await models.workflow.findAll({where:{complete:true, [op.or]:[{'$parent.child.parentId$':{[op.not]:workflowId}}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}]});
-    if(!workflows.filter((workflow)=>{return workflow.id==workflowId}).length) return;
+    let workflows = await models.workflow.findAll();
+    if(!workflows.filter(workflow=>workflow.id==workflowId).length) return;
+    const children = await models.child.findAll({where:{parentId:workflowId}});
+    // Can't be child of workflow that already parent of.
+    workflows = workflows.filter(workflow=>children.map(child=>child.workflowId).indexOf(workflow.id)<0);
     const candidateChildSteps = await models.step.findAll({where:{workflowId:workflowId}});
     if (!candidateChildSteps) throw new Error(ERROR_PREFIX + "Error getting candidate workflow steps.");
     let matchingSteps = 0;

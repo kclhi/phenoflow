@@ -65,9 +65,7 @@ app.use(function(err, req, res, next) {
 });
 
 cron.schedule("0 * * * *", async function() {
-  for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) {
-    await workflowUtils.workflowChild(workflow.id);
-  }
+  for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await workflowUtils.workflowChild(workflow.id);
 });
 
 module.exports = app;

@@ -1,3 +1,5 @@
+// martinchapman, 2020.
+
 const got = require("got");
 const parser = require('fast-xml-parser');
 const fs = require('fs').promises;

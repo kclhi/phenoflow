@@ -1,7 +1,9 @@
+// martinchapman, 2020.
+
 const got = require("got");
 const fs = require('fs').promises;
 
-const OHDSI_WEBAPI_ENDPOINT="http://172.19.0.1:8081/WebAPI";
+const OHDSI_WEBAPI_ENDPOINT="http://172.19.0.1:8080/WebAPI";
 const DB_SOURCE_NAME="OHDSI-CDMV5"
 
 function patientToCodes(patients, patient, code) {
