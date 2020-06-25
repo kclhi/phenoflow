@@ -7,6 +7,7 @@ const morgan = require("morgan");
 const logger = require("./config/winston");
 const fileUpload = require("express-fileupload");
 const cron = require("node-cron");
+require('dotenv').config()
 
 const models = require("./models");
 const index = require("./routes");

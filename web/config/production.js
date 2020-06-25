@@ -10,7 +10,7 @@ module.exports = {
     dialect: "mysql",
     logging: false
   },
-  user:{
+  user: {
     DEFAULT_PASSWORD: process.env.DEFAULT_PASSWORD
   },
   generator: {

@@ -17,5 +17,5 @@ module.exports = {
     HOST: "localhost",
     CONTAINER_HOST: "git-server",
     PORT: ":7005"
-  },
+  }
 };
