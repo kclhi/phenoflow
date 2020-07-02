@@ -4,10 +4,11 @@ Portable, workflow-based phenotype definitions.
 
 [https://kclhi.org/phenoflow](https://kclhi.org/phenoflow)
 
-[![StackShare](http://img.shields.io/badge/tech-stack-0690fa.svg?style=flat)](https://stackshare.io/martinchapman/phenoflow)
 ___
 
 Components of the Phenoflow architecture.
+
+[![StackShare](http://img.shields.io/badge/tech-stack-0690fa.svg?style=flat)](https://stackshare.io/martinchapman/phenoflow)
 
 ## Prerequisites
 

@@ -31,7 +31,7 @@ router.post('/:workflowId/:position', jwt({secret:config.get("jwt.RSA_PRIVATE_KE
 
 });
 
-router.post('/delete/:workflowId/:position', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY")}), async function(req, res, next) {
+router.post('/delete/:workflowId/:position', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   try {
     let removedStep = await models.step.destroy({where:{workflowId:req.params.workflowId, position:req.params.position}});

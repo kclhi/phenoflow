@@ -13,9 +13,18 @@ block content
     div(class="row align-items-center")
       div(class="col")
         a(href="/phenoflow/phenotype/all/")
-          img(src="/phenoflow/images/run.gif" class="box")
+          img(src="/phenoflow/images/run.png" class="box")
       div(class="col index-box")
-        | Download and immediately execute a phenotype against a local dataset with only two dependencies: <a href="https://github.com/common-workflow-language/cwltool">cwltool</a> and <a href="https://docs.docker.com/get-docker/">docker</a>.
+        | Download and immediately execute a phenotype against a local dataset.
+    div(class="row")
+      div()
+        | &nbsp;
+    div(class="row align-items-center")
+      div(class="col")
+        a(href="/phenoflow/phenotype/all/")
+          img(src="/phenoflow/images/view.png" class="box")
+      div(class="col index-box")
+          | Browse phenotypes represented in a standard format. <a href="/phenoflow/phenotype/all/">#{count}</a> phenotypes are currently available.
     div(class="row")
       div()
         | &nbsp;
@@ -24,16 +33,7 @@ block content
         a(href="/phenoflow/phenotype/all/")
           img(src="/phenoflow/images/custom.png" class="box")
       div(class="col index-box")
-        | Customise existing phenotype implementations. <a href="/phenoflow/phenotype/all/">#{count}</a> existing phenotype definitions are currently available.
-    div(class="row")
-      div()
-        | &nbsp;
-    div(class="row align-items-center")
-      div(class="col")
-        a(href="/phenoflow/phenotype/all/")
-          img(src="/phenoflow/images/abstract.png" class="box")
-      div(class="col index-box")
-        | Understand what is being executed with an intelligible definition powered by <a href="https://github.com/common-workflow-language/cwlviewer">cwl-viewer</a>.
+        | Find and customise existing phenotypes, for local requirements.
     div(class="row")
       div()
         | &nbsp;
@@ -43,3 +43,21 @@ block content
           img(src="/phenoflow/images/define.png" class="box")
       div(class="col index-box")
         | Graphically author new phenotypes.
+    div(class="row d-flex align-items-center")
+      div(class="col d-flex align-items-center")
+        p
+          | Phenotype execution only has two dependencies: <a href="https://github.com/common-workflow-language/cwltool">cwltool</a> and <a href="https://docs.docker.com/get-docker/">docker</a>.
+        p
+          img(src="/phenoflow/images/run.gif")
+    div(class="row")
+      div()
+        | &nbsp;
+    div(class="row ")
+      div(class="col" style="text-align:center;")
+        | Learn more
+        <br />
+        a(href="https://www.medrxiv.org/content/10.1101/2020.07.01.20144196v1")
+          | Phenoflow: Portable Workflow-based Phenotype Definitions
+        |  (2020)
+        <br />
+        | Martin Chapman, Luke V Rasmussen, Jennifer A Pacheco, Vasa Curcin
