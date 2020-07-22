@@ -8,7 +8,7 @@ module.exports = {
     logging: false
   },
   user:{
-    DEFAULT_PASSWORD: "1234"
+    DEFAULT_PASSWORD: "password"
   },
   jwt: {
     RSA_PRIVATE_KEY: raw(fs.readFileSync("certs/rsa-private-key.pem", "utf-8"))

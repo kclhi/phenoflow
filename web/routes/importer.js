@@ -73,7 +73,7 @@ async function createWorkflow(name, about, userName) {
   } catch(error) {
     error = "Error creating workflow for CSV: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
     logger.debug(error);
-    res.status(500).send(error);
+    return false;
   }
 
 }
@@ -124,6 +124,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
   const ABOUT = sanitizeHtml(req.body.about);
   // Disc
   let workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
+  if (!workflowId) return res.status(500).send("Error creating workflow");
   let language = "python";
   const OUTPUT_EXTENSION = "csv";
 
@@ -138,6 +139,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
   await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
   // i2b2
   workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
+  if(!workflowId) return false;
   language = "js";
 
   // Add data read (i2b2)
@@ -152,6 +154,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
   await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
   // omop
   workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
+  if(!workflowId) return false;
   language = "js";
 
   // Add data read (omop)
@@ -164,8 +167,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   language = "python";
   await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
-
-  res.sendStatus(200);
+  res.send({"workflowId":workflowId});
 
 });
 
