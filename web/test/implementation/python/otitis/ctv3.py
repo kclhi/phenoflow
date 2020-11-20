@@ -1,8 +1,19 @@
 # rest, 2020.
 
-import sys, csv, requests, json
+import sys, csv, json, urllib.request
+from urllib.error import HTTPError
 from html.parser import HTMLParser
 from html.entities import name2codepoint
+
+def postRequest(url, params):
+    req = urllib.request.Request(url, data=bytes(params, encoding="utf-8"));
+    req.add_header('content-type', 'application/x-www-form-urlencoded');
+    try:
+        response = urllib.request.urlopen(req);
+    except HTTPError as exception:
+        print(exception);
+        return None;
+    return response.read().decode('utf8');
 
 def identifyCodes(dynamicCodes):
     staticCodes = ["F527.", "F520.", "XE2QD", "Y20ff"];
@@ -26,15 +37,14 @@ class UMLSParser(HTMLParser):
         for attr in attrs:
             if(attr[0]=="action"):
                 tgt = attr[1].rsplit('/', 1)[-1];
-                r = requests.post("https://utslogin.nlm.nih.gov/cas/v1/tickets/" + tgt, data={"service":"http://umlsks.nlm.nih.gov"})
-                ticket = r.content.decode("utf-8");
-                r = requests.get("https://uts-ws.nlm.nih.gov/rest/search/current?string=otitis&sabs=RCD,SNOMEDCT_US&returnIdType=code&includeObsolete=true&ticket=" + ticket);
-                umlsCodes = [result["ui"] for result in json.loads(r.content.decode("utf-8"))["result"]["results"]]
-                identifyCodes(umlsCodes);
+                ticket = postRequest("https://utslogin.nlm.nih.gov/cas/v1/tickets/" + tgt, "service=http://umlsks.nlm.nih.gov")
+                with urllib.request.urlopen("https://uts-ws.nlm.nih.gov/rest/search/current?string=otitis&sabs=RCD,SNOMEDCT_US&returnIdType=code&includeObsolete=true&ticket=" + ticket) as umlsCodesResponse:
+                    umlsCodes = [result["ui"] for result in json.loads(umlsCodesResponse.read())["result"]["results"]];
+                    identifyCodes(umlsCodes);
 
 parser = UMLSParser()
 
 API_KEY="";
-r = requests.post("https://utslogin.nlm.nih.gov/cas/v1/api-key", data={"apikey":API_KEY})
-if(r.status_code==201): parser.feed(str(r.content));
+tgtRequest = postRequest("https://utslogin.nlm.nih.gov/cas/v1/api-key", "apikey="+API_KEY);
+if(tgtRequest): parser.feed(tgtRequest);
 else: identifyCodes([]);
