@@ -38,9 +38,16 @@ class UMLSParser(HTMLParser):
             if(attr[0]=="action"):
                 tgt = attr[1].rsplit('/', 1)[-1];
                 ticket = postRequest("https://utslogin.nlm.nih.gov/cas/v1/tickets/" + tgt, "service=http://umlsks.nlm.nih.gov")
-                with urllib.request.urlopen("https://uts-ws.nlm.nih.gov/rest/search/current?string=otitis&sabs=RCD,SNOMEDCT_US&returnIdType=code&includeObsolete=true&ticket=" + ticket) as umlsCodesResponse:
-                    umlsCodes = [result["ui"] for result in json.loads(umlsCodesResponse.read())["result"]["results"]];
-                    identifyCodes(umlsCodes);
+                if(ticket):
+                    try:
+                        with urllib.request.urlopen("https://uts-ws.nlm.nih.gov/rest/search/current?string=otitis&sabs=RCD,SNOMEDCT_US&returnIdType=code&includeObsolete=true&ticket=" + ticket) as umlsCodesResponse:
+                            umlsCodes = [result["ui"] for result in json.loads(umlsCodesResponse.read())["result"]["results"]];
+                            identifyCodes(umlsCodes);
+                    except HTTPError as exception:
+                        print(exception);
+                        identifyCodes([]);
+                else:
+                    identifyCodes([]);
 
 parser = UMLSParser()
 
