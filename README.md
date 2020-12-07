@@ -13,7 +13,7 @@ Components of the Phenoflow architecture.
 ## Prerequisites
 
 1. [Docker (machine)](https://docs.docker.com/machine/install-machine/).
-2. [Python 3](https://www.python.org/download/releases/3.7).
+2. [Python 3](https://www.python.org/downloads/release/python-370/).
 3. [Pip](https://pip.pypa.io/en/stable/installing/).
 4. [Virtualenv](https://virtualenv.pypa.io/en/latest/installation/).
 
