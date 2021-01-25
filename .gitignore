@@ -612,6 +612,7 @@ examples/
 output/
 web/uploads/
 web/provenance-templates/*.json
+web/templates/read-potential-cases-gstt.py
 
 !requirements.txt
 !README.txt

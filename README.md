@@ -21,6 +21,15 @@ Components of the Phenoflow architecture.
 
 ## Configuration
 
+### Certificate generation
+
+1. Run [visualiser/git-server/certs/ge-ca-cert.sh](visualiser/git-server/certs/ge-ca-cert.sh).
+2. Run [visualiser/git-server/certs/ge-domain-cert.sh](visualiser/git-server/certs/ge-domain-cert.sh).
+3. Copy [visualiser/git-server/certs/pf.pem](visualiser/git-server/certs/pf.pem) to [visualiser/spring/certs](visualiser/spring/certs).
+4. Copy [visualiser/git-server/certs/pf.pem](visualiser/git-server/certs/pf.pem) to [web/certs](web/certs).
+4. Copy [visualiser/git-server/certs/pf.*](visualiser/git-server/certs) to [web/proxy/certs](web/certs).
+5. Run [web/proxy/certs/gen-domain-cert.sh](web/proxy/certs/gen-domain-cert.sh).
+
 ### .env
 
 Create a `.env` file in project root.
@@ -35,7 +44,7 @@ MYSQL_PASSWORD=
 MYSQL_DATABASE=
 ```
 
-Location of a root certificate, allowing 'web' to communicate with other services:
+Location of a root certificate within [web](web) (e.g. '[certs/pf.pem](web/cers/pf.pem)'), allowing 'web' to communicate with other services:
 
 `NODE_EXTRA_CA_CERTS=`
 
@@ -46,15 +55,6 @@ RSA private key (for JWT signing) name, to be generated, e.g. `openssl genrsa -o
 Path on host server (without keyname) to private key:
 
 `HOST_RSA_PRIVATE_KEY_PATH=`
-
-### Certificate generation
-
-1. Run [visualiser/git-server/certs/ge-ca-cert.sh](visualiser/git-server/certs/ge-ca-cert.sh).
-2. Run [visualiser/git-server/certs/ge-domain-cert.sh](visualiser/git-server/certs/ge-domain-cert.sh).
-3. Copy [visualiser/git-server/certs/pf.pem](visualiser/git-server/certs/pf.pem) to [visualiser/spring/certs](visualiser/spring/certs).
-4. Copy [visualiser/git-server/certs/pf.pem](visualiser/git-server/certs/pf.pem) to [web/certs](web/certs).
-4. Copy [visualiser/git-server/certs/pf.*](visualiser/git-server/certs) to [web/proxy/certs](web/certs).
-5. Run [web/proxy/certs/gen-domain-cert.sh](web/proxy/certs/gen-domain-cert.sh).
 
 ### DB encryption
 
