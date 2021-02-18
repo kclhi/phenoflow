@@ -2,7 +2,9 @@ archiver
 bcrypt
 body-parser
 chai
+chai-http
 config
+compromise
 cookie-parser
 debug
 dotenv
@@ -22,9 +24,11 @@ neat-csv
 node-cron
 proxyquire
 pug
+request
 sanitize-html
 sequelize
 sequelize-cli
+string-similarity
 sqlite3
 winston
 yaml

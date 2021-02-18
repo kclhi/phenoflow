@@ -11,7 +11,7 @@ module.exports = {
     RSA_PRIVATE_KEY: "abcd"
   },
   importer: {
-    CSV_FOLDER: "phenotype-id.github.io",
+    CSV_FOLDER: "hdr-caliber-phenome-portal",
     SAIL_API: "https://conceptlibrary.saildatabank.com/api",
     SAIL_USERNAME: process.env.SAIL_USERNAME,
     SAIL_PASSWORD: process.env.SAIL_PASSWORD

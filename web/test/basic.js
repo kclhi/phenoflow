@@ -1,3 +1,5 @@
+// compromise doesn't play nicely with chai, so load it in the first test (TODO: properly reset module requires between tests)
+const nlp = require('compromise');
 const chai = require("chai");
 chai.use(require("chai-http"));
 const server = require("../app");
