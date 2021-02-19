@@ -29,6 +29,7 @@
     "markdown-to-json": "^0.5.4",
     "morgan": "^1.10.0",
     "mysql2": "^2.2.5",
+    "natural": "^4.0.0",
     "neat-csv": "^6.0.0",
     "node-cron": "^2.0.3",
     "pug": "^3.0.0",

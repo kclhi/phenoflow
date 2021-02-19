@@ -607,6 +607,7 @@ dmypy.json
 *.sqlite
 *.dot
 *.txt
+*-journal
 
 examples/
 output/

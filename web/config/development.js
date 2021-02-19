@@ -5,7 +5,7 @@ module.exports = {
   dbConfig: {
 	  dialect: "sqlite",
 	  storage: "db.dev.sqlite",
-    logging: false
+      logging: false
   },
   user:{
     DEFAULT_PASSWORD: "password"

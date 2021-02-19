@@ -20,6 +20,7 @@ markdown-to-json
 mocha
 morgan
 mysql2
+natural
 neat-csv
 node-cron
 proxyquire
