@@ -153,9 +153,9 @@ Inside [web](web), run all tests:
 
 `npm test`
 
-Run specific test:
+Run specific test(s):
 
-`NODE_ENV=test mocha --g "basic" --exit`
+`NODE_ENV=test npx mocha -g "TB1|TI1|TI3|covid|t2dm|TI5" --exit`
 
 Inside [generator](generator), run all tests:
 

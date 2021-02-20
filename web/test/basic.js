@@ -22,7 +22,7 @@ describe("basic", () => {
 
 		// Add:
 
-		it("Should be able to add a new user.", async() => {
+		it("[TB1] Should be able to add a new user.", async() => {
 			await models.sequelize.sync({force:true});
 			const result = await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});
 			result.should.be.a("object");
