@@ -192,7 +192,7 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
       let markdowns = [];
 
       if(!phenotypes) res.sendStatus(500);
-
+      
       for(let phenotype of phenotypes) {
 
         let lastHeading="";

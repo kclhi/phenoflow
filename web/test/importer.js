@@ -249,22 +249,21 @@ describe("importer", () => {
         let yaml;
         for(let term of markdown.name.split(" ")) {
           var res = await chai.request(server).post("/phenoflow/importer/caliber/annotate").send({markdown:markdown, name:term, about:markdown.phenotype_id});
-          if(!res.body) continue;
-          if(res.body.markdowns.length==0||res.body.markdowns.length>1) continue;
-          yaml = res.body.markdowns[0];
-          break;
-        }
-        if(yaml&&(yaml.toLowerCase().includes("implementation")&&!yaml.includes("phenoflow"))) {
-          console.error("Phenoflow link not added: " + yaml);
-          break;
+          if(!res.body&&!res.body.markdowns) continue;
+          for(let markdownYAML of res.body.markdowns) {
+            var id = markdownYAML.match(/\/download\/[0-9]+"/g)[0];
+            if(ids.includes(id)) continue;
+            yaml = markdownYAML;
+          }
         }
         if(!yaml) {
           console.error("No suitable phenotype found: " + markdown.name + " " + markdown.phenotype_id);
-          break;
         }
         expect(yaml).to.not.be.undefined;
-        let id = yaml.match(/\/download\/[0-9]+"/g)[0];
-        expect(ids).to.not.include(id);
+        if(!yaml.includes("phenoflow")) {
+          console.error("Phenoflow link not added: " + yaml);
+        }
+        expect(yaml).to.include("phenoflow");
         ids.push(id);
         await fs.writeFile("test/output/importer/" + file, yaml);
       }
