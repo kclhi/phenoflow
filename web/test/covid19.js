@@ -100,7 +100,7 @@ describe("covid19", () => {
 		// First COVID phenotype
 
 		it("Create covid workflow.", async() => {
-			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
+			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus).", USERNAME);
 		});
 
 		createInput("disc", "python", "py");

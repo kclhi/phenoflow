@@ -115,17 +115,19 @@ class Workflow {
   }
 
   // A workflow is defined as being a child of another if all but one of their steps overlap OR if all of their steps overlap.
-  static async workflowChild(workflowId) {
+  static async workflowChild(workflowId, exhaustive=false) {
 
     let workflows = await models.workflow.findAll();
     if(!workflows.filter(workflow=>workflow.id==workflowId).length) return;
     const children = await models.child.findAll({where:{parentId:workflowId}});
     // Can't be child of workflow that already parent of.
     workflows = workflows.filter(workflow=>children.map(child=>child.workflowId).indexOf(workflow.id)<0);
+    // Non-exhaustive searches only examine potential parent workflows with the same name.
+    if(!exhaustive) workflows = workflows.filter(workflow=>workflow.name==workflows.filter((workflow)=>{return workflow.id==workflowId})[0].name);
     const candidateChildSteps = await models.step.findAll({where:{workflowId:workflowId}});
     if (!candidateChildSteps) throw new Error(ERROR_PREFIX + "Error getting candidate workflow steps.");
-    let matchingSteps = 0;
     for(let workflow of workflows) {
+      let matchingSteps = 0;
       if(workflowId!=workflow.id) {
         const ERROR_PREFIX = "Unable to identify workflow intersection: ";
         const workflowSteps = await models.step.findAll({where:{workflowId:workflow.id}});
@@ -151,9 +153,12 @@ class Workflow {
           distinctStepName = candidateChildStep.name;
           distinctStepPosition = candidateChildStep.position;
         }
-        if(matchingSteps==candidateChildSteps.length||matchingSteps==workflowSteps.length-1) {
-          await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
-          matchingSteps=0;
+        if(distinctStepName&&distinctStepPosition
+          &&(matchingSteps==candidateChildSteps.length||matchingSteps==workflowSteps.length-1)
+          // We aren't able to tell if 3-step workflows are children via a middle distinct step.
+          &&!(matchingSteps==2&&!distinctStepName.includes("read")&&!distinctStepName.includes("output"))
+          ) {
+            await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
         }
       }
     }

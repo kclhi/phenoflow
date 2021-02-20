@@ -179,13 +179,13 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
 router.post('/caliber/annotate', async function(req, res, next) {
     
-    if(!req.body.markdown||!req.body.name) {
+    if(!req.body.markdown||!req.body.name||!req.body.about) {
         logger.debug("Missing params.");
         return res.status(500).send("Missing params.");
     }
 
     try {
-        var phenotypes = await models.workflow.findAll({where:{complete:true, name:{[op.like]:req.body.name}, [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}], order:[['name', 'ASC']]})
+        var phenotypes = await models.workflow.findAll({where:{complete:true, name:{[op.like]:"%"+req.body.name+"%"}, about:{[op.like]:"%"+req.body.about+"%"}, [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}], order:[['name', 'ASC']]})
     } catch(error) {
         logger.error(error.message);
     } 
@@ -197,9 +197,10 @@ router.post('/caliber/annotate', async function(req, res, next) {
 
         let lastHeading="";
         let updatedContent="";
+        const BUTTON_HTML = '<button type="button" class="btn btn-sm"><a href="https://kclhi.org/phenoflow/phenotype/download/'+phenotype.id+'">Phenoflow implementation</a></button>\n';
         
         for(let line of req.body.markdown.content.split("\n")) {
-            if(lastHeading.includes("Implementation") && line.startsWith("#")) updatedContent += '<button type="button" class="btn btn-sm"><a href="https://kclhi.org/phenoflow/phenotype/download/'+phenotype.id+'">Phenoflow implementation</a></button>\n'
+            if(lastHeading.includes("Implementation")&&line.startsWith("#")) updatedContent += BUTTON_HTML;
             if(line.startsWith("#")) lastHeading=line;
             updatedContent+=line+"\n";
         }
@@ -210,6 +211,7 @@ router.post('/caliber/annotate', async function(req, res, next) {
         markdown+="---\n";
         
         for(let [key, value] of Object.entries(req.body.markdown)) {
+            if(!value) continue;
             if(key=="content") {
                 markdown+="---\n";
                 markdown+=value?value:"";
@@ -219,15 +221,16 @@ router.post('/caliber/annotate', async function(req, res, next) {
                 markdown+=key+": \n";
                 for(let markdownArrayItem of value) markdown+="    - "+(key=="publications"?"'":"")+markdownArrayItem+(key=="publications"?"' ":"")+"\n";
             } else {
-                if(key.includes("date")) value=value.split('T')[0]
+                if(key.includes("date")&&value.includes("T")) value=value.split("T")[0]
                 markdown+=key+": "+(value?value+(key=="phenotype_id"?" ":""):"")+"\n";
             }
         }
 
+        if(!markdown.includes("phenoflow")) markdown += BUTTON_HTML;
         markdowns.push(markdown);
     }
 
     res.send({"markdowns":markdowns});
 });
-    
+
 module.exports = router;

@@ -26,9 +26,10 @@ describe("importer", () => {
 
         it("[TI1] Should be able to add a new user (CSVs).", async() => {
             await models.sequelize.sync({force:true});
-        	const result = await models.user.create({name:"caliber", password: config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://portal.caliberresearch.org"});
-        	result.should.be.a("object");
+            const result = await models.user.create({name:"caliber", password: config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://portal.caliberresearch.org"});
+            result.should.be.a("object");
         });
+
         function categorise(code, description, codeCategories, name, primary=true) {
             let placed=false;
             let primarySecondary = primary?" - primary":" - secondary";
@@ -41,10 +42,10 @@ describe("importer", () => {
                 let nouns = nlpKey.nouns()?nlpKey.nouns().out("text").split(" "):null;
                 // Adjectives first; both nouns, condition first
                 if(adjectives&&adjectives.length==1&&adjectives[0]!=keyTerms[0]
-                  ||nouns&&nouns.length==2&&name!=keyTerms[0]) {
-                      key=keyTerms[1].toLowerCase();
-                      key+=" "+keyTerms[0].toLowerCase();
-                  }
+                ||nouns&&nouns.length==2&&name!=keyTerms[0]) {
+                    key=keyTerms[1].toLowerCase();
+                    key+=" "+keyTerms[0].toLowerCase();
+                }
                 key=key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
                 return key;
             }
@@ -61,17 +62,17 @@ describe("importer", () => {
                     // Don't consider terms that are the condition itself
                     if(stemmer.stem(term)==stemmer.stem(name)) continue;
                     if((existingCategoryPrefix.includes(term.toLowerCase())
-                        || term.toLowerCase().includes(existingCategoryPrefix)
-                        || stringSimilarity.compareTwoStrings(term.toLowerCase(), existingCategoryPrefix) >= 0.8
-                        ) && term.length > 4) {
-                            codeCategories[existingCategory].push(code);
-                            if(term.toLowerCase()!=existingCategoryPrefix.toLowerCase()) {
-                                let suffix = (!clean(term).includes(clean(name))&&!clean(name).includes(clean(term)))?" "+name:"";
-                                codeCategories[orderKey(term + suffix) + primarySecondary] = codeCategories[existingCategory];
-                                delete codeCategories[existingCategory];
-                            }
-                            placed=true;
-                            break;
+                    || term.toLowerCase().includes(existingCategoryPrefix)
+                    || stringSimilarity.compareTwoStrings(term.toLowerCase(), existingCategoryPrefix) >= 0.8
+                    ) && term.length > 4) {
+                        codeCategories[existingCategory].push(code);
+                        if(term.toLowerCase()!=existingCategoryPrefix.toLowerCase()) {
+                            let suffix = (!clean(term).includes(clean(name))&&!clean(name).includes(clean(term)))?" "+name:"";
+                            codeCategories[orderKey(term + suffix) + primarySecondary] = codeCategories[existingCategory];
+                            delete codeCategories[existingCategory];
+                        }
+                        placed=true;
+                        break;
                     }
                 }
                 if(placed) break;
@@ -84,9 +85,9 @@ describe("importer", () => {
 
         async function importPhenotypeCSVs(phenotypeFiles) {
             let fullCSV;
-            
+
             for(let phenotypeFile of phenotypeFiles) {
-            
+
                 const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/"+phenotypeFile;
 
                 try {
@@ -96,7 +97,7 @@ describe("importer", () => {
                     return false;
                 }
 
-                try { 
+                try {
                     var markdown = JSON.parse(m2js.parse([PATH], {width: 0, content: true}));
                     var markdownContent = markdown[phenotypeFile.replace(".md", "")];
                 } catch(error) {
@@ -194,7 +195,7 @@ describe("importer", () => {
             }
 
             const server = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
-            let res = await chai.request(server).post("/phenoflow/importer").send({name:markdownContent.name, about:markdownContent.title, codeCategories:codeCategories, userName:"caliber"});
+            let res = await chai.request(server).post("/phenoflow/importer").send({name:markdownContent.name, about:markdownContent.phenotype_id+" - "+markdownContent.title, codeCategories:codeCategories, userName:"caliber"});
             res.should.have.status(200);
             res.body.should.be.a("object");
             return true;
@@ -226,30 +227,51 @@ describe("importer", () => {
 
         it("[TI3] Should be able to import all phenotype CSVs.", async() => {
             const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/";
-        	// Can't perform test if folder doesn't exist.
-        	try { await fs.stat(PATH) } catch(error) { return true; }
-        	for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
+            // Can't perform test if folder doesn't exist.
+            try { await fs.stat(PATH) } catch(error) { return true; }
+            for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
                 if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
                     expect(await importPhenotypeCSVs(phenotypeFiles)).to.be.true;
                 } else {
                     for(let phenotypeFile of phenotypeFiles) {
-                        expect(await importPhenotypeCSVs([phenotypeFile]));
+                        expect(await importPhenotypeCSVs([phenotypeFile])).to.be.true;
                     }
                 }
             }
         }).timeout(0);
 
-        it("[TI4] Should be able to annotate a CALIBER MD file with a phenoflow URL.", async() => {
-            const phenotypeFile = "axson_COPD_Y9JxuQRFPprJDMHSPowJYs.md";
-            const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/"+phenotypeFile;
-            // Can't perform test if file doesn't exist.
-            try { await fs.stat(PATH) } catch(error) { return true; }
+        it("[TI4] Should be able to annotate CALIBER MD files with a phenoflow URL.", async() => {
+            const PATH = "test/hdr-caliber-phenome-portal/_phenotypes";
+            let ids=[];
+            for(let file of await fs.readdir(PATH)) {
+                const markdown = JSON.parse(m2js.parse([PATH+"/"+file], {width: 0, content: true}))[file.replace(".md", "")];
+                if(!markdown.codelists) continue;
+                let yaml;
+                for(let term of markdown.name.split(" ")) {
+                    var res = await chai.request(server).post("/phenoflow/importer/caliber/annotate").send({markdown:markdown, name:term, about:markdown.phenotype_id});
+                    if(!res.body) continue;
+                    if(res.body.markdowns.length==0||res.body.markdowns.length>1) continue;
+                    yaml = res.body.markdowns[0];
+                    break;
+                }
+                if(yaml&&(yaml.toLowerCase().includes("implementation")&&!yaml.includes("phenoflow"))) {
+                    console.error("Phenoflow link not added: " + yaml);
+                    break;
+                }
+                if(!yaml) {
+                    console.error("No suitable phenotype found: " + markdown.name + " " + markdown.phenotype_id);
+                    break;
+                }
+                expect(yaml).to.not.be.undefined;
+                let id = yaml.match(/\/download\/[0-9]+"/g)[0];
+                expect(ids).to.not.include(id);
+                ids.push(id);
+                await fs.writeFile("test/output/importer/" + file, yaml);
+            }
+        }).timeout(0);
+
+        it("[TI5] Create children for imported phenotypes.", async() => {
             for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await workflowUtils.workflowChild(workflow.id);
-            const markdown = JSON.parse(m2js.parse([PATH], {width: 0, content: true}));
-            let res = await chai.request(server).post("/phenoflow/importer/caliber/annotate").send({markdown:markdown[phenotypeFile.replace(".md", "")], phenotypeFile:phenotypeFile, name:"COPD"});
-            res.should.have.status(200);
-            res.body.should.be.a("object");
-            expect(res.body.markdowns);
         }).timeout(0);
 
     });
