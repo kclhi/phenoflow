@@ -118,6 +118,8 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
 
     router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
+      req.setTimeout(0);
+
       if(!req.body.name || !req.body.about || !req.body.codeCategories || !req.body.userName) {
         logger.debug("Missing params.");
         return res.status(500).send("Missing params.");
@@ -195,7 +197,7 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
       
       for(let phenotype of phenotypes) {
 
-        let lastHeading="";
+        var lastHeading="";
         let updatedContent="";
         const BUTTON_HTML = '<button type="button" class="btn btn-sm"><a href="https://kclhi.org/phenoflow/phenotype/download/'+phenotype.id+'">Phenoflow implementation</a></button>\n';
 
@@ -226,7 +228,13 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
           }
         }
 
-        if(!markdown.includes("phenoflow")) markdown += BUTTON_HTML;
+        if(!markdown.includes("phenoflow")) {
+          if(!lastHeading.includes("Implementation")) {
+            markdown += "\n" + "### Implementation" + "\n" + BUTTON_HTML;
+          } else {
+            markdown += "\n" + BUTTON_HTML;
+          }
+        } 
         markdowns.push(markdown);
       }
 

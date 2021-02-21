@@ -5,7 +5,7 @@ mixin input(step, id, content, value, type=text, autocomplete="")
     input(value=value type=type class=id + " form-control" placeholder=content aria-label=content aria-describedby=step+id autocomplete=autocomplete)
 
 doctype html
-html
+html(lang="en" class="notranslate" translate="no")
   head
     - pageTitle="Phenoflow | " + title
     title=pageTitle
@@ -23,6 +23,8 @@ html
     script(src="/phenoflow/javascripts/login.js")
     script(src="/phenoflow/javascripts/pf.js")
 
+    include analytics.pug
+    
     script.
 
       ready(function(event) {

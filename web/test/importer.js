@@ -35,7 +35,7 @@ describe("importer", () => {
       function orderKey(key) {
         // Don't attempt reorder on more than two words
         let keyTerms = key.split(" ");
-        if(keyTerms.length!=2) return key;
+        if(keyTerms.length!=2) return key.charAt(0).toUpperCase() + key.slice(1);
         let nlpKey = nlp(key);
         let adjectives = nlpKey.adjectives()?nlpKey.adjectives().out("text").split(" "):null;
         let nouns = nlpKey.nouns()?nlpKey.nouns().out("text").split(" "):null;
@@ -45,7 +45,7 @@ describe("importer", () => {
             key=keyTerms[1].toLowerCase();
             key+=" "+keyTerms[0].toLowerCase();
           }
-          key=key.charAt(0).toUpperCase() + key.slice(1).toLowerCase();
+          key=key.charAt(0).toUpperCase() + key.slice(1);
           return key;
         }
         function clean(input) {

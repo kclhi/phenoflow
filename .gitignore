@@ -614,6 +614,7 @@ output/
 web/uploads/
 web/provenance-templates/*.json
 web/templates/read-potential-cases-gstt.py
+web/views/analytics.pug
 
 !requirements.txt
 !README.txt

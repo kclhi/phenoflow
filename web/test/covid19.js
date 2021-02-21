@@ -110,7 +110,7 @@ describe("covid19", () => {
 		// Second COVID phenotype
 
 		it("Create covid workflow (i2b2).", async() => {
-			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
+			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus).", USERNAME);
 		});
 
 		createInput("i2b2", "js", "js");
@@ -120,7 +120,7 @@ describe("covid19", () => {
 		// Third COVID phenotype
 
 		it("Create covid workflow (omop).", async() => {
-			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus) phenotype identifying cohorts based on controlled clinical terminology terms.", USERNAME);
+			workflowId = await Workflow.createWorkflow(NAME, "COVID-19 (coronavirus).", USERNAME);
 		});
 
 		createInput("omop", "js", "js");
