@@ -135,6 +135,8 @@ class Workflow {
         let distinctStepName, distinctStepPosition;
         for(let candidateChildStep of candidateChildSteps) {
           let workflowStep = null;
+          distinctStepName = candidateChildStep.name;
+          distinctStepPosition = candidateChildStep.position;
           if((workflowStep=workflowSteps.filter((step)=>{return candidateChildStep.name==step.name&&candidateChildStep.doc==step.doc&&candidateChildStep.type==step.type})) && workflowStep.length) {
             // ~MDC Again, eventually there may be multiple inputs and outputs.
             let candidateChildStepInput=await models.input.findOne({where:{stepId:candidateChildStep.id}});
@@ -145,21 +147,15 @@ class Workflow {
             if(!workflowStepInput) throw new Error(ERROR_PREFIX + "Error getting workflow step input.");
             let workflowStepOutput = await models.output.findOne({where:{stepId:workflowStep[0].id}});
             if(!workflowStepOutput) throw new Error(ERROR_PREFIX + "Error getting workflow step output.");
-            if(candidateChildStepInput.doc==workflowStepInput.doc&&candidateChildStepOutput.doc==workflowStepOutput.doc&&candidateChildStepOutput.extension==workflowStepOutput.extension) {
-              matchingSteps++;
-              continue;
-            }
+            if(candidateChildStepInput.doc==workflowStepInput.doc&&candidateChildStepOutput.doc==workflowStepOutput.doc&&candidateChildStepOutput.extension==workflowStepOutput.extension) matchingSteps++;
           }
-          distinctStepName = candidateChildStep.name;
-          distinctStepPosition = candidateChildStep.position;
         }
+  
         if(distinctStepName&&distinctStepPosition
           &&(matchingSteps==candidateChildSteps.length||matchingSteps==workflowSteps.length-1)
           // We aren't able to tell if 3-step workflows are children via a middle distinct step.
           &&!(matchingSteps==2&&!distinctStepName.includes("read")&&!distinctStepName.includes("output"))
-          ) {
-            await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
-        }
+          ) await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
       }
     }
 
