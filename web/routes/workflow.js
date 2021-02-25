@@ -90,6 +90,20 @@ router.get("/download/:workflowId", async function(req, res, next) {
 
 });
 
+
+//added questionnaire
+router.get("/questionnaire", async function(req, res, next) {
+  try {
+    res.render("questionnaire", {title:"Questionnaire"});      
+  }catch(error) {
+    logger.error("Get workflow error: " + error);
+    res.sendStatus(500);
+  }
+});
+
+
+
+
 router.post("/new", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   if(!req.body.name || !req.body.about || !req.body.userName) return res.sendStatus(500);

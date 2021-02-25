@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+export NODE_PATH='/home/yulei/Desktop/phenoflowproject/phenoflow/web/nenv/lib/node_modules'
+export NPM_CONFIG_PREFIX='/home/yulei/Desktop/phenoflowproject/phenoflow/web/nenv'
+export npm_config_prefix='/home/yulei/Desktop/phenoflowproject/phenoflow/web/nenv'
+exec 'nenv/bin/node' "$@"
