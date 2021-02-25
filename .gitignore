@@ -613,8 +613,11 @@ output/
 web/uploads/
 web/provenance-templates/*.json
 web/templates/read-potential-cases-gstt.py
-
+ 
 !requirements.txt
 !README.txt
 !logo.png
 !architecture.png
+
+web/env/
+web/nenv/
