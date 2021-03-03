@@ -30,7 +30,7 @@
     "mysql2": "^2.2.5",
     "neat-csv": "^6.0.0",
     "node-cron": "^2.0.3",
-    "pug": "^3.0.0",
+    "pug": "^3.0.1",
     "request": "^2.88.2",
     "sanitize-html": "^2.2.0",
     "sequelize": "^6.3.5",
