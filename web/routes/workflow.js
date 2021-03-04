@@ -101,6 +101,37 @@ router.get("/questionnaire", async function(req, res, next) {
   }
 });
 
+router.post("/questionnaire/postquestionnaire", async function(req, res, next) {
+
+  try {
+    
+    //let user = await models.user.findOne({where:{name: workflow.userName}});
+    let user="yuleifan"
+    if(user == null){
+      user = ''
+    }
+    console.log(req.body)
+    
+    let questionnaire = await models.questionnaire.create(
+      {
+        username:user, 
+        answers:JSON.stringify(req.body)
+      }
+    );
+ 
+    console.log("inserted")
+    res.send({"id":questionnaire.id});
+    console.log(questionnaire.id)
+    
+    
+  } catch(error) {
+  	console.log(error)
+    error = "Error adding workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+    logger.debug(error);
+    res.status(500).send(error);
+  }
+
+});
 
 
 
