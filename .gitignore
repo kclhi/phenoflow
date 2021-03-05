@@ -621,4 +621,4 @@ web/templates/read-potential-cases-gstt.py
 
 web/env/
 web/nenv/
-generator/env
+generator/env/
