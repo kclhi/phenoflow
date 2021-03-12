@@ -48,13 +48,28 @@ Location of a root certificate within [web](web) (e.g. '[certs/pf.pem](web/cers/
 
 `NODE_EXTRA_CA_CERTS=`
 
-RSA private key (for JWT signing) name, to be generated, e.g. `openssl genrsa -out key.pem 2048`:
+Deployment RSA private key (for JWT signing) name, to be generated, e.g. `openssl genrsa -out key.pem 2048`:
 
 `RSA_PRIVATE_KEY=`
 
-Path on host server (without keyname) to private key:
+Path on target deployment host (without keyname) to private key:
 
 `HOST_RSA_PRIVATE_KEY_PATH=`
+
+#### [web](web) .env
+
+Create a `.env` file in [web](web).
+
+Local development RSA private key full path, to be generated, or reused from above (e.g. `certs/key.pem`):
+
+`RSA_PRIVATE_KEY_FULL_PATH=`
+
+(Optional) If using [SAIL databank](https://saildatabank.com/) import, specify API credentials:
+
+```
+SAIL_USERNAME=
+SAIL_PASSWORD=
+```
 
 ### DB encryption
 
@@ -115,6 +130,12 @@ Install dependencies:
 
 ```
 cat requirements.txt | xargs npm install -g
+```
+
+Create database:
+
+```
+npm run migrate
 ```
 
 Run server:
