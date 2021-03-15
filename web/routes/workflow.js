@@ -8,6 +8,7 @@ const sanitizeHtml = require('sanitize-html');
 const jwt = require('express-jwt');
 const Workflow = require("../util/workflow");
 const Download = require("../util/download");
+const bcrypt = require("bcrypt");
 
 function processOffset(offsetParam) {
 
@@ -134,6 +135,54 @@ router.post("/questionnaire/postquestionnaire", async function(req, res, next) {
 });
 
 
+//added registration
+router.get("/registration", async function(req, res, next) {
+  try {
+    res.render("registration", {title:"Registration",existuser:"new user"});      
+  }catch(error) {
+    logger.error("Get workflow error: " + error);
+    res.sendStatus(500);
+  }
+});
+
+router.get("/registrationok", async function(req, res, next) {
+  try {
+    res.render("registrationok", {title:"Registration",existuser:" Successfully"});      
+  }catch(error) {
+    logger.error("Get workflow error: " + error);
+    res.sendStatus(500);
+  }
+});
+
+router.post("/registration/postregistration", async function(req, res, next) {
+  //insert database
+  console.log(req.body)
+
+  const password = req.body.password1
+  const rounds = 10
+
+  bcrypt.hash(password, rounds, async (err, hash) => {
+    if (err) {
+      console.error(err)
+      return
+    }
+    console.log(hash)
+
+    let newuser = await models.user.create(
+      {
+        name:req.body.email, 
+        password:hash
+      }
+    );
+    console.log("inserted")
+    res.send({"name":newuser.name});
+    console.log(newuser.name)
+
+  })
+
+  //res.redirect('/phenoflow/phenotype/define')//not work
+
+});
 
 router.post("/new", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 

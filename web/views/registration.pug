@@ -1,0 +1,136 @@
+extends layout
+
+block pageJS
+  script.
+
+    function validationName(e){
+        if(document.querySelector("#errors").innerHTML="unknown"){
+          document.querySelector("#errors").innerHTML=""
+        }
+
+        if(e.value.length<1){
+            document.querySelector("#err"+e.id).innerHTML="&nbsp; Should not empty"
+            document.querySelector("#errors").innerHTML=document.querySelector("#errors").innerHTML+"error"
+        }else{
+            if(e.type=="email"){
+                let mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+                if(!e.value.match(mailformat)){
+                    document.querySelector("#err"+e.id).innerHTML="&nbsp; Email format is not right"
+                    document.querySelector("#errors").innerHTML=document.querySelector("#errors").innerHTML+"error"
+                }
+            }else{
+                let ps1=document.querySelector("#password1").value;
+                let ps2=document.querySelector("#password2").value;
+                if(ps2.length>0 && ps2!= ps1){
+                    document.querySelector("#err"+e.id).innerHTML="&nbsp; Password not matched"
+                    document.querySelector("#errors").innerHTML=document.querySelector("#errors").innerHTML+"error"
+                }                    
+            }
+        }           
+
+    }
+
+    function clearErr(e){
+        document.querySelector("#err"+e.id).innerHTML=""
+        let err=document.querySelector("#errors").innerHTML;
+        err=err.replace("error","")
+        document.querySelector("#errors").innerHTML=err
+    }
+
+    function sendForm(){
+      let ckbox=document.querySelector("#agreeckbox")
+      let err=document.querySelector("#errors").innerHTML;
+
+      if(ckbox.checked == true && err == ""){
+          let form = document.querySelector('#registerform')
+          let formdata = new FormData(form)
+          let data={}
+          for (var [key, value] of formdata.entries()) { 
+            data[key] = value
+          }
+
+          let url="phenotype/registration/postregistration"
+          let datajsons=JSON.stringify(data)
+          let callback=function(response){
+            console.log("posted"+response)
+          }
+          sendPostRequest(url, datajsons, callback, contentType='application/json')
+
+      }else{
+        if(ckbox.checked == false){
+          document.querySelector("#erragree").innerHTML="Please tick"              
+        }
+        return
+      }
+
+
+    }
+
+block content
+ 
+  div(class="container")
+    p
+      span(style="color: #ff0000")
+        |*
+      |Please fill in all required fields
+
+    hr
+    form(id="registerform")      
+
+      div(class="form-group")
+        label(for="firstname" class="col-md-8")
+          span
+            span(style="color: #ff0000")
+              |*
+            |First Name
+            span(id="errfirstname" style="color: #ff0000")
+          input(type="text" class="form-control col-md-8" id="firstname" name="firstname" placeholder="Enter your first name" value="" onfocusout="validationName(this)" onkeydown="clearErr(this)")
+      
+        label(for="lastname" class="col-md-8")
+          span
+            span(style="color: #ff0000")
+              |*
+            |Last Name
+            span(id="errlastname" style="color: #ff0000")
+          input(type="text" class="form-control col-md-8" id="lastname" name="lastname" placeholder="Enter your last name" value="" onfocusout="validationName(this)" onkeydown="clearErr(this)")
+
+        label(for="email" class="col-md-8")
+          span
+            span(style="color: #ff0000")
+              |*
+            |Email Address
+            span(id="erremail" style="color: #ff0000")
+          input(type="email" class="form-control col-md-8" id="email" name="email" placeholder="Enter your email address" value="" onfocusout="validationName(this)" onkeydown="clearErr(this)")
+
+        label(for="password1" class="col-md-8")
+          span
+            span(style="color: #ff0000")
+              |*
+            |Password
+            span(id="errpassword1" style="color: #ff0000")
+          input(type="password" class="form-control col-md-8" id="password1" name="password1" placeholder="Create your password" value="" onfocusout="validationName(this)" onkeydown="clearErr(this)")
+
+        label(for="password2" class="col-md-8")
+          span
+            span(style="color: #ff0000")
+              |*
+            |Repeat Password
+            span(id="errpassword2" style="color: #ff0000")
+          input(type="password" class="form-control col-md-8" id="password2" name="password2" placeholder="Repeat your password" value="" onfocusout="validationName(this)" onkeydown="clearErr(this)")
+      hr
+      div(class="form-check col-md-12")        
+        input(type="checkbox" class="form-check-input" id="agreeckbox")
+        span
+          | Check me out for agree
+        span(id="erragree" style="color: #ff0000")
+      if existuser =="existuser"
+        span(style="color: #ff0000")
+          | exist user
+        a(href="./define" style="margin: 10px;" class="a-button", tabindex="0")
+          | Login
+      else 
+          button(onClick="sendForm()" type="button" class="btn btn-info")
+            | Submit
+
+      span(id="errors" style="display:none")
+        | unknown
