@@ -1,3 +1,5 @@
+// compromise doesn't play nicely with chai, so load it in the first test (TODO: properly reset module requires between tests)
+const nlp = require('compromise');
 const chai = require("chai");
 chai.use(require("chai-http"));
 const server = require("../app");
@@ -20,7 +22,7 @@ describe("basic", () => {
 
 		// Add:
 
-		it("Should be able to add a new user.", async() => {
+		it("[TB1] Should be able to add a new user.", async() => {
 			await models.sequelize.sync({force:true});
 			const result = await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});
 			result.should.be.a("object");
