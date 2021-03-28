@@ -61,7 +61,7 @@ class Workflow {
   static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
 
     try {
-      let workflows = await models.workflow.findAll({where:{complete:true, [op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}], order:[['name', 'ASC']]})
+      let workflows = await models.workflow.findAll({where:{complete:true, [op.or]:[{name:{[op.like]:"%"+category+"%"}},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}], order:[['name', 'ASC']]});
       return workflows.slice(offset, offset+limit);
     } catch(error) {
       error = "Error getting complete workflows: " + error;
@@ -135,8 +135,6 @@ class Workflow {
         let distinctStepName, distinctStepPosition;
         for(let candidateChildStep of candidateChildSteps) {
           let workflowStep = null;
-          distinctStepName = candidateChildStep.name;
-          distinctStepPosition = candidateChildStep.position;
           if((workflowStep=workflowSteps.filter((step)=>{return candidateChildStep.name==step.name&&candidateChildStep.doc==step.doc&&candidateChildStep.type==step.type})) && workflowStep.length) {
             // ~MDC Again, eventually there may be multiple inputs and outputs.
             let candidateChildStepInput=await models.input.findOne({where:{stepId:candidateChildStep.id}});
@@ -147,8 +145,13 @@ class Workflow {
             if(!workflowStepInput) throw new Error(ERROR_PREFIX + "Error getting workflow step input.");
             let workflowStepOutput = await models.output.findOne({where:{stepId:workflowStep[0].id}});
             if(!workflowStepOutput) throw new Error(ERROR_PREFIX + "Error getting workflow step output.");
-            if(candidateChildStepInput.doc==workflowStepInput.doc&&candidateChildStepOutput.doc==workflowStepOutput.doc&&candidateChildStepOutput.extension==workflowStepOutput.extension) matchingSteps++;
+            if(candidateChildStepInput.doc==workflowStepInput.doc&&candidateChildStepOutput.doc==workflowStepOutput.doc&&candidateChildStepOutput.extension==workflowStepOutput.extension) { 
+              matchingSteps++;
+              continue;
+            }
           }
+          distinctStepName = candidateChildStep.name;
+          distinctStepPosition = candidateChildStep.position;
         }
   
         if(distinctStepName&&distinctStepPosition
