@@ -168,26 +168,40 @@ router.post("/registration/postregistration", async function(req, res, next) {
     }
     console.log(hash)
 
-    let newuser = await models.user.create(
-      {
-        name:req.body.email, 
-        password:hash
-      }
-    );
-    console.log("inserted")
-    res.send({"name":newuser.name});
-    console.log(newuser.name)
+    try {
+      let newuser = await models.user.create(
+        {
+          name:req.body.email, 
+          password:hash
+        }
+      );
+      //console.log("inserted")
+      res.send({"name":newuser.name});
+      //console.log(newuser.name)
+
+    } catch (error) {
+      //console.log("not inserted")
+      res.send({"name":"exited"}); 
+    }
+
+
+    //res.render("registration", {existuser:"Successfully"});
 
   })
 
   //res.redirect('/phenoflow/phenotype/define')//not work
-
+  
+  
 });
 
 router.post("/new", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   if(!req.body.name || !req.body.about || !req.body.userName) return res.sendStatus(500);
   try {
+    //checking workflow name
+    let exitworkflow = await models.workflow.findOne({where:{name:sanitizeHtml(req.body.name)}});
+    if(!exitworkflow) return res.sendStatus(500).send("duplicated workflow name");
+
     let workflow = await models.workflow.create({name:sanitizeHtml(req.body.name), about:sanitizeHtml(req.body.about), userName:sanitizeHtml(req.body.userName)});
     res.send({"id":workflow.id});
   } catch(error) {

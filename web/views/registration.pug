@@ -2,6 +2,15 @@ extends layout
 
 block pageJS
   script.
+    var testObj2='#{existuser}'
+    console.log('t2',testObj2)
+    if(testObj2=="Successfully"){
+      console.log("here ===========")
+      var obj=document.querySelector("#regstatus");//.innerHTML="Successfully registrated, please login"
+      //document.querySelector("#regstatus").style.display="block"
+      console.log("obj",obj)
+    }
+    console.log("end --------------")
 
     function validationName(e){
         if(document.querySelector("#errors").innerHTML="unknown"){
@@ -52,7 +61,17 @@ block pageJS
           let url="phenotype/registration/postregistration"
           let datajsons=JSON.stringify(data)
           let callback=function(response){
-            console.log("posted"+response)
+            let resObj=JSON.parse(response);
+            if(resObj.name=="exited"){
+              //console.log("exited user, please login")
+              let msgobj=document.querySelector("#regstatus")
+              msgobj.innerHTML="<p>exited user, please <a href='../phenotype/define'>click here</a> to login"
+              msgobj.style.display="block"
+            }else{
+              //console.log("posted already")
+              window.location.href="../phenotype/define";
+            }
+
           }
           sendPostRequest(url, datajsons, callback, contentType='application/json')
 
@@ -134,3 +153,6 @@ block content
 
       span(id="errors" style="display:none")
         | unknown
+      span(id="regstatus" style="color: #ff0000; display:none;")
+        | unknown
+

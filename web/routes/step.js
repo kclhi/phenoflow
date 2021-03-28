@@ -19,6 +19,11 @@ router.post('/:workflowId/:position', jwt({secret:config.get("jwt.RSA_PRIVATE_KE
       return res.status(500).send(error);
     }
     if(!(workflow.userName==req.user.sub)) return res.sendStatus(500);
+
+    //checking step name
+    let exitstep = await models.step.findOne({where:{name:sanitizeHtml(req.body.name)}});
+    if(!exitstep) return res.sendStatus(500).send("duplicated step name");
+
     await models.step.upsert({name:sanitizeHtml(req.body.name), doc: sanitizeHtml(req.body.doc), type:sanitizeHtml(req.body.type), workflowId:req.params.workflowId, position:req.params.position});
     let stepId = await models.step.findOne({where:{workflowId:req.params.workflowId, position:req.params.position}});
     await Workflow.workflowComplete(workflow.id);
