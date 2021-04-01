@@ -8,6 +8,7 @@ const sanitizeHtml = require('sanitize-html');
 const jwt = require('express-jwt');
 const Workflow = require("../util/workflow");
 const Download = require("../util/download");
+const bcrypt = require("bcrypt");
 
 function processOffset(offsetParam) {
 
@@ -90,10 +91,117 @@ router.get("/download/:workflowId", async function(req, res, next) {
 
 });
 
+
+//added questionnaire
+router.get("/questionnaire", async function(req, res, next) {
+  try {
+    res.render("questionnaire", {title:"Questionnaire"});      
+  }catch(error) {
+    logger.error("Get workflow error: " + error);
+    res.sendStatus(500);
+  }
+});
+
+router.post("/questionnaire/postquestionnaire", async function(req, res, next) {
+
+  try {
+    
+    //let user = await models.user.findOne({where:{name: workflow.userName}});
+    let user="yuleifan"
+    if(user == null){
+      user = ''
+    }
+    console.log(req.body)
+    
+    let questionnaire = await models.questionnaire.create(
+      {
+        username:user, 
+        answers:JSON.stringify(req.body)
+      }
+    );
+ 
+    console.log("inserted")
+    res.send({"id":questionnaire.id});
+    console.log(questionnaire.id)
+    
+    
+  } catch(error) {
+  	console.log(error)
+    error = "Error adding workflow: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+    logger.debug(error);
+    res.status(500).send(error);
+  }
+
+});
+
+
+//added registration
+router.get("/registration", async function(req, res, next) {
+  try {
+    res.render("registration", {title:"Registration",existuser:"new user"});      
+  }catch(error) {
+    logger.error("Get workflow error: " + error);
+    res.sendStatus(500);
+  }
+});
+
+router.get("/registrationok", async function(req, res, next) {
+  try {
+    res.render("registrationok", {title:"Registration",existuser:" Successfully"});      
+  }catch(error) {
+    logger.error("Get workflow error: " + error);
+    res.sendStatus(500);
+  }
+});
+
+router.post("/registration/postregistration", async function(req, res, next) {
+  //insert database
+  console.log(req.body)
+
+  const password = req.body.password1
+  const rounds = 10
+
+  bcrypt.hash(password, rounds, async (err, hash) => {
+    if (err) {
+      console.error(err)
+      return
+    }
+    console.log(hash)
+
+    try {
+      let newuser = await models.user.create(
+        {
+          name:req.body.email, 
+          password:hash
+        }
+      );
+      //console.log("inserted")
+      res.send({"name":newuser.name});
+      //console.log(newuser.name)
+
+    } catch (error) {
+      //console.log("not inserted")
+      res.send({"name":"exited"}); 
+    }
+
+
+    //res.render("registration", {existuser:"Successfully"});
+
+  })
+
+  //res.redirect('/phenoflow/phenotype/define')//not work
+  
+  
+});
+
 router.post("/new", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   if(!req.body.name || !req.body.about || !req.body.userName) return res.sendStatus(500);
   try {
+    //checking workflow name
+    let exitworkflow = await models.workflow.findOne({where:{name:sanitizeHtml(req.body.name)}});
+    if(!exitworkflow) return res.sendStatus(500).send("duplicated workflow name");
+
     let workflow = await models.workflow.create({name:sanitizeHtml(req.body.name), about:sanitizeHtml(req.body.about), userName:sanitizeHtml(req.body.userName)});
     res.send({"id":workflow.id});
   } catch(error) {

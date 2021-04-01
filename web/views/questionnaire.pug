@@ -1,0 +1,155 @@
+doctype html
+
+html
+  head
+    title= "Questionnaire"
+    meta(charset="UTF-8", name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no")
+    link(rel="icon" href="/phenoflow/images/favicon.ico" type="image/x-icon" sizes="16x16")
+    link(rel="stylesheet" href="/phenoflow/stylesheets/questionnairestyle.css")
+    script(src="/phenoflow/javascripts/sendquestionnaire.js")
+    script(src="/phenoflow/javascripts/pf.js")
+
+  body
+    div(class="testbox")
+        form(id="questionnaireform")
+            h1
+                | Customer Satisfaction Survey
+            p
+                | We use your data for improving our product based on understanding how users use our phenoflow product.
+            div
+                h4
+                    | What is your profession background?
+                div(class="question-answer")
+                    label
+                        input(type="checkbox" name="profession" value="Doctors or Nurses")
+                        span
+                            | Doctors/Nurses                                
+                    label
+                        input(type="checkbox" name="profession" value="Epidemiologist")
+                        span
+                            | Epidemiologist                       
+                    label
+                        input(type="checkbox" name="profession" value="Medical and Health Services Manager")
+                        span
+                            | Medical and Health Services Manager
+                    label
+                        input(type="checkbox" name="profession" value="Scientist or researcher")
+                        span
+                            | Scientist/researcher
+                    label
+                        input(type="checkbox" name="profession" value="Software Developer")
+                        span
+                            | Software Developer
+                
+            
+            div
+                h4
+                    | For how long have you been using our phenoflow product?
+                div(class="question-answer")
+                    label
+                        input(type="radio" value="Less than a month" name="using")
+                        span
+                            | Less than a month
+                    label
+                        input(type="radio" value="1-12 months" name="using")
+                        span
+                            | 1-12 months
+                    label
+                        input(type="radio" value="1-3 years" name="using")
+                        span
+                            | 1-3 years
+                    label
+                        input(type="radio" value="Over 3 years" name="using")
+                        span
+                            | Over 3 years
+                    label
+                        input(type="radio" value="Never used" name="using")
+                        span
+                            | Never used
+     
+            div
+                h4
+                    | How often do you use our phenoflow product?
+                div(class="question-answer")
+                    label
+                        input(type="radio" value="Once a week" name="product")
+                        span
+                            | Once a week
+                    label
+                        input(type="radio" value="2 or 3 times a month" name="product")
+                        span
+                            | 2 or 3 times a month
+                    label
+                        input(type="radio" value="Once a month" name="product")
+                        span
+                            | Once a month
+                    label
+                        input(type="radio" value="Less than once a month" name="product")
+                        span
+                            | Less than once a month
+
+            div
+                h4
+                    | How satisfied are you with the phenoflow product?
+                div(class="question-answer")
+                    label
+                        input(type="radio" value="Very Satisfied" name="satisfied")
+                        span
+                            | Very Satisfied
+                    label
+                        input(type="radio" value="Satisfied" name="satisfied")
+                        span
+                            | Satisfied
+                    label
+                        input(type="radio" value="Neutral" name="satisfied")
+                        span
+                            | Neutral
+                    label
+                        input(type="radio" value="Unsatisfied" name="satisfied")
+                        span
+                            | Unsatisfied
+                    label
+                        input(type="radio" value="Very Unsatisfied" name="satisfied")
+                        span
+                            | Very Unsatisfied
+                
+            div
+                h4
+                    | What impressed you most about our phenoflow product?
+                textarea(rows="5" name="impressed" value="none")
+            
+            div
+                h4
+                    | What disappointed you most about our phenoflow product?
+                textarea(rows="5" name="disappointed" value="none")
+
+            div
+                h4
+                    | Would you use our phenoflow product in the future?
+                div(class="question-answer")
+                    label
+                        input(type="radio" value="Definitely" name="future")
+                        span
+                            | Definitely
+                    label
+                        input(type="radio" value="Probably" name="future")
+                        span
+                            | Probably
+                    label
+                        input(type="radio" value="Not Sure" name="future")
+                        span
+                            | Not Sure
+                    label
+                        input(type="radio" value="Probably Not" name="future")
+                        span
+                            | Probably Not
+                    label
+                        input(type="radio" value="Definitely Not" name="future")
+                        span
+                            | Definitely Not
+
+
+div(class="btn-block")
+    button(onClick="sendquestionnaire()")
+        | Send Feedback
+

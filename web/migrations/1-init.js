@@ -12,6 +12,7 @@ var Sequelize = require('sequelize');
  * createTable "implementations", deps: [steps]
  * createTable "inputs", deps: [steps]
  * createTable "outputs", deps: [steps]
+ * createTable "questionnaires", deps: [steps]
  * addIndex ["language","stepId"] to table "implementations"
  * addIndex ["stepId"] to table "inputs"
  * addIndex ["stepId"] to table "outputs"
@@ -356,6 +357,43 @@ var migrationCommands = [{
         ]
     },
     {
+        fn: "createTable",
+        params: [
+            "questionnaires",
+            {
+                "id": {
+                    "type": Sequelize.INTEGER,
+                    "field": "id",
+                    "autoIncrement": true,
+                    "primaryKey": true,
+                    "allowNull": false
+                },
+                "username": {
+                    "type": Sequelize.STRING,
+                    "field": "username",
+                    "allowNull": true
+                },
+                "answers": {
+                    "type": Sequelize.STRING,
+                    "field": "answers",
+                    "allowNull": true
+                },
+                "createdAt": {
+                    "type": Sequelize.DATE,
+                    "field": "createdAt",
+                    "allowNull": true
+                },
+                "updatedAt": {
+                    "type": Sequelize.DATE,
+                    "field": "updatedAt",
+                    "allowNull": true
+                }
+
+            },
+            {}
+        ]
+    },
+    {
         fn: "addIndex",
         params: [
             "implementations",
@@ -445,3 +483,6 @@ module.exports = {
     },
     info: info
 };
+
+
+

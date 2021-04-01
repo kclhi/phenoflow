@@ -74,13 +74,23 @@ block pageJS
           document.getElementById("download").removeAttribute("style")
           document.getElementById("downloadSpinner").style.display = "none";
         }
-      }
+      }   
       xhr.send(JSON.stringify({"implementationUnits":implementationUnits}));
+
+      openQuestionnaire();
+    
     }
     function showImplementation(workflowId, position) {
       const language = document.getElementById("step" + position).getElementsByClassName("implementation")[0].value;
       window.open("/phenoflow/implementation/" + workflowId + "/" + position + "/" + language);
     }
+
+
+    function openQuestionnaire(){
+      //popup questionnaire window 
+      window.open('../questionnaire','winname','directories=no,titlebar=no,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no,width=600,height=600,top=100,left=100');
+    }
+
 
 block header
   div
