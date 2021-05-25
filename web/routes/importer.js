@@ -96,9 +96,8 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
         try {
           await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, "templates/codelist.py", {"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CODE_CATEGORY":clean(code.toLowerCase()), "CODE_LIST":'"' + codeCategories[code].join('","') + '"', "AUTHOR":userName, "YEAR":new Date().getFullYear()});
         } catch(error) {
-          error = "Error creating imported step: " + error;
-          logger.debug(error);
-          return res.status(500).send(error);
+          error = "Error creating imported step (" + stepName + "): " + error;
+          throw error;
         }
 
         position++;
@@ -108,8 +107,8 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
       try {
         await createStep(workflowId, "output-cases", "Output cases", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, "output-cases.py", language, "templates/output-cases.py", {"PHENOTYPE":clean(name.toLowerCase())});
       } catch(error) {
-        logger.debug("Error creating last step from import: " + error);
-        return res.status(500).send(error);
+        error = "Error creating last step from import: " + error;
+        throw error;
       }
 
       await Workflow.workflowComplete(workflowId);
@@ -142,7 +141,12 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
         return res.status(500).send(error);
       }
 
-      await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+      try {
+        await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+      } catch(error) {
+        logger.debug("Error creating workflow steps: " + error);
+        return res.status(500).send(error);
+      }
 
       // i2b2
       workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
@@ -158,7 +162,12 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
       }
 
       language = "python";
-      await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+      try {
+        await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+      } catch(error) {
+        logger.debug("Error creating workflow steps (i2b2): " + error);
+        return res.status(500).send(error);
+      }
 
       // omop
       workflowId = await createWorkflow(NAME, ABOUT, req.body.userName);
@@ -174,7 +183,12 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
       }
 
       language = "python";
-      await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+      try {
+        await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+      } catch(error) {
+        logger.debug("Error creating workflow steps (omop): " + error);
+        return res.status(500).send(error);
+      }
 
       res.send({"workflowId":discWorflowId});
     });

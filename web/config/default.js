@@ -19,7 +19,8 @@ module.exports = {
     PORT: ":7005"
   },
   importer: {
-    CSV_FOLDER: "hdr-caliber-phenome-portal",
+    PHENOTYPE_FOLDER: "fixtures/importer/caliber",
+    CODELIST_FOLDER: "fixtures/importer/phekb",
     GROUP_SIMILAR_PHENOTYPES: false
   }
 };

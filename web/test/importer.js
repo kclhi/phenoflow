@@ -1,4 +1,4 @@
-const nlp = require('compromise')
+const nlp = require('compromise');
 const chai = require("chai");
 chai.use(require("chai-http"));
 const server = require("../app");
@@ -49,24 +49,30 @@ describe("importer", () => {
           return key;
         }
         function clean(input) {
+          if(!input) throw "Trying to clean empty input:"+code+" "+description+" "+name;
           return input.toLowerCase().replace(/[^a-zA-Z]/g, "");
         }
         for(let existingCategory of Object.keys(codeCategories)) {
           // Don't mix primary and secondary category groups
-          if(primary&&!existingCategory.includes("primary")) continue;
-          let existingCategoryPrefix = existingCategory.toLowerCase();
-          existingCategoryPrefix = existingCategoryPrefix.replace(name.toLowerCase(), "").replace(primarySecondary, "").trim().toLowerCase();
-          for(let term of description.split(" ")) {
-            term = nlp(term).nouns().toSingular().text() || term;
+          if(primary&&!existingCategory.includes("primary")) continue; 
+          // If description is just the name of the condition itself
+          if(name==description.toLowerCase()) {
+            codeCategories[existingCategory].push(code);
+            placed=true;
+            break;
+          }
+          let existingCategoryPrefix = existingCategory.toLowerCase().replace(primarySecondary, "").replace(name.toLowerCase(), "").trim();
+          for(let term of description.trim().replace("  ", " ").split(" ")) {
+            term = clean(nlp(term).nouns().toSingular().text() || term);
             // Don't consider terms that are the condition itself
-            if(stemmer.stem(term)==stemmer.stem(name)) continue;
-            if((existingCategoryPrefix.includes(term.toLowerCase())
-            || term.toLowerCase().includes(existingCategoryPrefix)
-            || stringSimilarity.compareTwoStrings(term.toLowerCase(), existingCategoryPrefix) >= 0.8
+            if(name.split(" ").map(word=>stemmer.stem(word).toLowerCase()).includes(stemmer.stem(term))) continue;
+            if((existingCategoryPrefix.includes(term)
+            || term.includes(existingCategoryPrefix)
+            || stringSimilarity.compareTwoStrings(term, existingCategoryPrefix) >= 0.8
           ) && term.length > 4) {
             codeCategories[existingCategory].push(code);
-            if(term.toLowerCase()!=existingCategoryPrefix.toLowerCase()) {
-              let suffix = (!clean(term).includes(clean(name))&&!clean(name).includes(clean(term)))?" "+name:"";
+            if(term!=existingCategoryPrefix.toLowerCase()) {
+              let suffix = (!term.includes(clean(name))&&!clean(name).includes(term))?" "+name:"";
               codeCategories[orderKey(term + suffix) + primarySecondary] = codeCategories[existingCategory];
               delete codeCategories[existingCategory];
             }
@@ -76,10 +82,94 @@ describe("importer", () => {
         }
         if(placed) break;
       }
-      // Don't add condition suffix if key already contains form of condition
-      let suffix = (!clean(description).includes(clean(name))&&!clean(name).includes(clean(description))&&!description.split(" ").map(term=>{return stemmer.stem(term)}).includes(stemmer.stem(name)))?" "+name:"";
-      if(!placed) codeCategories[orderKey(description + suffix) + primarySecondary] = [code];
+      if(!placed) {
+        // Don't add condition suffix if key already contains form of condition
+        let suffix = (!clean(description).includes(clean(name))&&!clean(name).includes(clean(description))&&!description.split(" ").map(term=>{return stemmer.stem(term)}).includes(stemmer.stem(name)))?" "+name:"";
+        codeCategories[orderKey(description + suffix) + primarySecondary] = [code];
+      }
       return codeCategories;
+    }
+
+    function getCodeCategories(csvFile, name) {
+      let codeCategories = {};
+      let hasCategory = ["readcode", "snomedconceptid", "icdcode", "icd10code", "icd11code", "opcs4code"];
+      let toCategorise = ["readv2code", "snomedcode", "snomedctconceptid", "icdcodeuncat", "conceptcd"];
+      let codingSystems = ["read", "icd-9", "icd-10", "cpt", "icd10cm", "snomed", "icd9cm", "icd9diagnosis", "icd10diagnosis"];
+      for(let row of csvFile) {
+        if(row['case_incl'] && row['case_incl'] == 'N') continue;
+        // Remove special characters from keys that prevent indexing
+        for(const [key, value] of Object.entries(row)) {
+          if(key!=key.replace(/[^a-zA-Z0-9]/g, "")) {
+            row[key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()] = row[key];
+            delete row[key];
+            continue;
+          }
+          if(key.toLowerCase()!=key) {
+            row[key.toLowerCase()] = row[key];
+            delete row[key];
+          }
+        }
+        let keys = Object.keys(row);
+        let value, hasCategoryKeys, toCategoriseKeys;
+        function getFirstUsableValue(keys, row) {
+          let value;
+          for(let key of keys) {
+            if (!row[key]||!row[key].length) continue;
+            value = row[key];
+            break;
+          }
+          if(!value) console.error("No usable value for "+JSON.stringify(row)+" "+name);
+          return value;
+        }
+        let system;
+        if((hasCategoryKeys = keys.filter(value=>hasCategory.includes(value))) && hasCategoryKeys.length) {
+          let category = (row["category"]||row["calibercategory"]||name) + ((hasCategoryKeys[0].includes("read")||hasCategoryKeys[0].includes("snomed"))?" - primary":" - secondary");
+          if(!codeCategories[category]) codeCategories[category] = [];
+          value = getFirstUsableValue(hasCategoryKeys, row);
+          if(value) { codeCategories[category].push(value) } else { return false };
+        } else if((system=row["codingsystem"]||row["codetype"]) && codingSystems.includes(system.toLowerCase().replace(/ /g, '').trim())) {
+          let description = row["description"].replace("[X]", "").replace("[D]", "");
+          if(!row["code"]) return false;
+          codeCategories = categorise(row["code"], description, codeCategories, name, (system=="read"||system=="snomed"));
+        } else if(row["vocabulary"] && codingSystems.includes(row["vocabulary"].toLowerCase().trim())) {
+          let conceptName = row["conceptname"];
+          codeCategories = categorise(row["conceptcode"], conceptName, codeCategories, name);
+        } else if((toCategoriseKeys = keys.filter(value => toCategorise.includes(value))) && toCategoriseKeys.length) {
+          let description = row["conceptname"]||row["proceduredescr"]||row["description"].replace("[X]", "").replace("[D]", "");
+          if(!description) continue;
+          value = getFirstUsableValue(toCategoriseKeys, row);
+          if(value) {codeCategories = categorise(value, description, codeCategories, name); } else { return false };
+        } else if(row["prodcode"]) {
+          let category = "Use of " + row["drugsubstance"];
+          if(!codeCategories[category]) codeCategories[category] = [];
+          if(!row["prodcode"]) return false;
+          codeCategories[category].push(row["prodcode"]);
+        } else if(row["code"]) {
+          let category = name + " - UK Biobank";
+          if (!codeCategories[category]) codeCategories[category] = [];
+          if(!row["code"]) return false;
+          codeCategories[category].push(row["code"]);
+        } else {
+          console.error("No handler for: "+JSON.stringify(row)+" "+name);
+          return false;
+        }
+      }
+      return codeCategories;
+    }
+
+    async function importPhenotype(name, about, codeCategories, userName) {
+
+      if(Object.keys(codeCategories).length == 0 || Object.keys(codeCategories).indexOf("undefined - primary")>-1 || Object.keys(codeCategories).indexOf("undefined - secondary")>-1) {
+        console.error("No category for " + name + ": " + JSON.stringify(codeCategories));
+        return false;
+      }
+
+      const server = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
+      let res = await chai.request(server).post("/phenoflow/importer").send({name:name, about:about, codeCategories:codeCategories, userName:userName});
+      res.should.have.status(200);
+      res.body.should.be.a("object");
+      return true;
+
     }
 
     async function importPhenotypeCSVs(phenotypeFiles) {
@@ -130,74 +220,9 @@ describe("importer", () => {
       }
 
       if(!fullCSV) return false;
-      let codeCategories = {};
-      let hasCategory = ["readcode", "snomedconceptid", "icdcode", "icd10code", "icd11code", "opcs4code"];
-      let toCategorise = ["readv2code", "snomedctconceptid"];
-      let codingSystems = ["Read", "ICD-9", "ICD-10"];
-      for(let row of fullCSV) {
-        // Remove special characters from keys that prevent indexing
-        for(const [key, value] of Object.entries(row)) {
-          if(key!=key.replace(/[^a-zA-Z0-9]/g, "")) {
-            row[key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()] = row[key];
-            delete row[key];
-            continue;
-          }
-          if(key.toLowerCase()!=key) {
-            row[key.toLowerCase()] = row[key];
-            delete row[key];
-          }
-        }
-        let keys = Object.keys(row);
-        let value, hasCategoryKeys, toCategoriseKeys;
-        function getFirstUsableValue(keys, row) {
-          let value;
-          for(let key of keys) {
-            if (!row[key]||!row[key].length) continue;
-            value = row[key];
-            break;
-          }
-          if(!value) console.error("No usable value for "+JSON.stringify(row)+" of "+phenotypeFile);
-          return value;
-        }
-        if((hasCategoryKeys = keys.filter(value=>hasCategory.includes(value))) && hasCategoryKeys.length) {
-          let category = (row["category"]||row["calibercategory"]||markdownContent.name) + ((hasCategoryKeys[0].includes("read")||hasCategoryKeys[0].includes("snomed"))?" - primary":" - secondary");
-          if(!codeCategories[category]) codeCategories[category] = [];
-          value = getFirstUsableValue(hasCategoryKeys, row);
-          if(value) { codeCategories[category].push(value) } else { return false };
-        } else if(row["codingsystem"] && codingSystems.includes(row["codingsystem"])) {
-          let description = row["description"].replace("[X]", "").replace("[D]", "");
-          if(!row["code"]) return false;
-          codeCategories = categorise(row["code"], description, codeCategories, markdownContent.name);
-        } else if((toCategoriseKeys = keys.filter(value => toCategorise.includes(value))) && toCategoriseKeys.length) {
-          let description = row["description"].replace("[X]", "").replace("[D]", "");
-          value = getFirstUsableValue(toCategoriseKeys, row);
-          if(value) {codeCategories = categorise(value, description, codeCategories, markdownContent.name); } else { return false };
-        } else if(row["prodcode"]) {
-          let category = "Use of " + row["drugsubstance"];
-          if(!codeCategories[category]) codeCategories[category] = [];
-          if(!row["prodcode"]) return false;
-          codeCategories[category].push(row["prodcode"]);
-        } else if(row["code"]) {
-          let category = markdownContent.name + " - UK Biobank";
-          if (!codeCategories[category]) codeCategories[category] = [];
-          if(!row["code"]) return false;
-          codeCategories[category].push(row["code"]);
-        } else {
-          console.error("No handler for: " + JSON.stringify(row));
-          continue;
-        }
-      }
-
-      if(Object.keys(codeCategories).indexOf("undefined - primary")>-1 || Object.keys(codeCategories).indexOf("undefined - secondary")>-1) {
-        console.error("No category for " + markdownContent.name + ": " + JSON.stringify(codeCategories));
-        return false;
-      }
-
-      const server = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
-      let res = await chai.request(server).post("/phenoflow/importer").send({name:markdownContent.name, about:markdownContent.phenotype_id+" - "+markdownContent.title, codeCategories:codeCategories, userName:"caliber"});
-      res.should.have.status(200);
-      res.body.should.be.a("object");
-      return true;
+      let codeCategories = getCodeCategories(fullCSV, markdownContent.name);
+      return await importPhenotype(markdownContent.name, markdownContent.phenotype_id+" - "+markdownContent.title, codeCategories, "caliber");
+      
     }
 
     async function groupPhenotypeFiles(path) {
@@ -239,8 +264,56 @@ describe("importer", () => {
       }
     }).timeout(0);
 
-    it("[TI4] Should be able to import multiple phenotype CSVs with the same name.", async() => {
-      const phenotypeFiles = ["kuan_asthma_eFTHigQ2RjygaBhHUco4pW.md", "carr_asthma_XmYuru73YF4EeRppjSAwsP.md", "axson_asthma_cdd2NMH5QDWVdEfTQNNfpK.md"];
+    it("[TI4] Should be able to add a new user (codelists).", async() => {
+      const result = await models.user.create({name:"phekb", password: config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://phekb.org/"});
+      result.should.be.a("object");
+    });
+
+    async function importCodelist(path, file) {
+      let csvFile, csv;
+      try {
+        csvFile = await fs.readFile(path + file);
+      } catch(error) {
+        console.error("Could not read codelist " + file + ": " + error);
+        expect(false);
+      }
+      try {
+        csv = await parse(csvFile);
+      } catch(error) {
+        console.error(error);
+        expect(false);
+      }
+      let name = file.split("_")[0].split("-"); 
+      if(name[name.length-1].match(/[0-9]*/)>0) name.pop();
+      name[0] = name[0].charAt(0).toUpperCase() + name[0].substring(1);
+      name = name.join(" ");
+      let about = name;
+      
+      let codeCategories = getCodeCategories(csv, name);
+      return await importPhenotype(name, about, codeCategories, "phekb");
+    }
+
+    it("[TI5] Should be able to import a codelist.", async() => { 
+      const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
+      const FILE = "psoriasis_icd.csv";
+      // Can't perform test if file doesn't exist.
+      try { await fs.stat(PATH) } catch(error) { return true; }
+      expect(await importCodelist(PATH, FILE));
+    }).timeout(0);
+
+    it("[TI6] Should be able to import all codelists.", async() => { 
+      const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
+      // Can't perform test if file doesn't exist.
+      try { await fs.stat(PATH) } catch(error) { return true; }
+      let phenotypeFiles = await fs.readdir(PATH);
+      for(let phenotypeFile of phenotypeFiles) {
+        if(phenotypeFile.includes("_rx") || phenotypeFile.includes("_lab") || phenotypeFile.includes("_key")) continue;
+        expect(await importCodelist(PATH, phenotypeFile))
+      }
+    }).timeout(0);
+
+    it("[TI7] Should be able to import multiple phenotype CSVs with the same name.", async() => {
+      const phenotypeFiles = ["Carr_Anxiety_5bqxGMaqvZFBhtEYb5mhZJ.md", "kuan_anxiety_LGWMqosnAtERehdytPzBWy.md"];
       const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/";
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
@@ -249,7 +322,7 @@ describe("importer", () => {
       }
     }).timeout(0);
 
-    it("[TI5] Should be able to annotate CALIBER MD files with a phenoflow URL.", async() => {
+    it("[TI8] Should be able to annotate CALIBER MD files with a phenoflow URL.", async() => {
       const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/";
       try { await fs.stat(PATH) } catch(error) { return true; }
       let ids=[];
@@ -279,7 +352,7 @@ describe("importer", () => {
       }
     }).timeout(0);
 
-    it("[TI6] Create children for imported phenotypes.", async() => {
+    it("[TI9] Create children for imported phenotypes.", async() => {
       for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await workflowUtils.workflowChild(workflow.id);
     }).timeout(0);
 
