@@ -11,7 +11,7 @@ const m2js = require("markdown-to-json");
 const parse = require('neat-csv');
 const models = require("../models");
 const config = require("config");
-const workflowUtils = require("../util/workflow");
+const WorkflowUtils = require("../util/workflow");
 
 describe("caliber importer", () => {
 
@@ -29,10 +29,10 @@ describe("caliber importer", () => {
       try { await fs.stat(PATH) } catch(error) { return true; }
       if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
         for(let phenotypeFiles of await importer.groupPhenotypeFiles(PATH)) {
-          if(phenotypeFiles.includes(phenotypeFile)) expect(await importPhenotypeCSVs(phenotypeFiles), importPhenotype).to.be.true;
+          if(phenotypeFiles.includes(phenotypeFile)) expect(await importPhenotypeCSVs(phenotypeFiles)).to.be.true;
         }
       } else {
-        expect(await Importer.importPhenotypeCSVs([phenotypeFile]), importPhenotype);
+        expect(await Importer.importPhenotypeCSVs([phenotypeFile])).to.be.true;
       }
     }).timeout(0);
 
@@ -92,7 +92,7 @@ describe("caliber importer", () => {
     }).timeout(0);
 
     it("[CI6] Create children for imported phenotypes.", async() => {
-      for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await workflowUtils.workflowChild(workflow.id);
+      for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
     }).timeout(0);
 
   });

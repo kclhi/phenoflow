@@ -1,3 +1,4 @@
+const nlp = require('compromise');
 const models = require("../models");
 const logger = require('../config/winston');
 const config = require('config');
@@ -192,6 +193,22 @@ class Workflow {
     }
     return workflow;
 
+  }
+
+  static ignoreInStepName(word) {
+    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction"];
+    let ignoreWords = ["not", "use", "type"];
+    let nlpd = nlp(word);
+    return word.length <= 2
+      || conditionSynonyms.concat(ignoreWords).includes(word.toLowerCase()) 
+      || nlpd.conjunctions().length>0
+      || nlpd.prepositions().length>0 
+      || nlpd.adverbs().length>0;
+  }
+  
+  static isNegative(phrase) {
+    phrase = phrase.toLowerCase();
+    return nlp("is " + phrase).verbs().isNegative().length>0 || phrase.split(" ").filter(word=>word.startsWith("non")).length>0 || phrase.split(" ").filter(word=>word.startsWith("un")).length>0 || phrase.split(" ").includes("without");
   }
 
 }

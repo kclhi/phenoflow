@@ -24,10 +24,10 @@ describe("phekb importer", () => {
 
     it("[PI2] Should be able to import a codelist.", async() => { 
       const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
-      const FILE = "psoriasis_icd.csv";
+      const FILE = "anxiety_icd.csv";
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
-      expect(await Importer.importCodelist(PATH, FILE));
+      expect(await Importer.importCodelist(PATH, FILE)).to.be.true;
     }).timeout(0);
 
     it("[PI3] Should be able to import all codelists.", async() => { 
@@ -37,7 +37,7 @@ describe("phekb importer", () => {
       let phenotypeFiles = await fs.readdir(PATH);
       for(let phenotypeFile of phenotypeFiles) {
         if(phenotypeFile.includes("_rx") || phenotypeFile.includes("_lab") || phenotypeFile.includes("_key")) continue;
-        expect(await Importer.importCodelist(PATH, phenotypeFile));
+        expect(await Importer.importCodelist(PATH, phenotypeFile)).to.be.true;
       }
     }).timeout(0);
 
