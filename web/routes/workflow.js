@@ -43,9 +43,9 @@ router.get("/all/:filter/:offset?", async function(req, res, next) {
 router.post("/all", async function(req, res, next) {
 
   if(req.body.name) { 
-    var workflowsByName = await Workflow.completeWorkflows(req.body.name, 0, limit=Number.MAX_VALUE);
+    var workflowsByName = await Workflow.completeWorkflows(req.body.name, 0, Number.MAX_VALUE);
   } else {
-    var workflowsByName = await Workflow.completeWorkflows("", 0, limit=Number.MAX_VALUE);
+    var workflowsByName = await Workflow.completeWorkflows("", 0, Number.MAX_VALUE);
   }
   if(req.body.importedId) var workflowsByImportedId = await Workflow.completeWorkflows(req.body.importedId, 0, limit=Number.MAX_VALUE);
   if(req.body.name&&workflowsByName&&req.body.importedId&&workflowsByImportedId) workflowsByName = workflowsByName.filter(workflowByName=>workflowsByImportedId.map(workflowByImportedId=>workflowByImportedId.id).includes(workflowByName.id));

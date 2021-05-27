@@ -1,8 +1,10 @@
+const nlp = require('compromise');
 const models = require("../models");
 const logger = require('../config/winston');
 const config = require('config');
 const sequelize = require('sequelize');
 const op = sequelize.Op;
+const stringSimilarity = require("string-similarity");
 
 class Workflow {
 
@@ -193,6 +195,96 @@ class Workflow {
     return workflow;
 
   }
+
+  static ignoreInStepName(word) {
+    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction"];
+    let ignoreWords = ["not", "use", "type"];
+    let nlpd = nlp(word);
+    return word.length <= 2
+      || conditionSynonyms.concat(ignoreWords).includes(word.toLowerCase()) 
+      || nlpd.conjunctions().length>0
+      || nlpd.prepositions().length>0 
+      || nlpd.adverbs().length>0;
+  }
+  
+  static isNegative(phrase) {
+    phrase = phrase.toLowerCase();
+    return nlp("is " + phrase).verbs().isNegative().length>0 || phrase.split(" ").filter(word=>word.startsWith("non")).length>0 || phrase.split(" ").filter(word=>word.startsWith("un")).length>0 || phrase.split(" ").includes("without");
+  }
+
+  static workflowStepAnalysis(workflowA, workflowStepA, workflowB, workflowStepB) {
+    const SIMILARITY_THRESHOLD = 0.8;
+    for(let workflowStepANameComponent of workflowStepA.name.split("---")[0].split("-")) {
+      if(this.ignoreInStepName(workflowStepANameComponent)) continue;
+      for(let workflowStepBNameComponent of workflowStepB.name.split("---")[0].split("-")) {
+        if(this.ignoreInStepName(workflowStepBNameComponent)) continue;
+        if((workflowA.name.toLowerCase().includes(workflowStepANameComponent.toLowerCase()) && workflowB.name.toLowerCase().includes(workflowStepBNameComponent.toLowerCase())) || (workflowStepANameComponent.toLowerCase().includes(workflowA.name.toLowerCase()) && workflowStepBNameComponent.toLowerCase().includes(workflowB.name.toLowerCase()))) return false;
+        if(stringSimilarity.compareTwoStrings(workflowStepANameComponent, workflowStepBNameComponent) > SIMILARITY_THRESHOLD) {
+          console.log(workflowA.name + " " + workflowStepA.name + " (" + workflowStepANameComponent + ") " + workflowB.name + " " + workflowStepB.name + " (" + workflowStepBNameComponent + ")");
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  static samePhenotype(nameA, nameB) {
+    function clean(input) { return input.toLowerCase().replace(/[^a-zA-Z]/g, ""); }
+    return clean(nameA)==clean(nameB);
+  }
+
+  static async workflowOverlap() {
+    let workflows = await this.completeWorkflows("", 0, Number.MAX_VALUE);
+    let pairings = {};
+    for(let workflowA of workflows) {
+      for(let workflowB of workflows) {   
+        if(workflowA.id!=workflowB.id && this.samePhenotype(workflowA.name, workflowB.name)) {
+          const workflowStepsA = await models.step.findAll({where:{workflowId:workflowA.id}});
+          const workflowStepsB = await models.step.findAll({where:{workflowId:workflowB.id}});
+          for(let workflowStepA of workflowStepsA) {
+            if(workflowStepA.type=="load" || workflowStepA.type=="output") continue;
+            for(let workflowStepB of workflowStepsB) {
+              if(workflowStepB.type=="load" || workflowStepB.type=="output") continue;
+              if(Object.keys(pairings).includes(workflowStepB.name) && pairings[workflowStepB.name] == workflowStepA.name) continue;
+              if(this.isNegative(workflowStepA.name.split("---")[0].split("-").join(" "))!=this.isNegative(workflowStepB.name.split("---")[0].split("-").join(" "))) continue;
+              if(workflowStepA.name.split("---")[1]!=workflowStepB.name.split("---")[1]) continue;
+              if(this.workflowStepAnalysis(workflowA, workflowStepA, workflowB, workflowStepB)) {
+                pairings[workflowStepA.name] = workflowStepB.name;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  static async analyseSiblings() { await this.workflowOverlap(); }
+
+  static async commonGeneralCondition(nameA, nameB) {
+    function getGeneralCondition(phrase) {
+      let ignoreWords = ["medication"];
+      if(!phrase.includes("-")) return phrase;
+      phrase = phrase.split("-").filter(word=>!Workflow.ignoreInStepName(word) && !ignoreWords.includes(word.toLowerCase()));
+      if(phrase.length==1) return phrase;
+      let nlpd = nlp(phrase.join(" "));
+      if(nlpd.nouns().json().length) return nlpd.nouns().json()[0].terms[0].text;
+      else if(nlpd.adjectives().json().length) return nlpd.adjectives().json()[nlpd.adjectives().json().length-1].terms[0].text;
+    }
+    let workflows = await this.completeWorkflows("", 0, Number.MAX_VALUE);
+    let pairings = {};
+    for(let workflowA of workflows) {
+      for(let workflowB of workflows) {   
+        if(Object.keys(pairings).includes(workflowB.name) && pairings[workflowB.name]==workflowA.name) continue;
+        if(workflowA.id!=workflowB.id && (Workflow.isNegative(workflowA.name.split("-").join(" "))==Workflow.isNegative(workflowB.name.split("-").join(" "))) && (getGeneralCondition(workflowA.name)==getGeneralCondition(workflowB.name))) {
+          console.log(workflowA.name + " " + workflowB.name);
+          pairings[workflowA.name] = workflowB.name;
+        }
+      }
+    }
+    return ;
+  }
+
+  static async analyseHierarchical() { await this.commonGeneralCondition(); }
 
 }
 
