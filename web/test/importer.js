@@ -13,6 +13,7 @@ const config = require("config");
 const stringSimilarity = require("string-similarity");
 const natural = require("natural");
 const stemmer = natural.PorterStemmer;
+const WorkflowUtils = require("../util/workflow");
 
 class Importer {
 
@@ -24,9 +25,40 @@ class Importer {
     return true;
   }
 
-  static categorise(code, description, codeCategories, name, primary=true) {
-    let placed=false;
-    let primarySecondary = primary?" - primary":" - secondary";
+  static clean(input) {
+    if(!input) return input;
+    return input.toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
+  static getCodeCategories(csvFiles, name) {
+    let codeCategories = {};
+    const primaryCodeKeys = ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd"];
+    const secondaryCodeKeys = ["icdcode", "icd10code", "icd11code", "opcs4code", "icdcodeuncat"];
+    const codeKeys = primaryCodeKeys.concat(secondaryCodeKeys);
+    const primaryCodingSystems = ["read", "snomed", "snomedct"];
+    const secondaryCodingSystems = ["icd9", "icd10", "cpt", "icd10cm", "icd9cm", "icd9diagnosis", "icd10diagnosis"];
+    const codingSystems = primaryCodingSystems.concat(secondaryCodingSystems);
+    function singular(term) { return nlp(term).nouns().toSingular().text() || term; }
+    function getKeyTerm(phrase, name) {
+      if(phrase.split(" ").filter(word=>name.toLowerCase().includes(word.toLowerCase()))) return name;
+      let nouns = nlp(phrase).nouns().text().split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
+      let adjectives = nlp(phrase).adjectives().text().split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
+      return nouns.length?Importer.clean(nouns[0]):Importer.clean(adjectives[0]);
+    }
+    function getValue(row) {
+      if(row["code"]) return row["code"];
+      let otherKeyCodes;
+      if((otherKeyCodes=Object.keys(row).filter(key=>codeKeys.includes(key.toLowerCase())))&&otherKeyCodes) return row[otherKeyCodes[0]];
+      console.error("No usable value for "+JSON.stringify(row)+" "+name);
+      return 0;
+    }
+    function getDescription(row) {
+      const descriptions = ["description", "conceptname", "proceduredescr", "icd10term", "icd11term", "snomedterm", "icd10codedescr", "icdterm", "readterm", "readcodedescr"];
+      let description = row[Object.keys(row).filter(key=>descriptions.includes(Importer.clean(key)))[0]];
+      if(description) description = description.replace("[X]", "").replace("[D]", "")
+      if(description&&description.includes(" ")) description=description.split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word))).join(" ");
+      return description;
+    }
     function orderKey(key) {
       // Don't attempt reorder on more than two words
       let keyTerms = key.split(" ");
@@ -43,123 +75,102 @@ class Importer {
       key=key.charAt(0).toUpperCase() + key.slice(1);
       return key;
     }
-    function clean(input) {
-      if(!input) throw "Trying to clean empty input:"+code+" "+description+" "+name;
-      return input.toLowerCase().replace(/[^a-zA-Z]/g, "");
-    }
-    for(let existingCategory of Object.keys(codeCategories)) {
-      // Don't mix primary and secondary category groups
-      if(primary&&!existingCategory.includes("primary")) continue; 
-      // If description is just the name of the condition itself
-      if(name==description.toLowerCase()) {
-        codeCategories[existingCategory].push(code);
-        placed=true;
-        break;
-      }
-      let existingCategoryPrefix = existingCategory.toLowerCase().replace(primarySecondary, "").replace(name.toLowerCase(), "").trim();
-      for(let term of description.trim().replace("  ", " ").split(" ")) {
-        term = clean(nlp(term).nouns().toSingular().text() || term);
-        // Don't consider terms that are the condition itself
-        if(name.split(" ").map(word=>stemmer.stem(word).toLowerCase()).includes(stemmer.stem(term))) continue;
-        if((existingCategoryPrefix.includes(term)
-        || term.includes(existingCategoryPrefix)
-        || stringSimilarity.compareTwoStrings(term, existingCategoryPrefix) >= 0.8
-        ) && term.length > 4) {
-          codeCategories[existingCategory].push(code);
-          if(term!=existingCategoryPrefix.toLowerCase()) {
-            let suffix = (!term.includes(clean(name))&&!clean(name).includes(term))?" "+name:"";
-            codeCategories[orderKey(term + suffix) + primarySecondary] = codeCategories[existingCategory];
-            delete codeCategories[existingCategory];
+    for(let csvFile of csvFiles) {
+      let codingSystem, termCount={};
+      var primarySecondary = ((codingSystem=csvFile[0]["codingsystem"]||csvFile[0]["codetype"]||csvFile[0]["vocabulary"])&&primaryCodingSystems.includes(this.clean(codingSystem)))||primaryCodeKeys.filter(primaryCodeKey=>Object.keys(csvFile[0]).map(key=>this.clean(key)).includes(this.clean(primaryCodeKey))).length?"primary":"secondary";
+      csvFile=csvFile.filter(row=>(row["case_incl"]&&row["case_incl"]!="N")||!row["case_incl"]);
+      // Initial cleaning and counting terms
+      for(let row of csvFile) {
+        // Remove special characters from keys that prevent indexing
+        for(const [key, value] of Object.entries(row)) {
+          if(key!=this.clean(key)) {
+            row[this.clean(key)] = row[key];
+            delete row[key];
+            continue;
           }
-          placed=true;
-          break;
+          if(key!=key.toLowerCase()) {
+            row[key.toLowerCase()] = row[key];
+            delete row[key];
+          }
+        }
+        let description=getDescription(row);
+        if(description) {
+          for(let term of description.split(" ")) {
+            term = singular(this.clean(term));
+            if(name.split(" ").map(word=>Importer.clean(word)).filter(word=>word.includes(term)).length
+            || name.split(" ").map(word=>Importer.clean(stemmer.stem(word))).filter(word=>word.includes(stemmer.stem(term))).length 
+            || name.split(" ").filter(word=>term.includes(Importer.clean(word)||stemmer.stem(term).includes(Importer.clean(stemmer.stem(word))))).length 
+            || term.length<=4) continue;
+            Object.keys(termCount).includes(term)?termCount[term]=termCount[term]+=1:termCount[term]=1;
+          }
         }
       }
-      if(placed) break;
-    }
-    if(!placed) {
-      // Don't add condition suffix if key already contains form of condition
-      let suffix = (!clean(description).includes(clean(name))&&!clean(name).includes(clean(description))&&!description.split(" ").map(term=>{return stemmer.stem(term)}).includes(stemmer.stem(name)))?" "+name:"";
-      codeCategories[orderKey(description + suffix) + primarySecondary] = [code];
-    }
-    return codeCategories;
-  }
 
-  static getCodeCategories(csvFile, name) {
-    let codeCategories = {};
-    let hasCategory = ["readcode", "snomedconceptid", "icdcode", "icd10code", "icd11code", "opcs4code"];
-    let toCategorise = ["readv2code", "snomedcode", "snomedctconceptid", "icdcodeuncat", "conceptcd"];
-    let codingSystems = ["read", "icd-9", "icd-10", "cpt", "icd10cm", "snomed", "icd9cm", "icd9diagnosis", "icd10diagnosis", "snomed-ct"];
-    for(let row of csvFile) {
-      if(row['case_incl'] && row['case_incl'] == 'N') continue;
-      // Remove special characters from keys that prevent indexing
-      for(const [key, value] of Object.entries(row)) {
-        if(key!=key.replace(/[^a-zA-Z0-9]/g, "")) {
-          row[key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()] = row[key];
-          delete row[key];
-          continue;
+      const NOT_DIFFERENTIATING_CUTOFF=0.15;
+      let termCountArray = Object.keys(termCount).map(key=>[key, termCount[key]]).filter(term=>term[1]>1);
+      termCountArray.sort(function(first, second) { return second[1]-first[1]; });
+      let numberOfTerms = termCountArray.length?termCountArray.map(term=>term[1]).reduce((a,b)=>a+b):0;
+      let notDifferentiatingSubset = termCountArray.filter(term=>term[1]/parseFloat(numberOfTerms)>=NOT_DIFFERENTIATING_CUTOFF).map(term=>term[0]);
+      // Exclude those terms too that are shorthand for those in the excluded subet
+      notDifferentiatingSubset = notDifferentiatingSubset.concat(termCountArray.filter(term=>notDifferentiatingSubset.filter(subsetTerm=>subsetTerm!=term[0]&&subsetTerm.includes(term[0])).length));
+
+      for(let row of csvFile) {
+        let category, code=getValue(row), description=getDescription(row);
+        if(description) {
+          // Remaining work to categorise descriptions
+          if(termCountArray.length) {
+            let matched=false;
+            for(let term of termCountArray.filter(term=>!notDifferentiatingSubset.includes(term)).map(term=>term[0]).reverse()) {
+              if(description.split(" ").filter(word=>stringSimilarity.compareTwoStrings(singular(this.clean(word)), term) >= 0.8 
+              || term.includes(singular(this.clean(word))) 
+              || singular(this.clean(word)).includes(term)).length) {
+                codeCategories[term+"--"+primarySecondary]?codeCategories[term+"--"+primarySecondary].push(code):codeCategories[term+"--"+primarySecondary]=[code];
+                matched=true;
+                break;
+              }
+            }
+            // If not common term, pick most representative term from description
+            if(!matched) {
+              let keyTerm = getKeyTerm(description, name);
+              codeCategories[keyTerm+"--"+primarySecondary]?codeCategories[keyTerm+"--"+primarySecondary].push(code):codeCategories[keyTerm+"--"+primarySecondary]=[code];
+            }
+          } else {
+            category=name+"--"+primarySecondary;
+            codeCategories[category]?codeCategories[category].push(code):codeCategories[category]=[code];
+          }
+        } else if(category=row["category"]||row["calibercategory"]) {
+          category+="--"+primarySecondary;
+          codeCategories[category]?codeCategories[category].push(code):codeCategories[category]=[code];
+        } else if(row["prodcode"]) {
+          category="Use of "+row["drugsubstance"]+"--"+primarySecondary;
+          codeCategories[category]?codeCategories[category].push(row["prodcode"]):codeCategories[category]=[row["prodcode"]];
+        } else if(row["code"]) {
+          category=name+" - UK Biobank"+"--"+primarySecondary;
+          codeCategories[category]?codeCategories[category].push(row["code"]):codeCategories[category]=[row["code"]];
+        } else {
+          console.error("No handler for: "+JSON.stringify(row)+" "+name);
+          //return false;
         }
-        if(key.toLowerCase()!=key) {
-          row[key.toLowerCase()] = row[key];
-          delete row[key];
-        }
-      }
-      let keys = Object.keys(row);
-      let value, hasCategoryKeys, toCategoriseKeys;
-      function getFirstUsableValue(keys, row) {
-        let value;
-        for(let key of keys) {
-          if (!row[key]||!row[key].length) continue;
-          value = row[key];
-          break;
-        }
-        if(!value) console.error("No usable value for "+JSON.stringify(row)+" "+name);
-        return value;
-      }
-      let system;
-      if((hasCategoryKeys = keys.filter(value=>hasCategory.includes(value))) && hasCategoryKeys.length) {
-        let category = (row["category"]||row["calibercategory"]||name) + ((hasCategoryKeys[0].includes("read")||hasCategoryKeys[0].includes("snomed"))?" - primary":" - secondary");
-        if(!codeCategories[category]) codeCategories[category] = [];
-        value = getFirstUsableValue(hasCategoryKeys, row);
-        if(value) { codeCategories[category].push(value) } else { return false };
-      } else if((system=row["codingsystem"]||row["codetype"]) && codingSystems.includes(system.toLowerCase().replace(/ /g, '').trim())) {
-        let description = row["description"].replace("[X]", "").replace("[D]", "");
-        if(!row["code"]) return false;
-        codeCategories = this.categorise(row["code"], description, codeCategories, name, (system=="read"||system=="snomed"));
-      } else if(row["vocabulary"] && codingSystems.includes(row["vocabulary"].toLowerCase().trim())) {
-        let conceptName = row["conceptname"];
-        codeCategories = this.categorise(row["conceptcode"], conceptName, codeCategories, name);
-      } else if((toCategoriseKeys = keys.filter(value => toCategorise.includes(value))) && toCategoriseKeys.length) {
-        let description = row["conceptname"]||row["proceduredescr"]||row["description"].replace("[X]", "").replace("[D]", "");
-        if(!description) continue;
-        value = getFirstUsableValue(toCategoriseKeys, row);
-        if(value) {codeCategories = this.categorise(value, description, codeCategories, name); } else { return false };
-      } else if(row["prodcode"]) {
-        let category = "Use of " + row["drugsubstance"];
-        if(!codeCategories[category]) codeCategories[category] = [];
-        if(!row["prodcode"]) return false;
-        codeCategories[category].push(row["prodcode"]);
-      } else if(row["code"]) {
-        let category = name + " - UK Biobank";
-        if (!codeCategories[category]) codeCategories[category] = [];
-        if(!row["code"]) return false;
-        codeCategories[category].push(row["code"]);
-      } else {
-        console.error("No handler for: "+JSON.stringify(row)+" "+name);
-        //return false;
       }
     }
-    
+  
+    let formattedCodeCategories = {};
+    for(const [term, codes] of Object.entries(codeCategories)) {
+      let termAndPrimarySecondary = term.split("--");
+      let suffix = (!this.clean(termAndPrimarySecondary[0]).includes(this.clean(name))&&!this.clean(name).includes(this.clean(termAndPrimarySecondary[0])))?" "+name:"";
+      termAndPrimarySecondary[0]==name?formattedCodeCategories[termAndPrimarySecondary[0]+suffix+" - "+termAndPrimarySecondary[1]] = codeCategories[term]:formattedCodeCategories[orderKey(termAndPrimarySecondary[0]+suffix)+" - "+termAndPrimarySecondary[1]] = codeCategories[term];
+    }
+
     if(Object.keys(codeCategories).length == 0 || Object.keys(codeCategories).indexOf("undefined - primary")>-1 || Object.keys(codeCategories).indexOf("undefined - secondary")>-1) {
       console.error("No category for " + name + ": " + JSON.stringify(codeCategories));
       return false;
     }
 
-    return codeCategories;
+    return formattedCodeCategories;
   }
 
   static async importPhenotypeCSVs(phenotypeFiles) {
-    let fullCSV;
+    let allCSVs=[];
 
     for(let phenotypeFile of phenotypeFiles) {
 
@@ -200,14 +211,14 @@ class Importer {
         } catch(error) {
           console.error(error)
         }
-        fullCSV = fullCSV?fullCSV.concat(currentCSV):currentCSV;
+        allCSVs.push(currentCSV);
       }
 
     }
-
-    if(!fullCSV) return false;
-    let codeCategories = this.getCodeCategories(fullCSV, markdownContent.name);
-    return await this.importPhenotype(markdownContent.name, markdownContent.phenotype_id+" - "+markdownContent.title, codeCategories, "caliber");
+    if(allCSVs.length==0) return false;
+    let codeCategories = this.getCodeCategories(allCSVs, markdownContent.name);
+    if(codeCategories) return await this.importPhenotype(markdownContent.name, markdownContent.phenotype_id+" - "+markdownContent.title, codeCategories, "caliber");
+    else return false;
     
   }
 
@@ -241,8 +252,9 @@ class Importer {
     name = name.join(" ");
     let about = name;
     
-    let codeCategories = this.getCodeCategories(csv, name);
-    return await this.importPhenotype(name, about, codeCategories, "phekb");
+    let codeCategories = this.getCodeCategories([csv], name);
+    if (codeCategories) return await this.importPhenotype(name, about, codeCategories, "phekb");
+    else return false;
   }
 
 }
