@@ -21,6 +21,7 @@ module.exports = {
   importer: {
     PHENOTYPE_FOLDER: "fixtures/importer/caliber",
     CODELIST_FOLDER: "fixtures/importer/phekb",
+    KEYWORD_LIST_FOLDER: "fixtures/importer/kclhi",
     GROUP_SIMILAR_PHENOTYPES: false
   }
 };
