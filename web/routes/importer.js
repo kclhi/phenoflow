@@ -80,21 +80,21 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
 
     }
 
-    async function createWorkflowSteps(workflowId, name, language, outputExtension, userName, codeCategories) {
+    async function createWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, categoryType, template) {
 
       let position = 2;
 
       // For each code set
-      for(var code in codeCategories) {
-        let stepName = clean(code.toLowerCase());
-        let stepDoc = "Identify " + clean(code, true);
+      for(var category in categories) {
+        let stepName = clean(category.toLowerCase());
+        let stepDoc = "Identify " + clean(category, true);
         let stepType = "logic";
         let inputDoc = "Potential cases of " + name;
-        let outputDoc = "Patients with clinical codes indicating " + name + " related events in electronic health record.";
-        let fileName = clean(code.toLowerCase()) + ".py";
+        let outputDoc = "Patients with " + categoryType + " indicating " + name + " related events in electronic health record.";
+        let fileName = clean(category.toLowerCase()) + ".py";
 
         try {
-          await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, "templates/codelist.py", {"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CODE_CATEGORY":clean(code.toLowerCase()), "CODE_LIST":'"' + codeCategories[code].join('","') + '"', "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+          await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, template, {"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":clean(category.toLowerCase()), "LIST":'"' + categories[category].join('","') + '"', "AUTHOR":userName, "YEAR":new Date().getFullYear()});
         } catch(error) {
           error = "Error creating imported step (" + stepName + "): " + error;
           throw error;
@@ -115,11 +115,23 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
 
     }
 
+    async function createCodeWorkflowSteps(workflowId, name, language, outputExtension, userName, categories) {
+
+      await createWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "clinical codes", "templates/codelist.py");
+
+    }
+
+    async function createKeywordWorkflowSteps(workflowId, name, language, outputExtension, userName, categories) {
+
+      await createWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "keywords", "templates/keywords.py");
+
+    }
+
     router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
       req.setTimeout(0);
 
-      if(!req.body.name || !req.body.about || !req.body.codeCategories || !req.body.userName) {
+      if(!req.body.name || !req.body.about || !req.body.categories || !req.body.userName || !req.body.implementation) {
         logger.debug("Missing params.");
         return res.status(500).send("Missing params.");
       }
@@ -142,7 +154,8 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
       }
 
       try {
-        await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+        if(req.body.implementation=="code") await createCodeWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
+        else await createKeywordWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
       } catch(error) {
         logger.debug("Error creating workflow steps: " + error);
         return res.status(500).send(error);
@@ -163,7 +176,8 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
 
       language = "python";
       try {
-        await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+        if(req.body.implementation=="code") await createCodeWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
+        else await createKeywordWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
       } catch(error) {
         logger.debug("Error creating workflow steps (i2b2): " + error);
         return res.status(500).send(error);
@@ -184,7 +198,8 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
 
       language = "python";
       try {
-        await createWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.codeCategories);
+        if(req.body.implementation=="code") await createCodeWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
+        else await createKeywordWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
       } catch(error) {
         logger.debug("Error creating workflow steps (omop): " + error);
         return res.status(500).send(error);
