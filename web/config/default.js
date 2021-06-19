@@ -23,5 +23,8 @@ module.exports = {
     CODELIST_FOLDER: "fixtures/importer/phekb",
     KEYWORD_LIST_FOLDER: "fixtures/importer/kclhi",
     GROUP_SIMILAR_PHENOTYPES: false
+  },
+  validation: {
+    SNOWSTORM_URL: "localhost:8080"
   }
 };
