@@ -155,6 +155,23 @@ class Importer {
     return formattedCategories;
   }
 
+  static getValue(row) {
+    if(row["code"]) return row["code"];
+    let otherKeyCodes;
+    const codeKeys = Importer.primaryCodeKeys.concat(Importer.secondaryCodeKeys);
+    if((otherKeyCodes=Object.keys(row).filter(key=>codeKeys.includes(key.toLowerCase())))&&otherKeyCodes) return row[otherKeyCodes[0]];
+    console.error("No usable value for "+JSON.stringify(row)+" "+name);
+    return 0;
+  }
+  
+  static getDescription(row) {
+    const descriptions = ["description", "conceptname", "proceduredescr", "icd10term", "icd11term", "snomedterm", "icd10codedescr", "icdterm", "readterm", "readcodedescr", "term"];
+    let description = row[Object.keys(row).filter(key=>descriptions.includes(Importer.clean(key)))[0]];
+    if(description) description = description.replace("[X]", "").replace("[D]", "")
+    if(description&&description.includes(" ")) description=description.split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word))).join(" ");
+    return description;
+  }
+
   static async importPhenotypeCSVs(phenotypeFiles) {
     let allCSVs=[];
 
@@ -202,7 +219,7 @@ class Importer {
 
     }
     if(allCSVs.length==0) return false;
-    let codeCategories = this.getCodeCategories(allCSVs, markdownContent.name);
+    let codeCategories = this.getCategories(allCSVs, markdownContent.name, this.getValue, this.getDescription);
     if(codeCategories) return await this.importPhenotype(markdownContent.name, markdownContent.phenotype_id+" - "+markdownContent.title, codeCategories, "caliber");
     else return false;
     
@@ -244,22 +261,7 @@ class Importer {
   }
 
   static async importCodelist(path, file, author) {
-    function getValue(row) {
-      if(row["code"]) return row["code"];
-      let otherKeyCodes;
-      const codeKeys = Importer.primaryCodeKeys.concat(Importer.secondaryCodeKeys);
-      if((otherKeyCodes=Object.keys(row).filter(key=>codeKeys.includes(key.toLowerCase())))&&otherKeyCodes) return row[otherKeyCodes[0]];
-      console.error("No usable value for "+JSON.stringify(row)+" "+name);
-      return 0;
-    }
-    function getDescription(row) {
-      const descriptions = ["description", "conceptname", "proceduredescr", "icd10term", "icd11term", "snomedterm", "icd10codedescr", "icdterm", "readterm", "readcodedescr"];
-      let description = row[Object.keys(row).filter(key=>descriptions.includes(Importer.clean(key)))[0]];
-      if(description) description = description.replace("[X]", "").replace("[D]", "")
-      if(description&&description.includes(" ")) description=description.split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word))).join(" ");
-      return description;
-    }
-    return await this.import(path, file, author, getValue, getDescription, "code");
+    return await this.import(path, file, author, this.getValue, this.getDescription, "code");
   }
 
   static async importKeywordList(path, file, author) {

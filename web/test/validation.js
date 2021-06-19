@@ -10,6 +10,7 @@ const models = require('../models');
 const logger = require('../config/winston');
 const config = require('config');
 const Workflow = require('./workflow');
+const WorkflowUtils = require("../util/workflow");
 
 describe('validation', () => {
 
@@ -17,7 +18,7 @@ describe('validation', () => {
 
 		let workflowId, secondWorkflowId;
 		let name = "workflow";
-
+    
 		it("Should be able to add a new user.", async() => {
 			await models.user.sync({force:true});
 			const result = await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});

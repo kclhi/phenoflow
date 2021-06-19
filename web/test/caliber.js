@@ -23,7 +23,7 @@ describe("caliber importer", () => {
     });
 
     it("[CI2] Should be able to import a phenotype CSV.", async() => {
-      const phenotypeFile = "axson_COPD_Y9JxuQRFPprJDMHSPowJYs.md";
+      const phenotypeFile = "alcohol-consumption.md";
       const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
@@ -41,6 +41,7 @@ describe("caliber importer", () => {
       // Can't perform test if folder doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
       for(let phenotypeFiles of await Importer.groupPhenotypeFiles(PATH)) {
+        console.log(phenotypeFiles);
         if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
           expect(await Importer.importPhenotypeCSVs(phenotypeFiles)).to.be.true;
         } else {

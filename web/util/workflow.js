@@ -1,5 +1,6 @@
 const nlp = require('compromise');
-const models = require("../models");
+nlp.extend(require('compromise-adjectives'));
+const models = require('../models');
 const logger = require('../config/winston');
 const config = require('config');
 const sequelize = require('sequelize');
@@ -196,7 +197,7 @@ class Workflow {
   }
 
   static ignoreInStepName(word) {
-    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction"];
+    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction", "accident"];
     let ignoreWords = ["not", "use", "type"];
     let nlpd = nlp(word);
     return word.length <= 2

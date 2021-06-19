@@ -31,6 +31,7 @@ describe("phekb importer", () => {
       try { await fs.stat(PATH) } catch(error) { return true; }
       let phenotypeFiles = await fs.readdir(PATH);
       for(let phenotypeFile of phenotypeFiles) {
+        console.log(phenotypeFile);
         if(phenotypeFile.includes("_rx") || phenotypeFile.includes("_lab") || phenotypeFile.includes("_key")) continue;
         expect(await Importer.importCodelist(PATH, phenotypeFile, "phekb")).to.be.true;
       }
