@@ -23,11 +23,11 @@ Components of the Phenoflow architecture.
 
 ### Certificate generation
 
-1. Run [visualiser/git-server/certs/ge-ca-cert.sh](visualiser/git-server/certs/ge-ca-cert.sh).
-2. Run [visualiser/git-server/certs/ge-domain-cert.sh](visualiser/git-server/certs/ge-domain-cert.sh).
-3. Copy [visualiser/git-server/certs/pf.pem](visualiser/git-server/certs/pf.pem) to [visualiser/spring/certs](visualiser/spring/certs).
-4. Copy [visualiser/git-server/certs/pf.pem](visualiser/git-server/certs/pf.pem) to [web/certs](web/certs).
-4. Copy [visualiser/git-server/certs/pf.*](visualiser/git-server/certs) to [web/proxy/certs](web/certs).
+1. Run [visualiser/git-server/certs/ge-ca-cert.sh](visualiser/git-server/certs/gen-ca-cert.sh).
+2. Run [visualiser/git-server/certs/ge-domain-cert.sh](visualiser/git-server/certs/gen-domain-cert.sh).
+3. Copy visualiser/git-server/certs/pf.pem to a new folder visualiser/spring/certs.
+4. Copy visualiser/git-server/certs/pf.pem to a new folder web/certs.
+4. Copy visualiser/git-server/certs/pf.* to [web/proxy/certs](web/proxy/certs).
 5. Run [web/proxy/certs/gen-domain-cert.sh](web/proxy/certs/gen-domain-cert.sh).
 
 ### .env
@@ -44,7 +44,7 @@ MYSQL_PASSWORD=
 MYSQL_DATABASE=
 ```
 
-Location of a root certificate within [web](web) (e.g. '[certs/pf.pem](web/cers/pf.pem)'), allowing 'web' to communicate with other services:
+Location of a root certificate within [web](web) (e.g. 'web/cers/pf.pem'), allowing 'web' to communicate with other services:
 
 `NODE_EXTRA_CA_CERTS=`
 
@@ -86,7 +86,7 @@ SAIL_PASSWORD=
 
 <img src="architecture.png" width="650">
 
-This is an [express](https://expressjs.com/) (lightweight server) project. The majority of the logic is contained within [web/app.js](web/app.js), and in the [web/routes](web/routes) and [web/util](web/lib) folders.
+This is an [express](https://expressjs.com/) (lightweight server) project. The majority of the logic is contained within [web/app.js](web/app.js), and in the [web/routes](web/routes) and [web/util](web/util) folders.
 
 ### Install and Run
 
