@@ -12,6 +12,7 @@
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
     "compromise": "^13.11.2",
+    "compromise-adjectives": "^0.0.7",
     "config": "^3.3.6",
     "cookie-parser": "^1.4.5",
     "debug": "^4.3.1",

@@ -17,6 +17,14 @@ const WorkflowUtils = require("../util/workflow");
 
 class Importer {
 
+  static primaryCodeKeys() {
+    return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd"];
+  }
+
+  static secondaryCodeKeys() {
+    return ["icdcode", "icd10code", "icd11code", "opcs4code", "icdcodeuncat"];
+  }
+
   static async importPhenotype(name, about, categories, userName, implementation="code") {
     const server = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
     let res = await chai.request(server).post("/phenoflow/importer").send({name:name, about:about, categories:categories, userName:userName, implementation:implementation});
@@ -29,10 +37,7 @@ class Importer {
     if(!input) return input;
     return input.toLowerCase().replace(/[^a-z0-9]/g, "");
   }
-
-  static primaryCodeKeys = ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd"];
-  static secondaryCodeKeys = ["icdcode", "icd10code", "icd11code", "opcs4code", "icdcodeuncat"];
-
+  
   static getCategories(csvFiles, name, valueFunction, descriptionFunction) {
     let categories = {};
     const primaryCodingSystems = ["read", "snomed", "snomedct"];
@@ -63,7 +68,6 @@ class Importer {
     }
     for(let csvFile of csvFiles) {
       let codingSystem, termCount={};
-      var primarySecondary = ((codingSystem=csvFile[0]["codingsystem"]||csvFile[0]["codetype"]||csvFile[0]["vocabulary"])&&primaryCodingSystems.includes(this.clean(codingSystem)))||this.primaryCodeKeys.filter(primaryCodeKey=>Object.keys(csvFile[0]).map(key=>this.clean(key)).includes(this.clean(primaryCodeKey))).length?"primary":"secondary";
       csvFile=csvFile.filter(row=>(row["case_incl"]&&row["case_incl"]!="N")||!row["case_incl"]);
       // Initial cleaning and counting terms
       for(let row of csvFile) {
@@ -91,7 +95,7 @@ class Importer {
           }
         }
       }
-
+      var primarySecondary = ((codingSystem=csvFile[0]["codingsystem"]||csvFile[0]["codetype"]||csvFile[0]["vocabulary"])&&primaryCodingSystems.includes(this.clean(codingSystem)))||Importer.primaryCodeKeys().filter(primaryCodeKey=>Object.keys(csvFile[0]).map(key=>this.clean(key)).includes(this.clean(primaryCodeKey))).length?"primary":"secondary";
       const NOT_DIFFERENTIATING_CUTOFF=0.15;
       let termCountArray = Object.keys(termCount).map(key=>[key, termCount[key]]).filter(term=>term[1]>1);
       termCountArray.sort(function(first, second) { return second[1]-first[1]; });
@@ -158,7 +162,7 @@ class Importer {
   static getValue(row) {
     if(row["code"]) return row["code"];
     let otherKeyCodes;
-    const codeKeys = Importer.primaryCodeKeys.concat(Importer.secondaryCodeKeys);
+    const codeKeys = Importer.primaryCodeKeys().concat(Importer.secondaryCodeKeys());
     if((otherKeyCodes=Object.keys(row).filter(key=>codeKeys.includes(key.toLowerCase())))&&otherKeyCodes) return row[otherKeyCodes[0]];
     console.error("No usable value for "+JSON.stringify(row)+" "+name);
     return 0;

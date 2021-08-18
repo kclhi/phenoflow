@@ -9,7 +9,6 @@ const op = sequelize.Op;
 class Workflow {
 
   static async workflow(workflow) {
-
     try {
       let steps = await models.step.findAll({where:{workflowId:workflow.id}, order:[['position', 'ASC']]});
       let mergedSteps = [];
@@ -27,11 +26,9 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
   static async getWorkflow(workflowId) {
-
     try {
       var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
       if(!workflow) throw "Error finding workflow";
@@ -42,11 +39,9 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
   static async getRandomWorkflow() {
-
     try {
       let workflows = await models.workflow.findAll();
       if(!workflows) throw "Error finding workflows";
@@ -57,11 +52,9 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
   static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
-
     try {
       let workflows = await models.workflow.findAll({where:{complete:true, [op.or]:[{name:{[op.like]:"%"+category+"%"}},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}], order:[['name', 'ASC']]});
       return workflows.slice(offset, offset+limit);
@@ -70,11 +63,9 @@ class Workflow {
       logger.debug(error);
       throw error;
     }
-
   }
 
   static async addChildrenToStep(workflow) {
-
     try {
       let children = await models.child.findAll({where:{parentId:workflow.id}});
       for(let child of children) {
@@ -89,11 +80,9 @@ class Workflow {
       logger.debug(error);
       throw error;
     }
-
   }
 
   static async workflowComplete(workflowId) {
-
     try {
       let candidateWorkflow = await Workflow.getWorkflow(workflowId);
       let completeWorkflow = true;
@@ -113,12 +102,10 @@ class Workflow {
       logger.debug(error);
       throw error;
     }
-
   }
 
   // A workflow is defined as being a child of another if all but one of their steps overlap OR if all of their steps overlap.
   static async workflowChild(workflowId, exhaustive=false) {
-
     let workflows = await models.workflow.findAll();
     if(!workflows.filter(workflow=>workflow.id==workflowId).length) return;
     const children = await models.child.findAll({where:{parentId:workflowId}});
@@ -163,11 +150,9 @@ class Workflow {
           ) await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
       }
     }
-
   }
 
   static async getFullWorkflow(workflowId, language=null, implementationUnits=null) {
-
     try {
       var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
       if(!workflow) throw "Error finding workflow";
@@ -193,7 +178,6 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
   static ignoreInStepName(word) {
