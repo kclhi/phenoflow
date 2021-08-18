@@ -23,7 +23,7 @@ describe("caliber importer", () => {
     });
 
     it("[CI2] Should be able to import a phenotype CSV.", async() => {
-      const phenotypeFile = "alcohol-consumption.md";
+      const phenotypeFile = "kuan_bronchiectasis_SWUAhaHStc967nLCfhY6rc.md";
       const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }

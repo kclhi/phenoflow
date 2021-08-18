@@ -7,11 +7,13 @@ const sequelize = require('sequelize');
 const op = sequelize.Op;
 const stringSimilarity = require('string-similarity');
 const got = require('got');
+const fs = require('fs');
+const fspromises = require('fs').promises;
+const { exit } = require('process');
 
 class Workflow {
 
   static async workflow(workflow) {
-
     try {
       let steps = await models.step.findAll({where:{workflowId:workflow.id}, order:[['position', 'ASC']]});
       let mergedSteps = [];
@@ -29,11 +31,9 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
   static async getWorkflow(workflowId) {
-
     try {
       var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
       if(!workflow) throw "Error finding workflow";
@@ -44,11 +44,9 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
   static async getRandomWorkflow() {
-
     try {
       let workflows = await models.workflow.findAll();
       if(!workflows) throw "Error finding workflows";
@@ -59,11 +57,9 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
   static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
-
     try {
       let workflows = await models.workflow.findAll({where:{complete:true, [op.or]:[{name:{[op.like]:"%"+category+"%"}},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}], order:[['name', 'ASC']]});
       return workflows.slice(offset, offset+limit);
@@ -72,11 +68,9 @@ class Workflow {
       logger.debug(error);
       throw error;
     }
-
   }
 
   static async addChildrenToStep(workflow) {
-
     try {
       let children = await models.child.findAll({where:{parentId:workflow.id}});
       for(let child of children) {
@@ -91,11 +85,9 @@ class Workflow {
       logger.debug(error);
       throw error;
     }
-
   }
 
   static async workflowComplete(workflowId) {
-
     try {
       let candidateWorkflow = await Workflow.getWorkflow(workflowId);
       let completeWorkflow = true;
@@ -115,12 +107,10 @@ class Workflow {
       logger.debug(error);
       throw error;
     }
-
   }
 
   // A workflow is defined as being a child of another if all but one of their steps overlap OR if all of their steps overlap.
   static async workflowChild(workflowId, exhaustive=false) {
-
     let workflows = await models.workflow.findAll();
     if(!workflows.filter(workflow=>workflow.id==workflowId).length) return;
     const children = await models.child.findAll({where:{parentId:workflowId}});
@@ -165,11 +155,9 @@ class Workflow {
           ) await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
       }
     }
-
   }
 
   static async getFullWorkflow(workflowId, language=null, implementationUnits=null) {
-
     try {
       var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
       if(!workflow) throw "Error finding workflow";
@@ -195,7 +183,6 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
   static ignoreInStepName(word) {
@@ -235,24 +222,25 @@ class Workflow {
   }
 
   static async workflowOverlap(workflows) {
-    let overlap={}, stepPairings={}, iteration=1;
+    let overlap={}, iteration=1;
     for(let workflowA of workflows) {
       for(let workflowB of workflows) {
-        console.log(Math.round((iteration++/(workflows.length*workflows.length))*100)+"%");   
+        console.log(Math.round((iteration++/(workflows.length*workflows.length))*100)+"%"); 
         if(workflowA.id!=workflowB.id && this.samePhenotype(workflowA.name, workflowB.name)) {
+          let key = workflowA.name+"_"+workflowA.id+"_"+workflowA.userName+"-"+workflowB.name+"_"+workflowB.id+"_"+workflowB.userName;
+          if(!Object.keys(overlap).includes(key)) overlap[key] = [];
           const workflowStepsA = await models.step.findAll({where:{workflowId:workflowA.id}});
           const workflowStepsB = await models.step.findAll({where:{workflowId:workflowB.id}});
           for(let workflowStepA of workflowStepsA) {
             if(workflowStepA.type=="load" || workflowStepA.type=="output") continue;
             for(let workflowStepB of workflowStepsB) {
               if(workflowStepB.type=="load" || workflowStepB.type=="output") continue;
-              if(Object.keys(stepPairings).includes(workflowStepB.name) && stepPairings[workflowStepB.name]==workflowStepA.name) continue;
+              let existingCheckKey = workflowB.name+"_"+workflowB.id+"_"+workflowB.userName+"-"+workflowA.name+"_"+workflowA.id+"_"+workflowA.userName;
+              if(Object.keys(overlap).includes(existingCheckKey) && overlap[existingCheckKey].filter(element=>element.includes(workflowStepB.name+"_"+workflowStepB.id)&&element.includes(workflowStepA.name+"_"+workflowStepA.id)).length) continue;
               if(this.isNegative(workflowStepA.name.split("---")[0].split("-").join(" "))!=this.isNegative(workflowStepB.name.split("---")[0].split("-").join(" "))) continue;
-              if(workflowStepA.name.split("---")[1]!=workflowStepB.name.split("---")[1]) continue;
+              //if(workflowStepA.name.split("---")[1]!=workflowStepB.name.split("---")[1]) continue;
               if(this.workflowStepAnalysis(workflowA, workflowStepA, workflowB, workflowStepB)) {
-                stepPairings[workflowStepA.name] = workflowStepB.name;
-                let key = workflowA.name+workflowA.id+workflowB.name+workflowB.id;
-                Object.keys(overlap).includes(key)?overlap[key].push([workflowStepA.name, workflowStepB.name]):overlap[key]=[[workflowStepA.name, workflowStepB.name]];
+                overlap[key].push([workflowStepA.name+"_"+workflowStepA.id, workflowStepB.name+"_"+workflowStepB.id]);
               }
             }
           }
@@ -265,6 +253,7 @@ class Workflow {
   static async analyseSiblings() { 
     let workflows = await this.completeWorkflows("", 0, Number.MAX_VALUE);
     let overlap = await this.workflowOverlap(workflows);
+    await fspromises.writeFile("siblings.json", JSON.stringify(overlap));
   }
   
   static async commonGeneralCondition(workflows) {
@@ -307,9 +296,10 @@ class Workflow {
         let generalConditionsA = getGeneralConditions(workflowA.name);
         let generalConditionsB = getGeneralConditions(workflowB.name);
         let generalCondition = generalConditionsA.filter(condition=>generalConditionsB.includes(condition))[0];
-        if( workflowA.id!=workflowB.id && generalCondition && !this.samePhenotype(workflowA.name, generalCondition) && !this.samePhenotype(workflowB.name, generalCondition) && !this.samePhenotype(workflowA.name, workflowB.name) && Workflow.isNegative(workflowA.name.split("-").join(" "))==Workflow.isNegative(workflowB.name.split("-").join(" "))) {
+        if(workflowA.id!=workflowB.id && generalCondition && !this.samePhenotype(workflowA.name, generalCondition) && !this.samePhenotype(workflowB.name, generalCondition) && !this.samePhenotype(workflowA.name, workflowB.name) && Workflow.isNegative(workflowA.name.split("-").join(" "))==Workflow.isNegative(workflowB.name.split("-").join(" "))) {
           generalCondition = generalCondition.toLowerCase();
-          Object.keys(conditions).includes(generalCondition)?conditions[generalCondition]=conditions[generalCondition].concat([workflowA.name.toLowerCase(), workflowB.name.toLowerCase()]):conditions[generalCondition]=[workflowA.name.toLowerCase(), workflowB.name.toLowerCase()];
+          let workflowPair = [workflowA.name.toLowerCase()+"_"+workflowA.userName, workflowB.name.toLowerCase()+"_"+workflowB.userName];
+          Object.keys(conditions).includes(generalCondition)?conditions[generalCondition]=conditions[generalCondition].concat(workflowPair):conditions[generalCondition]=workflowPair;
           conditions[generalCondition] = [...new Set(conditions[generalCondition])];
         }
       }
@@ -319,7 +309,9 @@ class Workflow {
 
   static async analyseHierarchical() { 
     let workflows = await this.completeWorkflows("", 0, Number.MAX_VALUE);
+    console.log(workflows.map(workflow=>workflow.userName).reduce((acc, e) => acc.set(e, (acc.get(e) || 0) + 1), new Map()));
     let conditions = await this.commonGeneralCondition(workflows);
+    await fspromises.writeFile("hierarchical.json", JSON.stringify(conditions));
   }
 
 }

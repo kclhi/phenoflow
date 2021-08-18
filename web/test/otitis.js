@@ -24,7 +24,7 @@ describe('otitis', () => {
 		});
 
 		// 1. read-potential-cases
-		it('Create T2DM workflow.', async() => {
+		it('Create Otitis workflow.', async() => {
 			workflowId = await Workflow.createWorkflow(NAME, "Otitis media (REST trial cohort)", "rest", USERNAME);
 		});
 
