@@ -53,7 +53,7 @@ describe("caliber importer", () => {
     }).timeout(0);
 
     it("[CI4] Should be able to import multiple phenotype CSVs with the same name.", async() => {
-      const phenotypeFiles = ["Carr_Anxiety_5bqxGMaqvZFBhtEYb5mhZJ.md", "kuan_anxiety_LGWMqosnAtERehdytPzBWy.md"];
+      const phenotypeFiles = ["kuan_diabetes_bYMFsBEu7tVB6YkrQ8aBvk.md", "sapey_diabetes_ZmgyhwLqB2QmAtxENwkL8X.md", "carr_diabetes_jQLxtg2Z3zPcXWge5Nv9tU.md"];
       const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
