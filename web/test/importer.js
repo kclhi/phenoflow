@@ -18,7 +18,7 @@ const WorkflowUtils = require("../util/workflow");
 class Importer {
 
   static primaryCodeKeys() {
-    return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd"];
+    return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode"];
   }
 
   static secondaryCodeKeys() {
@@ -169,7 +169,7 @@ class Importer {
   }
   
   static getDescription(row) {
-    const descriptions = ["description", "conceptname", "proceduredescr", "icd10term", "icd11term", "snomedterm", "icd10codedescr", "icdterm", "readterm", "readcodedescr", "term"];
+    const descriptions = ["description", "conceptname", "proceduredescr", "icd10term", "icd11term", "snomedterm", "icd10codedescr", "icdterm", "readterm", "readcodedescr", "term", "snomedctterm"];
     let description = row[Object.keys(row).filter(key=>descriptions.includes(Importer.clean(key)))[0]];
     if(description) description = description.replace("[X]", "").replace("[D]", "")
     if(description&&description.includes(" ")) description=description.split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word))).join(" ");
@@ -239,33 +239,45 @@ class Importer {
     return Object.values(groups);
   }
 
-  static async import(path, file, author, valueFunction, descriptionFunction, implementation) {
-    let csvFile, csv;
-    try {
-      csvFile = await fs.readFile(path + file);
-    } catch(error) {
-      console.error("Could not read codelist " + file + ": " + error);
-      expect(false);
+  static async importMultiple(path, files, author, valueFunction, descriptionFunction, implementation) {
+    let csvs=[];
+    for(let file of files) {
+      let csvFile, csv;
+      try {
+        csvFile = await fs.readFile(path + file);
+      } catch(error) {
+        console.error("Could not read codelist " + file + ": " + error);
+        expect(false);
+      }
+      try {
+        csv = await parse(csvFile);
+      } catch(error) {
+        console.error(error);
+        expect(false);
+      }
+      csvs.push(csv);
     }
-    try {
-      csv = await parse(csvFile);
-    } catch(error) {
-      console.error(error);
-      expect(false);
-    }
-    let name = file.split("_")[0].split("-"); 
+    let name = files[0].split("_")[0].split("-"); 
     if(name[name.length-1].match(/[0-9]*/)>0) name.pop();
     name[0] = name[0].charAt(0).toUpperCase() + name[0].substring(1);
     name = name.join(" ");
     let about = name;
     
-    let categories = this.getCategories([csv], name, valueFunction, descriptionFunction);
+    let categories = this.getCategories(csvs, name, valueFunction, descriptionFunction);
     if (categories) return await this.importPhenotype(name, about, categories, author, implementation);
     else return false;
   }
 
+  static async import(path, file, author, valueFunction, descriptionFunction, implementation) {
+    return this.importMultiple(path, [file], author, valueFunction, descriptionFunction, implementation);
+  }
+
   static async importCodelist(path, file, author) {
     return await this.import(path, file, author, this.getValue, this.getDescription, "code");
+  }
+
+  static async importCodelistMultiple(path, files, author) {
+    return await this.importMultiple(path, files, author, this.getValue, this.getDescription, "code");
   }
 
   static async importKeywordList(path, file, author) {
