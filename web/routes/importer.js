@@ -80,9 +80,7 @@ async function createWorkflow(name, about, userName) {
 
 }
 
-async function createWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, categoryType, template) {
-
-  let position = 2;
+async function createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, categoryType, template, position=2) {
 
   // For each code set
   for(var category in categories) {
@@ -103,7 +101,12 @@ async function createWorkflowSteps(workflowId, name, language, outputExtension, 
     position++;
   }
 
-  // Add file write
+  return position;
+
+}
+
+async function addFileWrite(workflowId, position, name, outputExtension, language) {
+
   try {
     await createStep(workflowId, "output-cases", "Output cases", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, "output-cases.py", language, "templates/output-cases.py", {"PHENOTYPE":clean(name.toLowerCase())});
   } catch(error) {
@@ -115,23 +118,53 @@ async function createWorkflowSteps(workflowId, name, language, outputExtension, 
 
 }
 
-async function createCodeWorkflowSteps(workflowId, name, language, outputExtension, userName, categories) {
+async function createCodeWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2) {
 
-  await createWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "clinical codes", "templates/codelist.py");
+  return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "clinical codes", "templates/codelist.py", position);
 
 }
 
-async function createKeywordWorkflowSteps(workflowId, name, language, outputExtension, userName, categories) {
+async function createKeywordWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2) {
 
-  await createWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "keywords", "templates/keywords.py");
+  return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "keywords", "templates/keywords.py", position);
 
+}
+
+async function createWorkflowStepsFromList(workflowId, name, outputExtension, list, userName) {
+  
+  let position=2;
+
+  for(let item of list) {
+    if(item.logicType=="codelist") {
+      if(item.implementation=="code") position = await createCodeWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position);
+      else position = await createKeywordWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position);
+    } else if(item.logicType=="age") {
+      let stepName = clean("age between " + item.ageLower + " and " + item.ageUpper + " yo");
+      let stepDoc = "Age of patient is between " + item.ageLower + " and " + item.ageUpper;
+      let stepType = "logic";
+      let inputDoc = "Potential cases of " + name;
+      let outputDoc = "Patients who are between " + item.ageLower + " and " + item.ageUpper + " years old.";
+      let fileName = clean("age between " + item.ageLower + " and " + item.ageUpper + " yo") + ".py";
+
+      try {
+        await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/age.py", {"PHENOTYPE":clean(name.toLowerCase()), "AGE_LOWER":item.ageLower, "AGE_UPPER":item.ageUpper, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+      } catch(error) {
+        error = "Error creating imported step (" + stepName + "): " + error;
+        throw error;
+      }
+      position++;
+    }
+  }
+
+  await addFileWrite(workflowId, position, name, outputExtension, "python");
+  
 }
 
 router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
 
   req.setTimeout(0);
 
-  if(!req.body.name || !req.body.about || !req.body.categories || !req.body.userName || !req.body.implementation) {
+  if((!req.body.name||!req.body.about||!req.body.userName)||(!req.body.list&&(!req.body.categories||!req.body.implementation))) {
     logger.debug("Missing params.");
     return res.status(500).send("Missing params.");
   }
@@ -154,8 +187,11 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
   }
 
   try {
-    if(req.body.implementation=="code") await createCodeWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
-    else await createKeywordWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
+    if(!req.body.list) {
+      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":"codelist", "language":language, "implementation":req.body.implementation, "categories":req.body.categories}], req.body.userName);
+    } else {
+      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, req.body.list, req.body.userName);
+    }
   } catch(error) {
     logger.debug("Error creating workflow steps: " + error);
     return res.status(500).send(error);
@@ -176,8 +212,11 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   language = "python";
   try {
-    if(req.body.implementation=="code") await createCodeWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
-    else await createKeywordWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
+    if(!req.body.list) {
+      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":"codelist", "language":language, "implementation":req.body.implementation, "categories":req.body.categories}], req.body.userName);
+    } else {
+      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, req.body.list, req.body.userName);
+    }
   } catch(error) {
     logger.debug("Error creating workflow steps (i2b2): " + error);
     return res.status(500).send(error);
@@ -198,8 +237,11 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   language = "python";
   try {
-    if(req.body.implementation=="code") await createCodeWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
-    else await createKeywordWorkflowSteps(workflowId, NAME, language, OUTPUT_EXTENSION, req.body.userName, req.body.categories);
+    if(!req.body.list) {
+      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":"codelist", "language":language, "implementation":req.body.implementation, "categories":req.body.categories}], req.body.userName);
+    } else {
+      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, req.body.list, req.body.userName);
+    }
   } catch(error) {
     logger.debug("Error creating workflow steps (omop): " + error);
     return res.status(500).send(error);

@@ -16,7 +16,7 @@ function patientToCodes(patients, patient, code) {
 
 (async()=>{
 
-  let id=0, persons, patients={};
+  let id=0, persons, patients={}, ages={};
 
   try {
     persons = await got(OHDSI_WEBAPI_ENDPOINT + "/cdmresults/" + DB_SOURCE_NAME + "/person/").json();
@@ -36,17 +36,18 @@ function patientToCodes(patients, patient, code) {
       continue;
     }
     for(let code of person.records.filter(record=>record.domain=="condition").map(record=>record.conceptId)) patients = patientToCodes(patients, id, code);
+    if(person.yearOfBirth) ages[id]=person.yearOfBirth+"-01-01";
+    else ages[id]="0000-00-00";
   }
 
-  await fs.writeFile('[PHENOTYPE]-potential-cases.csv', "patient-id,codes\n");
+  await fs.writeFile('[PHENOTYPE]-potential-cases.csv', "patient-id,dob,codes\n");
   for(let patient in patients) {
     try {
-      const row = patient+",\""+Array.from(patients[patient]).join(",")+"\"\n";
+      const row = patient+","+ages[patient]+",\""+Array.from(patients[patient]).join(",")+"\"\n";
       await fs.appendFile('[PHENOTYPE]-potential-cases.csv', row);
     } catch(error) {
       console.log(error);
     }
-
   }
 
 })();

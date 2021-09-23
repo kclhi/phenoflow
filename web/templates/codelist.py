@@ -10,7 +10,8 @@ with open(sys.argv[1], 'r') as file_in, open('[PHENOTYPE]-potential-cases.csv', 
     for row in csv_reader:
         newRow = row.copy();
         for cell in row:
-            if ([value for value in row[cell].split(",") if value in codes]):
+            # If we previously excluded this individual due to their age, they cannot be a case now.
+            if([value for value in row[cell].split(",") if value in codes] and not("age-exclusion" in row and row["age-exclusion"]=="TRUE")):
                 newRow["[CATEGORY]-identified"] = "CASE";
                 break;
             else:

@@ -25,9 +25,11 @@ class Importer {
     return ["icdcode", "icd10code", "icd11code", "opcs4code", "icdcodeuncat"];
   }
 
-  static async importPhenotype(name, about, categories, userName, implementation="code") {
+  static async importPhenotype(name, about, categories, userName, implementation="code", list=null) {
     const server = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
-    let res = await chai.request(server).post("/phenoflow/importer").send({name:name, about:about, categories:categories, userName:userName, implementation:implementation});
+    let res;
+    if(list) res = await chai.request(server).post("/phenoflow/importer").send({name:name, about:about, list:list, userName:userName});
+    else res = await chai.request(server).post("/phenoflow/importer").send({name:name, about:about, categories:categories, userName:userName, implementation:implementation});
     res.should.have.status(200);
     res.body.should.be.a("object");
     return true;
@@ -239,14 +241,21 @@ class Importer {
     return Object.values(groups);
   }
 
-  static async importMultiple(path, files, author, valueFunction, descriptionFunction, implementation) {
+  static getName(file) {
+    let name = file.split("_")[0].split("-"); 
+    if(name[name.length-1].match(/[0-9]*/)>0) name.pop();
+    name[0] = name[0].charAt(0).toUpperCase() + name[0].substring(1);
+    return name.join(" ");
+  }
+
+  static async getCategoriesFromCSVs(path, files, valueFunction, descriptionFunction) {
     let csvs=[];
     for(let file of files) {
       let csvFile, csv;
       try {
-        csvFile = await fs.readFile(path + file);
+        csvFile = await fs.readFile(path+file);
       } catch(error) {
-        console.error("Could not read codelist " + file + ": " + error);
+        console.error("Could not read codelist "+file+": "+error);
         expect(false);
       }
       try {
@@ -257,13 +266,13 @@ class Importer {
       }
       csvs.push(csv);
     }
-    let name = files[0].split("_")[0].split("-"); 
-    if(name[name.length-1].match(/[0-9]*/)>0) name.pop();
-    name[0] = name[0].charAt(0).toUpperCase() + name[0].substring(1);
-    name = name.join(" ");
+    return this.getCategories(csvs, this.getName(files[0]), valueFunction, descriptionFunction);
+  }
+
+  static async importMultiple(path, files, author, valueFunction, descriptionFunction, implementation) {
+    let categories = await this.getCategoriesFromCSVs(path, files, valueFunction, descriptionFunction);
+    let name = this.getName(files[0]);
     let about = name;
-    
-    let categories = this.getCategories(csvs, name, valueFunction, descriptionFunction);
     if (categories) return await this.importPhenotype(name, about, categories, author, implementation);
     else return false;
   }
@@ -291,6 +300,34 @@ class Importer {
       return description;
     }
     return await this.import(path, file, author, getValue, getDescription, "keywords");
+  }
+
+  static async importSteplist(path, file, author) {
+    let csvFile, csv;
+    try {
+      csvFile=await fs.readFile(path+file);
+    } catch(error) {
+      console.error("Could not read steplist "+file+": "+error);
+      expect(false);
+    }
+    try {
+      csv = await parse(csvFile);
+    } catch(error) {
+      console.error(error);
+      expect(false);
+    }
+    let name=this.getName(file);
+    let about=name;
+    let list=[];
+    for(let row of csv) {
+      if(row["logicType"]=="codelist") {
+        let categories = await this.getCategoriesFromCSVs(path, [row["param"]], this.getValue, this.getDescription);
+        list.push({"logicType":"codelist", "implementation":"code", "language":"python", "categories":categories});
+      } else if(row["logicType"]="age") {
+        list.push({"logicType":"age", "language":"python", "ageLower":row["param"].split(":")[0], "ageUpper":row["param"].split(":")[1]});
+      }
+    }
+    return await this.importPhenotype(name, about, null, author, null, list);
   }
 
 }

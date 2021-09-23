@@ -46,6 +46,13 @@ describe("phekb importer", () => {
       expect(await Importer.importCodelistMultiple(PATH, [FILE_A, FILE_B], "phekb")).to.be.true;
     }).timeout(0);
 
+    it("[PI4] Should be able to construct a phenotype from a list of steps.", async() => { 
+      const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
+      const LIST = "abdominal-aortic-aneurysm-2.csv";
+      try { await fs.stat(PATH) } catch(error) { return true; }
+      expect(await Importer.importSteplist(PATH, LIST, "phekb")).to.be.true;
+    }).timeout(0);
+
   });
 
 });
