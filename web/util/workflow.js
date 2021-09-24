@@ -275,14 +275,14 @@ class Workflow {
     async function getSNOMEDParents(workflows) {
       console.log("Getting SNOMED parents...");
       for(let workflow of workflows) {
-        let conceptSearch = await got.get("http://"+config.get("validation.SNOWSTORM_URL")+"/MAIN/concepts?term="+workflow.name.replace("-", "+").replace("_", "+")).json();
+        let conceptSearch, parentSearch;
+        try { conceptSearch = await got.get("http://"+config.get("validation.SNOWSTORM_URL")+"/MAIN/concepts?term="+workflow.name.replace("-", "+").replace("_", "+")).json(); } catch(error) { continue; };
         if(!conceptSearch.items[0]) continue;
         let parents=[], item=0;
         while(parents.length==0) {
           if(item>conceptSearch.items.length) break;
-          let parentSearch = await got.get("http://"+config.get("validation.SNOWSTORM_URL")+"/browser/MAIN/concepts/"+conceptSearch.items[item++].conceptId).json();
+          try { parentSearch = await got.get("http://"+config.get("validation.SNOWSTORM_URL")+"/browser/MAIN/concepts/"+conceptSearch.items[item++].conceptId).json(); } catch(error) { break; };
           parents = parentSearch.relationships.filter(relationship=>relationship.type.pt.term=="Is a"&&relationship.characteristicType=="STATED_RELATIONSHIP").map(relationship=>relationship.target.pt.term);
-          
         }
         childParents[workflow.name] = parents.map(term=>term.split(" ").filter(word=>!Workflow.ignoreInStepName(word)).join(" ")).filter(term=>term.length>0);
       }

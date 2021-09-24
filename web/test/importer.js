@@ -121,11 +121,15 @@ class Importer {
                 break;
               }
             }
-            // If not common term, pick most representative term from description
+            // If no common term, pick most representative term from description
             if(!matched) {
               let keyTerm = getKeyTerm(description, name);
               categories[keyTerm+"--"+primarySecondary]?categories[keyTerm+"--"+primarySecondary].push(code):categories[keyTerm+"--"+primarySecondary]=[code];
             }
+          } else if(csvFile.length==1) {
+            // If there's only one code, use its description
+            category=description+"--"+primarySecondary;
+            categories[category]?categories[category].push(code):categories[category]=[code];
           } else {
             category=name+"--"+primarySecondary;
             categories[category]?categories[category].push(code):categories[category]=[code];
@@ -321,10 +325,14 @@ class Importer {
     let list=[];
     for(let row of csv) {
       if(row["logicType"]=="codelist") {
-        let categories = await this.getCategoriesFromCSVs(path, [row["param"]], this.getValue, this.getDescription);
-        list.push({"logicType":"codelist", "implementation":"code", "language":"python", "categories":categories});
-      } else if(row["logicType"]="age") {
+        let file = row["param"].split(":")[0];
+        let requiredCodes = row["param"].split(":")[1];
+        let categories = await this.getCategoriesFromCSVs(path, [file], this.getValue, this.getDescription);
+        list.push({"logicType":"codelist", "language":"python", "categories":categories, "requiredCodes":requiredCodes});
+      } else if(row["logicType"]=="age") {
         list.push({"logicType":"age", "language":"python", "ageLower":row["param"].split(":")[0], "ageUpper":row["param"].split(":")[1]});
+      } else if(row["logicType"]=="lastEncounter") {
+        list.push({"logicType":"lastEncounter", "language":"python", "maxYears":row["param"]});
       }
     }
     return await this.importPhenotype(name, about, null, author, null, list);

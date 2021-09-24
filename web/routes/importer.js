@@ -80,7 +80,7 @@ async function createWorkflow(name, about, userName) {
 
 }
 
-async function createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, categoryType, template, position=2) {
+async function createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, categoryType, template, position=2, requiredCodes=1) {
 
   // For each code set
   for(var category in categories) {
@@ -92,7 +92,7 @@ async function createCategoryWorkflowSteps(workflowId, name, language, outputExt
     let fileName = clean(category.toLowerCase()) + ".py";
 
     try {
-      await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, template, {"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":clean(category.toLowerCase()), "LIST":'"' + categories[category].join('","') + '"', "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+      await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, template, {"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":clean(category.toLowerCase()), "LIST":'"' + categories[category].join('","') + '"', "REQUIRED_CODES":requiredCodes, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
     } catch(error) {
       error = "Error creating imported step (" + stepName + "): " + error;
       throw error;
@@ -118,9 +118,9 @@ async function addFileWrite(workflowId, position, name, outputExtension, languag
 
 }
 
-async function createCodeWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2) {
+async function createCodeWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2, requiredCodes=1) {
 
-  return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "clinical codes", "templates/codelist.py", position);
+  return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "clinical codes", "templates/codelist.py", position, requiredCodes);
 
 }
 
@@ -136,18 +136,36 @@ async function createWorkflowStepsFromList(workflowId, name, outputExtension, li
 
   for(let item of list) {
     if(item.logicType=="codelist") {
-      if(item.implementation=="code") position = await createCodeWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position);
-      else position = await createKeywordWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position);
+      position = await createCodeWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position, item.requiredCodes);
+    } else if(item.logicType=="keywordlist") {
+      position = await createKeywordWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position);
     } else if(item.logicType=="age") {
-      let stepName = clean("age between " + item.ageLower + " and " + item.ageUpper + " yo");
+      let stepShort = "age between " + item.ageLower + " and " + item.ageUpper + " yo";
+      let stepName = clean(stepShort);
       let stepDoc = "Age of patient is between " + item.ageLower + " and " + item.ageUpper;
       let stepType = "logic";
       let inputDoc = "Potential cases of " + name;
       let outputDoc = "Patients who are between " + item.ageLower + " and " + item.ageUpper + " years old.";
-      let fileName = clean("age between " + item.ageLower + " and " + item.ageUpper + " yo") + ".py";
+      let fileName = clean(stepShort) + ".py";
 
       try {
         await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/age.py", {"PHENOTYPE":clean(name.toLowerCase()), "AGE_LOWER":item.ageLower, "AGE_UPPER":item.ageUpper, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+      } catch(error) {
+        error = "Error creating imported step (" + stepName + "): " + error;
+        throw error;
+      }
+      position++;
+    } else if(item.logicType=="lastEncounter") {
+      let stepShort = "last encounter not greater than " + item.maxYears + " years";
+      let stepName = clean(stepShort);
+      let stepDoc = "Last interaction with patient is not more than " + item.maxYears + " years ago";
+      let stepType = "logic";
+      let inputDoc = "Potential cases of " + name;
+      let outputDoc = "Patients with an encounter less than " + item.maxYears + " years ago.";
+      let fileName = clean(stepShort) + ".py";
+
+      try {
+        await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/last-encounter.py", {"PHENOTYPE":clean(name.toLowerCase()), "MAX_YEARS":item.maxYears, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
       } catch(error) {
         error = "Error creating imported step (" + stepName + "): " + error;
         throw error;
@@ -188,7 +206,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
 
   try {
     if(!req.body.list) {
-      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":"codelist", "language":language, "implementation":req.body.implementation, "categories":req.body.categories}], req.body.userName);
+      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(req.body.implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":req.body.implementation, "categories":req.body.categories, "requiredCodes":1}], req.body.userName);
     } else {
       await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, req.body.list, req.body.userName);
     }
@@ -213,7 +231,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
   language = "python";
   try {
     if(!req.body.list) {
-      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":"codelist", "language":language, "implementation":req.body.implementation, "categories":req.body.categories}], req.body.userName);
+      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(req.body.implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":req.body.implementation, "categories":req.body.categories, "requiredCodes":1}], req.body.userName);
     } else {
       await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, req.body.list, req.body.userName);
     }
@@ -238,7 +256,7 @@ router.post('/', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS2
   language = "python";
   try {
     if(!req.body.list) {
-      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":"codelist", "language":language, "implementation":req.body.implementation, "categories":req.body.categories}], req.body.userName);
+      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(req.body.implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":req.body.implementation, "categories":req.body.categories, "requiredCodes":1}], req.body.userName);
     } else {
       await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, req.body.list, req.body.userName);
     }
