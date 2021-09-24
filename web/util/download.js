@@ -24,7 +24,7 @@ class Download {
 
     await Zip.add(archive, workflow, name + ".cwl");
     await Zip.add(archive, workflowInputs, name + "-inputs.yml");
-    if(steps && steps[0] && steps[0].type.indexOf("external") < 0) await Zip.add(archive, "", "replaceMe.csv");
+    if(steps && steps[0] && steps[0].type.indexOf("external") < 0) await Zip.addFile(archive, "templates/", "replaceMe.csv");
 
     for(const step in steps) {
       await Zip.add(archive, steps[step].content, steps[step].name + ".cwl");

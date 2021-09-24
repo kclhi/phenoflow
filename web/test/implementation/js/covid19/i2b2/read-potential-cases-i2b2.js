@@ -34,15 +34,22 @@ function patientToCodes(patients, patient, code) {
   // ~MDC reduce/spread slow but neat:
   let dobs = PATIENT_DATA.patient.reduce((acc,item) => ({...acc, [item.patient_id]: item.param[5]}), {});
   const OBSERVATIONS = parser.parse(PDO_QUERY_RESPONSE.body)['ns5:response'].message_body['ns3:response']['ns2:patient_data']['ns2:observation_set'];
-  const PRIMARY_PATIENTS = OBSERVATIONS[0].observation;
-  const SECONDARY_PATIENTS = OBSERVATIONS[1].observation;
+  let primaryPatients = OBSERVATIONS[0].observation;
+  // Sort, so reduce picks up latest encounter as last value for dictionary.
+  primaryPatients.sort((a,b)=>new Date(a.end_date).getTime()-new Date(b.end_date).getTime());
+  let lastEncountersPrimary = primaryPatients.reduce((acc,item) => ({...acc, [item.patient_id]: item.end_date}), {});
+  let secondaryPatients = OBSERVATIONS[1].observation;
+  secondaryPatients.sort((a,b)=>new Date(a.end_date).getTime()-new Date(b.end_date).getTime());
+  let lastEncountersSecondary = primaryPatients.reduce((acc,item) => ({...acc, [item.patient_id]: item.end_date}), {});
+  let lastEncounter = {...lastEncountersPrimary, ...lastEncountersSecondary};
   let patients = {};
-  for(let patient of PRIMARY_PATIENTS) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
-  for(let patient of SECONDARY_PATIENTS) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
-  await fs.appendFile('covid-potential-cases.csv', "patient-id,dob,codes\n");
+  for(let patient of primaryPatients) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
+  for(let patient of secondaryPatients) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
+  await fs.appendFile('covid-potential-cases.csv', "patient-id,dob,codes,last-encounter\n");
+
   for(let patient in patients) {
     try {
-      await fs.appendFile('covid-potential-cases.csv', patient+","+dobs[patient]+",\""+Array.from(patients[patient]).join(",")+"\"\n");
+      await fs.appendFile('covid-potential-cases.csv', patient+","+dobs[patient]+",\""+Array.from(patients[patient]).join(",")+"\","+lastEncounter[patient].substring(0,lastEncounter[patient].length-1)+"\n");
     } catch(error) {
       console.log(error);
     }
