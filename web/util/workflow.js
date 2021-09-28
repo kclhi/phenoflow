@@ -121,6 +121,7 @@ class Workflow {
         const ERROR_PREFIX = "Unable to identify workflow intersection: ";
         const workflowSteps = await models.step.findAll({where:{workflowId:workflow.id}});
         if(!workflowSteps) throw new Error(ERROR_PREFIX + "Error getting other workflow steps.");
+        if(workflowSteps.length!=candidateChildSteps.length) continue;
         let distinctStepName, distinctStepPosition;
         for(let candidateChildStep of candidateChildSteps) {
           let workflowStep = null;
@@ -144,7 +145,7 @@ class Workflow {
         }
   
         if(distinctStepName&&distinctStepPosition
-          &&(matchingSteps==candidateChildSteps.length||matchingSteps==workflowSteps.length-1)
+          &&(matchingSteps==candidateChildSteps.length||matchingSteps==candidateChildSteps.length-1)
           // We aren't able to tell if 3-step workflows are children via a middle distinct step.
           &&!(matchingSteps==2&&!distinctStepName.includes("read")&&!distinctStepName.includes("output"))
           ) await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
