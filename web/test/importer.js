@@ -18,7 +18,7 @@ const WorkflowUtils = require("../util/workflow");
 class Importer {
 
   static primaryCodeKeys() {
-    return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode"];
+    return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid"];
   }
 
   static secondaryCodeKeys() {
@@ -67,6 +67,14 @@ class Importer {
       }
       key=key.charAt(0).toUpperCase() + key.slice(1);
       return key;
+    }
+    function findAndCapitaliseName(text) {
+      let newText="";
+      for(let word of text.split(" ")) {
+        if(name.toLowerCase().includes(word.toLowerCase())) newText+=word.charAt(0).toUpperCase() + word.substring(1)+" ";
+        else newText+=word+" ";
+      }
+      return newText.substring(0,newText.length-1);
     }
     for(let csvFile of csvFiles) {
       let codingSystem, termCount={};
@@ -128,9 +136,10 @@ class Importer {
             }
           } else if(csvFile.length==1) {
             // If there's only one code, use its description
-            category=description+"--"+primarySecondary;
+            category=findAndCapitaliseName(description)+"--"+primarySecondary;
             categories[category]?categories[category].push(code):categories[category]=[code];
           } else {
+            // Otherwise, just use the name of the definition itself
             category=name+"--"+primarySecondary;
             categories[category]?categories[category].push(code):categories[category]=[code];
           }
@@ -169,9 +178,8 @@ class Importer {
     if(row["code"]) return row["code"];
     let otherKeyCodes;
     const codeKeys = Importer.primaryCodeKeys().concat(Importer.secondaryCodeKeys());
-    if((otherKeyCodes=Object.keys(row).filter(key=>codeKeys.includes(key.toLowerCase())))&&otherKeyCodes) return row[otherKeyCodes[0]];
-    console.error("No usable value for "+JSON.stringify(row)+" "+name);
-    return 0;
+    if((otherKeyCodes=Object.keys(row).filter(key=>codeKeys.includes(key.toLowerCase())))&&otherKeyCodes) for(let keyCode of otherKeyCodes) if(row[keyCode]) return row[keyCode];
+    throw "No usable value for "+JSON.stringify(row)+" "+otherKeyCodes;
   }
   
   static getDescription(row) {
