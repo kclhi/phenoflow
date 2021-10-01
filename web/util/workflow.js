@@ -75,6 +75,7 @@ class Workflow {
       let children = await models.child.findAll({where:{parentId:workflow.id}});
       for(let child of children) {
         if(child.distinctStepPosition&&child.distinctStepName) {
+          if(!workflow.steps[child.distinctStepPosition-1]) continue;
           if(!workflow.steps[child.distinctStepPosition-1].children) workflow.steps[child.distinctStepPosition-1].children = [];
           workflow.steps[child.distinctStepPosition-1].children.push({workflowId:child.workflowId, stepName:child.distinctStepName});
         }
@@ -150,7 +151,7 @@ class Workflow {
         }
   
         if(distinctStepName&&distinctStepPosition
-          &&(matchingSteps==candidateChildSteps.length||matchingSteps==candidateChildSteps.length-1)
+          &&(matchingSteps==candidateChildSteps.length||matchingSteps==workflowSteps.length-1)
           // We aren't able to tell if 3-step workflows are children via a middle distinct step.
           &&!(matchingSteps==2&&!distinctStepName.includes("read")&&!distinctStepName.includes("output"))
           ) await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
