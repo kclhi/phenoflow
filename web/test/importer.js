@@ -115,8 +115,9 @@ class Importer {
       notDifferentiatingSubset = notDifferentiatingSubset.concat(termCountArray.filter(term=>notDifferentiatingSubset.filter(subsetTerm=>subsetTerm!=term[0]&&subsetTerm.includes(term[0])).length));
 
       for(let row of csvFile) {
-        let category, code=valueFunction(row), description=descriptionFunction(row);
+        let category, description=descriptionFunction(row);
         if(description) {
+          let code=valueFunction(row);
           // Remaining work to categorise descriptions
           if(termCountArray.length) {
             let matched=false;
@@ -144,6 +145,7 @@ class Importer {
             categories[category]?categories[category].push(code):categories[category]=[code];
           }
         } else if(category=row["category"]||row["calibercategory"]) {
+          let code=valueFunction(row);
           category+="--"+primarySecondary;
           categories[category]?categories[category].push(code):categories[category]=[code];
         } else if(row["prodcode"]) {
@@ -153,7 +155,7 @@ class Importer {
           category=name+" - UK Biobank"+"--"+primarySecondary;
           categories[category]?categories[category].push(row["code"]):categories[category]=[row["code"]];
         } else {
-          console.error("No handler for: "+JSON.stringify(row)+" "+name);
+          console.error("WARN: No handler for: "+JSON.stringify(row)+" "+name);
           //return false;
         }
       }
