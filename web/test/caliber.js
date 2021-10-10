@@ -2,16 +2,74 @@ const Importer = require("./importer");
 const chai = require("chai");
 chai.use(require("chai-http"));
 const server = require("../app");
-const should = chai.should();
 const expect = chai.expect;
-const fsfull = require("fs");
 const fs = require("fs").promises;
-const proxyquire = require('proxyquire');
 const m2js = require("markdown-to-json");
 const parse = require('neat-csv');
 const models = require("../models");
 const config = require("config");
 const WorkflowUtils = require("../util/workflow");
+
+async function importCaliberPhenotypes(phenotypeFiles) {
+  let allCSVs=[];
+
+  for(let phenotypeFile of phenotypeFiles) {
+
+    const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/"+phenotypeFile;
+
+    try {
+      await fs.stat(PATH)
+    } catch(error) {
+      console.error(PATH+" does not exist.");
+      return false;
+    }
+
+    try {
+      var markdown = JSON.parse(m2js.parse([PATH], {width: 0, content: true}));
+      var markdownContent = markdown[phenotypeFile.replace(".md", "")];
+    } catch(error) {
+      console.error(phenotypeFile+": "+error);
+      return false;
+    }
+
+    if(!markdownContent.codelists) return true;
+
+    if(!Array.isArray(markdownContent.codelists)) markdownContent.codelists = [markdownContent.codelists];
+
+    for(let codelist of markdownContent.codelists) {
+      let currentCSVSource;
+      codelist = codelist.endsWith(".csv")?codelist:codelist+".csv"
+      codelist = codelist.replace(".csv.csv", ".csv")
+      try {
+        currentCSVSource = await fs.readFile("test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_data/codelists/"+codelist);
+      } catch(error) {
+        console.error("Could not read codelist for " + phenotypeFile + ": " + error);
+        return false;
+      }
+      let currentCSV;
+      try {
+        currentCSV = await parse(currentCSVSource);
+      } catch(error) {
+        console.error(error)
+      }
+      allCSVs.push({"filename":codelist, "content":currentCSV});
+    }
+
+  }
+  if(allCSVs.length==0) return false;
+  return await Importer.importCodelists(allCSVs, markdownContent.name, markdownContent.phenotype_id+" - "+markdownContent.title, "caliber");
+  
+}
+
+async function groupPhenotypeFiles(path) {
+  let phenotypeFiles = await fs.readdir(path);
+  let groups={};
+  for(let phenotypeFile of phenotypeFiles) {
+    let markdown = JSON.parse(m2js.parse([path+phenotypeFile], {width: 0, content: true}))[phenotypeFile.replace(".md", "")];
+    (groups[markdown.name+markdown.title]=groups[markdown.name+markdown.title]?groups[markdown.name+markdown.title]:[]).push(phenotypeFile);
+  }
+  return Object.values(groups);
+}
 
 describe("caliber importer", () => {
 
@@ -21,18 +79,24 @@ describe("caliber importer", () => {
       const result = await models.user.create({name:"caliber", password: config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://portal.caliberresearch.org"});
       result.should.be.a("object");
     });
-
+    
     it("[CI2] Should be able to import a phenotype CSV.", async() => {
-      const phenotypeFile = "kuan_bronchiectasis_SWUAhaHStc967nLCfhY6rc.md";
+      const phenotypeFile = "blood-pressure.md";
       const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
       if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
-        for(let phenotypeFiles of await importer.groupPhenotypeFiles(PATH)) {
-          if(phenotypeFiles.includes(phenotypeFile)) expect(await importPhenotypeCSVs(phenotypeFiles)).to.be.true;
+        for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
+          if(phenotypeFiles.includes(phenotypeFile)) {
+            let res = await importCaliberPhenotypes(phenotypeFiles);
+            res.body.should.be.a("object");
+            res.should.have.status(200);
+          }
         }
       } else {
-        expect(await Importer.importPhenotypeCSVs([phenotypeFile])).to.be.true;
+        let res = await importCaliberPhenotypes([phenotypeFile]);
+        res.body.should.be.a("object");
+        res.should.have.status(200);
       }
     }).timeout(0);
 
@@ -40,13 +104,17 @@ describe("caliber importer", () => {
       const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
       // Can't perform test if folder doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
-      for(let phenotypeFiles of await Importer.groupPhenotypeFiles(PATH)) {
+      for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
         console.log(phenotypeFiles);
         if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
-          expect(await Importer.importPhenotypeCSVs(phenotypeFiles)).to.be.true;
+          let res = await importCaliberPhenotypes(phenotypeFiles);
+          res.body.should.be.a("object");
+          res.should.have.status(200);
         } else {
           for(let phenotypeFile of phenotypeFiles) {
-            expect(await Importer.importPhenotypeCSVs([phenotypeFile])).to.be.true;
+            let res = await importCaliberPhenotypes([phenotypeFile]);
+            res.body.should.be.a("object");
+            res.should.have.status(200);
           }
         }
       }
@@ -58,7 +126,9 @@ describe("caliber importer", () => {
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
       for(let phenotypeFile of phenotypeFiles) {
-        expect(await Importer.importPhenotypeCSVs([phenotypeFile])).to.be.true;
+        let res = await importCaliberPhenotypes([phenotypeFile]);
+        res.body.should.be.a("object");
+        res.should.have.status(200);
       }
     }).timeout(0);
 
