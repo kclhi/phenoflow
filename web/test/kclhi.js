@@ -4,14 +4,16 @@ chai.use(require("chai-http"));
 const server = require("../app");
 const should = chai.should();
 const expect = chai.expect;
-const fsfull = require("fs");
 const fs = require("fs").promises;
-const proxyquire = require('proxyquire');
-const m2js = require("markdown-to-json");
-const parse = require('neat-csv');
 const models = require("../models");
 const config = require("config");
-const workflowUtils = require("../util/workflow");
+const importerUtils = require("../util/importer");
+
+async function importKCLHIKeywords(path, file) {
+  
+  return await Importer.importKeywordList({"filename":file, "content":await importerUtils.openCSV(path, file)}, "kclhi");
+
+}
 
 describe("kclhi importer", () => {
 
@@ -27,7 +29,9 @@ describe("kclhi importer", () => {
       const FILE = "stroke_key.csv";
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
-      expect(await Importer.importKeywordList(PATH, FILE, "kclhi")).to.be.true;
+      let res = await importKCLHIKeywords(PATH, FILE);
+      res.body.should.be.a("object");
+      res.should.have.status(200);
     }).timeout(0);
 
     it("[KI3] Should be able to import all keyword lists.", async() => { 
@@ -37,7 +41,9 @@ describe("kclhi importer", () => {
       let phenotypeFiles = await fs.readdir(PATH);
       for(let phenotypeFile of phenotypeFiles) {
         if(phenotypeFile.includes("_rx") || phenotypeFile.includes("_lab") || phenotypeFile.includes("_icd")) continue;
-        expect(await Importer.importKeywordList(PATH, phenotypeFile, "kclhi")).to.be.true;
+        let res = await importKCLHIKeywords(PATH, phenotypeFile);
+        res.body.should.be.a("object");
+        res.should.have.status(200);
       }
     }).timeout(0);
 

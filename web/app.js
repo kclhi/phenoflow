@@ -27,9 +27,9 @@ app.enable('strict routing');
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
 
-app.use(morgan("combined", { stream: logger.stream }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(morgan("combined", {stream:logger.stream}));
+app.use(bodyParser.json({extended:false, limit:'50mb'}));
+app.use(bodyParser.urlencoded({limit:'50mb', extended:false, parameterLimit:50000}));
 app.use(cookieParser());
 app.use("/phenoflow", express.static(path.join(__dirname, "public")));
 
