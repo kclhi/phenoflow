@@ -55,7 +55,7 @@ def search_and_merge(data, cols, v):
             swifter.apply(lambda row: row.any(), axis = 1)
     return x
 
-data = pd.read_csv(sys.argv[1]);
-conditions = text_to_cols(data, ['condition'], {'[CATEGORY]-identified': [[LIST]]]}));
+data = pd.read_csv(sys.argv[1], dtype="object");
+conditions = text_to_cols(data, [*data], {'[CATEGORY]-identified': [[LIST]]});
 conditions = conditions['[CATEGORY]-identified'].replace(True, 'CASE').replace(False, 'UNK');
 pd.concat([data, conditions], axis=1).to_csv('[PHENOTYPE]-potential-cases.csv', index=False);

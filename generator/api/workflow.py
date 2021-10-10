@@ -38,7 +38,7 @@ def createGenericStep(id, docker_image, base_command, type, doc, input_doc, exte
 
 def createPythonStep(id, type, doc, input_doc, extension, output_doc):
 
-    return createGenericStep(id, "python:latest", "python", type, doc, input_doc, extension, output_doc);
+    return createGenericStep(id, "kclhi/python:latest", "python", type, doc, input_doc, extension, output_doc);
 
 def createJSStep(id, type, doc, input_doc, extension, output_doc):
 
