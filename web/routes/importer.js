@@ -544,6 +544,38 @@ async function importPhenotype(name, about, categories, userName, implementation
     }
   }
 
+  // fhir
+  existingWorkflowId = await existingWorkflow(NAME, ABOUT, userName, "read-potential-cases-fhir");
+  existingWorkflowChanged = await importChangesExistingWorkflow(existingWorkflowId, categories);
+
+  if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) {
+    if(existingWorkflowChanged) await WorkflowUtils.deleteStepsFromWorkflow(existingWorkflowId);
+
+    workflowId = (existingWorkflowId||await createWorkflow(NAME, ABOUT, userName));
+    if(!workflowId) return false;
+    language = "js";
+
+    // Add data read (fhir)
+    try {
+      await createStep(workflowId, "read-potential-cases-fhir", "Read potential cases from a FHIR server.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from a FHIR server.", OUTPUT_EXTENSION, "read-potential-cases-fhir.js", language, "templates/read-potential-cases-fhir.js", {"PHENOTYPE":categoryClean(NAME.toLowerCase())});
+    } catch(error) {
+      logger.debug("Error creating first step from import: " + error);
+      return false;
+    }
+
+    language = "python";
+    try {
+      if(!list) {
+        await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":implementation, "categories":categories, "requiredCodes":1}], userName);
+      } else {
+        await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, list, userName);
+      }
+    } catch(error) {
+      logger.debug("Error creating workflow steps (fhir): " + error);
+      return false;
+    }
+  }
+
   return true;
 }
 
