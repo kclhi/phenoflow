@@ -71,6 +71,25 @@ async function groupPhenotypeFiles(path) {
   return Object.values(groups);
 }
 
+async function importSingleCaliberPhenotype(phenotypeFile) {
+  const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
+  // Can't perform test if file doesn't exist.
+  try { await fs.stat(PATH) } catch(error) { return true; }
+  if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
+    for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
+      if(phenotypeFiles.includes(phenotypeFile)) {
+        let res = await importCaliberPhenotypes(phenotypeFiles);
+        res.body.should.be.a("object");
+        res.should.have.status(200);
+      }
+    }
+  } else {
+    let res = await importCaliberPhenotypes([phenotypeFile]);
+    res.body.should.be.a("object");
+    res.should.have.status(200);
+  }
+}
+
 describe("caliber importer", () => {
 
   describe("/POST import caliber csv", () => {
@@ -81,23 +100,7 @@ describe("caliber importer", () => {
     });
     
     it("[CI2] Should be able to import a phenotype CSV.", async() => {
-      const phenotypeFile = "blood-pressure.md";
-      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
-      // Can't perform test if file doesn't exist.
-      try { await fs.stat(PATH) } catch(error) { return true; }
-      if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
-        for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
-          if(phenotypeFiles.includes(phenotypeFile)) {
-            let res = await importCaliberPhenotypes(phenotypeFiles);
-            res.body.should.be.a("object");
-            res.should.have.status(200);
-          }
-        }
-      } else {
-        let res = await importCaliberPhenotypes([phenotypeFile]);
-        res.body.should.be.a("object");
-        res.should.have.status(200);
-      }
+      await importSingleCaliberPhenotype("blood-pressure.md");
     }).timeout(0);
 
     it("[CI3] Should be able to import all phenotype CSVs.", async() => {
@@ -164,6 +167,20 @@ describe("caliber importer", () => {
 
     it("[CI6] Create children for imported phenotypes.", async() => {
       for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
+    }).timeout(0);
+
+    it("[CI7] Importing the same (CALIBER) phenotype should result in no changes.", async() => {
+      await importSingleCaliberPhenotype("blood-pressure.md");
+      await importSingleCaliberPhenotype("blood-pressure.md");
+      let workflows = await models.workflow.findAndCountAll();
+      expect(workflows.count).to.equal(3);
+    }).timeout(0);
+
+    it("[CI8] Importing an update to the same (CALIBER) phenotype should edit the existing definition.", async() => {
+      await importSingleCaliberPhenotype("blood-pressure.md");
+      await importSingleCaliberPhenotype("blood-pressure-alt.md");
+      let workflows = await models.workflow.findAndCountAll();
+      expect(workflows.count).to.equal(3);
     }).timeout(0);
 
   });

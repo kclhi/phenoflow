@@ -5,6 +5,7 @@ const logger = require('../config/winston');
 const config = require('config');
 const sequelize = require('sequelize');
 const op = sequelize.Op;
+const fs = require('fs').promises;
 
 class Workflow {
 
@@ -62,6 +63,44 @@ class Workflow {
       error = "Error getting complete workflows: " + error;
       logger.debug(error);
       throw error;
+    }
+  }
+
+  static async deleteStepsFromWorkflow(workflowId) {
+    try {
+      let steps = await models.step.findAll({where:{workflowId:workflowId}});
+      for(let step of steps) {
+        try {
+          let implementations = await models.implementation.findAll({where:{stepId:step.id}});
+          for(let implementation of implementations) {
+            await fs.unlink("uploads/"+workflowId+"/"+implementation.language+"/"+implementation.fileName);
+          } 
+        } catch(exception) {
+          console.log("Error deleting implementation:"+error);
+        }
+        try {
+          await models.implementation.destroy({where:{stepId:step.id}});
+        } catch(exception) {
+          console.error("Error deleting implementation:"+error);
+        }
+        try {
+          await models.input.destroy({where:{stepId:step.id}});
+        } catch(exception) {
+          console.error("Error deleting input:"+error);
+        }
+        try {
+          await models.output.destroy({where:{stepId:step.id}});
+        } catch(exception) {
+          console.error("Error deleting output:"+error);
+        }
+      }
+      try {
+        await models.step.destroy({where:{workflowId:workflowId}});
+      } catch(exception) {
+        console.error("Error deleting steps:"+error);
+      }
+    } catch(exception) {
+      console.error("Error getting steps to delete:"+error);
     }
   }
 

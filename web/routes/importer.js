@@ -15,174 +15,7 @@ const stemmer = natural.PorterStemmer;
 const config = require("config");
 const Workflow = require("../util/workflow");
 const WorkflowUtils = require("../util/workflow");
-
-async function createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, implementationTemplatePath, substitutions) {
-
-  try {
-    var step = await models.step.create({name:stepName, doc: stepDoc, type: stepType, workflowId:workflowId, position:position});
-  } catch(error) {
-    error = "Error importing step: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
-    logger.debug(error);
-    throw error;
-  }
-
-  try {
-    await models.input.create({doc:inputDoc, stepId:step.id});
-  } catch(error) {
-    error = "Error importing step input: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
-    logger.debug(error);
-    throw error;
-  }
-
-  try {
-    await models.output.create({doc:outputDoc, extension:outputExtension, stepId:step.id});
-  } catch(error) {
-    error = "Error importing step output: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
-    logger.debug(error);
-    throw error;
-  }
-
-  try {
-    await models.implementation.upsert({fileName:fileName, language:language, stepId:step.id});
-
-  } catch(error) {
-    error = "Error creating step implementation: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
-    logger.debug(error);
-    throw error;
-  }
-
-  let implementationTemplate = await fs.readFile(implementationTemplatePath, "utf8");
-  for(var substitution in substitutions) implementationTemplate = implementationTemplate.replace(new RegExp("\\\[" + substitution + "\\\]", "g"), substitutions[substitution]);
-  const destination = "uploads/" + workflowId + "/" + language;
-
-  try {
-    await fs.stat(destination);
-  } catch(error) {
-    await fs.mkdir(destination, {recursive:true});
-  }
-
-  fs.writeFile(destination + "/" + fileName.replace(/\//g, ""), implementationTemplate);
-
-}
-
-function categoryClean(input, spaces=false) {
-
-  input = input.replace(/\//g, "").replace(/(\s)?\(.*\)/g, "").replace(/\,/g, "").replace(/&amp;/g, "and");
-  if(!spaces) input = input.replace(/ /g, "-");
-  return input;
-
-}
-
-async function createWorkflow(name, about, userName) {
-
-  try {
-    var workflow = await models.workflow.create({name:name, about:about, userName:sanitizeHtml(userName)});
-    return workflow.id;
-  } catch(error) {
-    error = "Error creating workflow for CSV: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
-    logger.debug(error);
-    return false;
-  }
-
-}
-
-async function createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, categoryType, template, position=2, requiredCodes=1) {
-
-  // For each code set
-  for(var category in categories) {
-    let stepName = categoryClean(category.toLowerCase());
-    let stepDoc = "Identify " + categoryClean(category, true);
-    let stepType = "logic";
-    let inputDoc = "Potential cases of " + name;
-    let outputDoc = "Patients with " + categoryType + " indicating " + name + " related events in electronic health record.";
-    let fileName = categoryClean(category.toLowerCase()) + ".py";
-
-    try {
-      await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, template, {"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":categoryClean(category.toLowerCase()), "LIST":'"' + categories[category].join('","') + '"', "REQUIRED_CODES":requiredCodes, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
-    } catch(error) {
-      error = "Error creating imported step (" + stepName + "): " + error;
-      throw error;
-    }
-
-    position++;
-  }
-
-  return position;
-
-}
-
-async function addFileWrite(workflowId, position, name, outputExtension, language) {
-
-  try {
-    await createStep(workflowId, "output-cases", "Output cases", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, "output-cases.py", language, "templates/output-cases.py", {"PHENOTYPE":categoryClean(name.toLowerCase())});
-  } catch(error) {
-    error = "Error creating last step from import: " + error;
-    throw error;
-  }
-
-  await Workflow.workflowComplete(workflowId);
-
-}
-
-async function createCodeWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2, requiredCodes=1) {
-
-  return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "clinical codes", "templates/codelist.py", position, requiredCodes);
-
-}
-
-async function createKeywordWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2) {
-
-  return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "keywords", "templates/keywords.py", position);
-
-}
-
-async function createWorkflowStepsFromList(workflowId, name, outputExtension, list, userName) {
-  
-  let position=2;
-
-  for(let item of list) {
-    if(item.logicType=="codelist") {
-      position = await createCodeWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position, item.requiredCodes);
-    } else if(item.logicType=="keywordlist") {
-      position = await createKeywordWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position);
-    } else if(item.logicType=="age") {
-      let stepShort = "age between " + item.ageLower + " and " + item.ageUpper + " yo";
-      let stepName = categoryClean(stepShort);
-      let stepDoc = "Age of patient is between " + item.ageLower + " and " + item.ageUpper;
-      let stepType = "logic";
-      let inputDoc = "Potential cases of " + name;
-      let outputDoc = "Patients who are between " + item.ageLower + " and " + item.ageUpper + " years old.";
-      let fileName = categoryClean(stepShort) + ".py";
-
-      try {
-        await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/age.py", {"PHENOTYPE":categoryClean(name.toLowerCase()), "AGE_LOWER":item.ageLower, "AGE_UPPER":item.ageUpper, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
-      } catch(error) {
-        error = "Error creating imported step (" + stepName + "): " + error;
-        throw error;
-      }
-      position++;
-    } else if(item.logicType=="lastEncounter") {
-      let stepShort = "last encounter not greater than " + item.maxYears + " years";
-      let stepName = categoryClean(stepShort);
-      let stepDoc = "Last interaction with patient is not more than " + item.maxYears + " years ago";
-      let stepType = "logic";
-      let inputDoc = "Potential cases of " + name;
-      let outputDoc = "Patients with an encounter less than " + item.maxYears + " years ago.";
-      let fileName = categoryClean(stepShort) + ".py";
-
-      try {
-        await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/last-encounter.py", {"PHENOTYPE":categoryClean(name.toLowerCase()), "MAX_YEARS":item.maxYears, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
-      } catch(error) {
-        error = "Error creating imported step (" + stepName + "): " + error;
-        throw error;
-      }
-      position++;
-    }
-  }
-
-  await addFileWrite(workflowId, position, name, outputExtension, "python");
-  
-}
+const { workflow } = require('../util/workflow');
 
 function primaryCodeKeys() {
   return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid"];
@@ -404,84 +237,311 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
   else return res.sendStatus(500);
 });
 
+//
+
+async function createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, implementationTemplatePath, substitutions) {
+
+  try {
+    var step = await models.step.create({name:stepName, doc: stepDoc, type: stepType, workflowId:workflowId, position:position});
+  } catch(error) {
+    error = "Error importing step: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+    logger.debug(error);
+    throw error;
+  }
+
+  try {
+    await models.input.create({doc:inputDoc, stepId:step.id});
+  } catch(error) {
+    error = "Error importing step input: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+    logger.debug(error);
+    throw error;
+  }
+
+  try {
+    await models.output.create({doc:outputDoc, extension:outputExtension, stepId:step.id});
+  } catch(error) {
+    error = "Error importing step output: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+    logger.debug(error);
+    throw error;
+  }
+
+  try {
+    await models.implementation.upsert({fileName:fileName, language:language, stepId:step.id});
+
+  } catch(error) {
+    error = "Error creating step implementation: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+    logger.debug(error);
+    throw error;
+  }
+
+  let implementationTemplate = await fs.readFile(implementationTemplatePath, "utf8");
+  for(var substitution in substitutions) implementationTemplate = implementationTemplate.replace(new RegExp("\\\[" + substitution + "\\\]", "g"), substitutions[substitution]);
+  const destination = "uploads/" + workflowId + "/" + language;
+
+  try {
+    await fs.stat(destination);
+  } catch(error) {
+    await fs.mkdir(destination, {recursive:true});
+  }
+
+  fs.writeFile(destination + "/" + fileName.replace(/\//g, ""), implementationTemplate);
+
+}
+
+function categoryClean(input, spaces=false) {
+
+  input = input.replace(/\//g, "").replace(/(\s)?\(.*\)/g, "").replace(/\,/g, "").replace(/&amp;/g, "and");
+  if(!spaces) input = input.replace(/ /g, "-");
+  return input;
+
+}
+
+async function createWorkflow(name, about, userName) {
+
+  try {
+    var workflow = await models.workflow.create({name:name, about:about, userName:sanitizeHtml(userName)});
+    return workflow.id;
+  } catch(error) {
+    error = "Error creating workflow for CSV: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+    logger.debug(error);
+    return false;
+  }
+
+}
+
+async function createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, categoryType, template, position=2, requiredCodes=1) {
+
+  // For each code set
+  for(var category in categories) {
+    let stepName = categoryClean(category.toLowerCase());
+    let stepDoc = "Identify " + categoryClean(category, true);
+    let stepType = "logic";
+    let inputDoc = "Potential cases of " + name;
+    let outputDoc = "Patients with " + categoryType + " indicating " + name + " related events in electronic health record.";
+    let fileName = categoryClean(category.toLowerCase()) + ".py";
+
+    try {
+      await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, template, {"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":categoryClean(category.toLowerCase()), "LIST":'"' + categories[category].join('","') + '"', "REQUIRED_CODES":requiredCodes, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+    } catch(error) {
+      error = "Error creating imported step (" + stepName + "): " + error;
+      throw error;
+    }
+
+    position++;
+  }
+
+  return position;
+
+}
+
+async function addFileWrite(workflowId, position, name, outputExtension, language) {
+
+  try {
+    await createStep(workflowId, "output-cases", "Output cases", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, "output-cases.py", language, "templates/output-cases.py", {"PHENOTYPE":categoryClean(name.toLowerCase())});
+  } catch(error) {
+    error = "Error creating last step from import: " + error;
+    throw error;
+  }
+
+  await Workflow.workflowComplete(workflowId);
+
+}
+
+async function createCodeWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2, requiredCodes=1) {
+
+  return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "clinical codes", "templates/codelist.py", position, requiredCodes);
+
+}
+
+async function createKeywordWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2) {
+
+  return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "keywords", "templates/keywords.py", position);
+
+}
+
+async function createWorkflowStepsFromList(workflowId, name, outputExtension, list, userName) {
+  
+  let position=2;
+
+  for(let item of list) {
+    if(item.logicType=="codelist") {
+      position = await createCodeWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position, item.requiredCodes);
+    } else if(item.logicType=="keywordlist") {
+      position = await createKeywordWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position);
+    } else if(item.logicType=="age") {
+      let stepShort = "age between " + item.ageLower + " and " + item.ageUpper + " yo";
+      let stepName = categoryClean(stepShort);
+      let stepDoc = "Age of patient is between " + item.ageLower + " and " + item.ageUpper;
+      let stepType = "logic";
+      let inputDoc = "Potential cases of " + name;
+      let outputDoc = "Patients who are between " + item.ageLower + " and " + item.ageUpper + " years old.";
+      let fileName = categoryClean(stepShort) + ".py";
+
+      try {
+        await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/age.py", {"PHENOTYPE":categoryClean(name.toLowerCase()), "AGE_LOWER":item.ageLower, "AGE_UPPER":item.ageUpper, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+      } catch(error) {
+        error = "Error creating imported step (" + stepName + "): " + error;
+        throw error;
+      }
+      position++;
+    } else if(item.logicType=="lastEncounter") {
+      let stepShort = "last encounter not greater than " + item.maxYears + " years";
+      let stepName = categoryClean(stepShort);
+      let stepDoc = "Last interaction with patient is not more than " + item.maxYears + " years ago";
+      let stepType = "logic";
+      let inputDoc = "Potential cases of " + name;
+      let outputDoc = "Patients with an encounter less than " + item.maxYears + " years ago.";
+      let fileName = categoryClean(stepShort) + ".py";
+
+      try {
+        await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/last-encounter.py", {"PHENOTYPE":categoryClean(name.toLowerCase()), "MAX_YEARS":item.maxYears, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+      } catch(error) {
+        error = "Error creating imported step (" + stepName + "): " + error;
+        throw error;
+      }
+      position++;
+    }
+  }
+
+  await addFileWrite(workflowId, position, name, outputExtension, "python");
+  
+}
+
+async function existingWorkflow(name, about, userName, connectorStepName) {
+
+  try {
+    let workflows = await models.workflow.findAll({where: {name:name, about:about, userName:sanitizeHtml(userName)}});
+    if(workflows.length) {
+      if(workflows.length>3) throw "More than one match when checking for existing workflows.";
+      for(let workflow of workflows) {
+        try {
+          let steps = await models.step.findAll({where:{workflowId:workflow.id}});
+          if(steps.map((step)=>step.name).includes(connectorStepName)) {
+            return workflow.id;
+          }
+        } catch(error) {
+          console.error("Unable to check for existing steps:"+error);
+        }
+      }
+    }
+  } catch(error) {
+    console.error("Unable to check for existing workflow: "+error);
+  }
+  return false;
+
+}
+
+async function importChangesExistingWorkflow(workflowId, categories) {
+
+  if(!workflowId) return false;
+  let steps = await models.step.findAll({where:{workflowId:workflowId}});
+  if(!steps.length) return false;
+  let existingStepNames = steps.map((step)=>step.name).filter((step)=>!step.includes("read-")&&!step.includes("output-"));
+  let newStepNames = Object.keys(categories).map((category)=>categoryClean(category.toLowerCase()));
+  return !(existingStepNames.sort().toString()==newStepNames.sort().toString());
+
+}
+
 async function importPhenotype(name, about, categories, userName, implementation="code", list=null) {
 
   const NAME = categoryClean(sanitizeHtml(name));
   const ABOUT = sanitizeHtml(about).replace("&amp;", "and");
+  const OUTPUT_EXTENSION = "csv";
+  let workflowId, language;
+
+  let existingWorkflowId = await existingWorkflow(NAME, ABOUT, userName, "read-potential-cases-disc");
+  let existingWorkflowChanged = await importChangesExistingWorkflow(existingWorkflowId, categories);
 
   // Disc
-  let workflowId = discWorflowId = await createWorkflow(NAME, ABOUT, userName);
-  if (!workflowId) return res.status(500).send("Error creating workflow");
-  let language = "python";
-  const OUTPUT_EXTENSION = "csv";
+  if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) {
+    if(existingWorkflowChanged) await WorkflowUtils.deleteStepsFromWorkflow(existingWorkflowId);
 
-  // Add data read
-  try {
-    await createStep(workflowId, "read-potential-cases-disc", "Read potential cases from disc", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", language, "templates/read-potential-cases-disc.py", {"PHENOTYPE":categoryClean(NAME.toLowerCase())});
-  } catch(error) {
-    logger.debug("Error creating first step from import: " + error);
-    return false;
-  }
-
-  try {
-    if(!list) {
-      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":implementation, "categories":categories, "requiredCodes":1}], userName);
-    } else {
-      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, list, userName);
+    workflowId = (existingWorkflowId||await createWorkflow(NAME, ABOUT, userName));
+    if (!workflowId) return res.status(500).send("Error creating workflow");
+    language = "python";
+    
+    // Add data read
+    try {
+      await createStep(workflowId, "read-potential-cases-disc", "Read potential cases from disc", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", language, "templates/read-potential-cases-disc.py", {"PHENOTYPE":categoryClean(NAME.toLowerCase())});
+    } catch(error) {
+      logger.debug("Error creating first step from import: " + error);
+      return false;
     }
-  } catch(error) {
-    logger.debug("Error creating workflow steps: " + error);
-    return false;
-  }
 
+    try {
+      if(!list) {
+        await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":implementation, "categories":categories, "requiredCodes":1}], userName);
+      } else {
+        await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, list, userName);
+      }
+    } catch(error) {
+      logger.debug("Error creating workflow steps: " + error);
+      return false;
+    }
+  }
+  
   // i2b2
-  workflowId = await createWorkflow(NAME, ABOUT, userName);
-  if(!workflowId) return false;
-  language = "js";
+  existingWorkflowId = await existingWorkflow(NAME, ABOUT, userName, "read-potential-cases-i2b2");
+  existingWorkflowChanged = await importChangesExistingWorkflow(existingWorkflowId, categories);
 
-  // Add data read (i2b2)
-  try {
-    await createStep(workflowId, "read-potential-cases-i2b2", "Read potential cases from i2b2", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from i2b2.", OUTPUT_EXTENSION, "read-potential-cases-i2b2.js", language, "templates/read-potential-cases-i2b2.js", {"PHENOTYPE":categoryClean(NAME.toLowerCase())});
-  } catch(error) {
-    logger.debug("Error creating first step from import: " + error);
-    return false;
-  }
+  if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) {
+    if(existingWorkflowChanged) await WorkflowUtils.deleteStepsFromWorkflow(existingWorkflowId);
 
-  language = "python";
-  try {
-    if(!list) {
-      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":implementation, "categories":categories, "requiredCodes":1}], userName);
-    } else {
-      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, list, userName);
+    workflowId = (existingWorkflowId||await createWorkflow(NAME, ABOUT, userName));
+    if(!workflowId) return false;
+    language = "js";
+
+    // Add data read (i2b2)
+    try {
+      await createStep(workflowId, "read-potential-cases-i2b2", "Read potential cases from i2b2", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from i2b2.", OUTPUT_EXTENSION, "read-potential-cases-i2b2.js", language, "templates/read-potential-cases-i2b2.js", {"PHENOTYPE":categoryClean(NAME.toLowerCase())});
+    } catch(error) {
+      logger.debug("Error creating first step from import: " + error);
+      return false;
     }
-  } catch(error) {
-    logger.debug("Error creating workflow steps (i2b2): " + error);
-    return false;
+
+    language = "python";
+    try {
+      if(!list) {
+        await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":implementation, "categories":categories, "requiredCodes":1}], userName);
+      } else {
+        await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, list, userName);
+      }
+    } catch(error) {
+      logger.debug("Error creating workflow steps (i2b2): " + error);
+      return false;
+    }
   }
 
   // omop
-  workflowId = await createWorkflow(NAME, ABOUT, userName);
-  if(!workflowId) return false;
-  language = "js";
+  existingWorkflowId = await existingWorkflow(NAME, ABOUT, userName, "read-potential-cases-omop");
+  existingWorkflowChanged = await importChangesExistingWorkflow(existingWorkflowId, categories);
 
-  // Add data read (omop)
-  try {
-    await createStep(workflowId, "read-potential-cases-omop", "Read potential cases from an OMOP db.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from an OMOP DB.", OUTPUT_EXTENSION, "read-potential-cases-omop.js", language, "templates/read-potential-cases-omop.js", {"PHENOTYPE":categoryClean(NAME.toLowerCase())});
-  } catch(error) {
-    logger.debug("Error creating first step from import: " + error);
-    return false;
-  }
+  if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) {
+    if(existingWorkflowChanged) await WorkflowUtils.deleteStepsFromWorkflow(existingWorkflowId);
 
-  language = "python";
-  try {
-    if(!list) {
-      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":implementation, "categories":categories, "requiredCodes":1}], userName);
-    } else {
-      await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, list, userName);
+    workflowId = (existingWorkflowId||await createWorkflow(NAME, ABOUT, userName));
+    if(!workflowId) return false;
+    language = "js";
+
+    // Add data read (omop)
+    try {
+      await createStep(workflowId, "read-potential-cases-omop", "Read potential cases from an OMOP db.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from an OMOP DB.", OUTPUT_EXTENSION, "read-potential-cases-omop.js", language, "templates/read-potential-cases-omop.js", {"PHENOTYPE":categoryClean(NAME.toLowerCase())});
+    } catch(error) {
+      logger.debug("Error creating first step from import: " + error);
+      return false;
     }
-  } catch(error) {
-    logger.debug("Error creating workflow steps (omop): " + error);
-    return false;
+
+    language = "python";
+    try {
+      if(!list) {
+        await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, [{"logicType":(implementation=="code"?"codelist":"keywordlist"), "language":language, "implementation":implementation, "categories":categories, "requiredCodes":1}], userName);
+      } else {
+        await createWorkflowStepsFromList(workflowId, NAME, OUTPUT_EXTENSION, list, userName);
+      }
+    } catch(error) {
+      logger.debug("Error creating workflow steps (omop): " + error);
+      return false;
+    }
   }
 
   return true;
