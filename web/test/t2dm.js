@@ -175,7 +175,7 @@ describe('t2dm', () => {
 
 		}
 
-		it("[D1] Should be able to add a new user.", async() => {
+		it("Should be able to add a new user.", async() => {
 			const result = await models.user.create({name:"phekb", password:config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://phekb.org"});
 			result.should.be.a("object");
 		});

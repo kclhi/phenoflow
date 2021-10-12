@@ -22,6 +22,23 @@ class Importer {
   
   }
 
+  static async hashFiles(path, files) {
+
+    let filesContent="";
+    for(let file of files) filesContent+=await fs.readFile(path+file);
+    return require('crypto').createHash('sha1').update(filesContent).digest('base64');
+
+  }
+
+  static getName(file) {
+
+    let name = file.split("_")[0].split("-"); 
+    if(name[name.length-1].match(/[0-9]*/)>0) name.pop();
+    name[0] = name[0].charAt(0).toUpperCase() + name[0].substring(1);
+    return name.join(" ");
+  
+  }
+
 }
 
 module.exports = Importer;

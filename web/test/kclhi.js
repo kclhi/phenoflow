@@ -11,7 +11,8 @@ const importerUtils = require("../util/importer");
 
 async function importKCLHIKeywords(path, file) {
   
-  return await Importer.importKeywordList({"filename":file, "content":await importerUtils.openCSV(path, file)}, "kclhi");
+  let id = await importerUtils.hashFiles(path, [file]);
+  return await Importer.importKeywordList({"filename":file, "content":await importerUtils.openCSV(path, file)}, importerUtils.getName(file), id+" - "+importerUtils.getName(file), "kclhi");
 
 }
 

@@ -74,7 +74,7 @@ async function groupPhenotypeFiles(path) {
   return Object.values(groups);
 }
 
-async function importSingleCaliberPhenotype(phenotypeFile) {
+async function testCaliberPhenotype(phenotypeFile) {
   const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
   // Can't perform test if file doesn't exist.
   try { await fs.stat(PATH) } catch(error) { return true; }
@@ -99,7 +99,7 @@ describe("caliber importer", () => {
     });
     
     it("[CI2] Should be able to import a phenotype CSV.", async() => {
-      await importSingleCaliberPhenotype("blood-pressure.md");
+      await testCaliberPhenotype("blood-pressure.md");
     }).timeout(0);
 
     it("[CI3] Should be able to import all phenotype CSVs.", async() => {
@@ -158,20 +158,16 @@ describe("caliber importer", () => {
       }
     }).timeout(0);
 
-    it("[CI6] Create children for imported phenotypes.", async() => {
-      for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
-    }).timeout(0);
-
-    it("[CI7] Importing the same (CALIBER) phenotype should result in no changes.", async() => {
-      await importSingleCaliberPhenotype("blood-pressure.md");
-      await importSingleCaliberPhenotype("blood-pressure.md");
+    it("[CI6] Importing the same (CALIBER) phenotype should result in no changes.", async() => {
+      await testCaliberPhenotype("blood-pressure.md");
+      await testCaliberPhenotype("blood-pressure.md");
       let workflows = await models.workflow.findAndCountAll();
       expect(workflows.count).to.equal(3);
     }).timeout(0);
 
-    it("[CI8] Importing an update to the same (CALIBER) phenotype should edit the existing definition.", async() => {
-      await importSingleCaliberPhenotype("blood-pressure.md");
-      await importSingleCaliberPhenotype("blood-pressure-alt.md");
+    it("[CI7] Importing an update to the same (CALIBER) phenotype should edit the existing definition.", async() => {
+      await testCaliberPhenotype("blood-pressure.md");
+      await testCaliberPhenotype("blood-pressure-alt.md");
       let workflows = await models.workflow.findAndCountAll();
       expect(workflows.count).to.equal(3);
     }).timeout(0);
