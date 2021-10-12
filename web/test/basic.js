@@ -179,6 +179,12 @@ describe("basic", () => {
 			expect(await workflows.filter((workflow)=>{return workflow.id==2})[0].countParent()).equal(1);
 		});
 
+    // Delete:
+
+		it("Should be able to delete a step.", async() => {
+			await Workflow.deleteStep(workflowId-1, 1);
+		});
+
 		//
 
 		it("Should be able to add a third workflow.", async() => {
@@ -201,17 +207,10 @@ describe("basic", () => {
 			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
 		});
 
-		it("Identical workflows should also be children.", async() => {
+		it("Identical workflows are not considered to be children.", async() => {
 			await WorkflowUtils.workflowChild(workflowId);
 			workflows = await models.workflow.findAll();
-			expect(await workflows.filter((workflow)=>{return workflow.id==3})[0].countParent()).equal(1);
-		});
-
-		// Delete:
-
-		it("Should be able to delete second step.", async() => {
-			await Workflow.deleteStep(workflowId, 2);
-			workflowId=workflowId-2; // Reset to first workflow.
+			expect(await workflows.filter((workflow)=>{return workflow.id==3})[0].countParent()).equal(0);
 		});
 
 		// Other service interaction:
@@ -230,6 +229,7 @@ describe("basic", () => {
 		let timestamp="" + Math.floor(new Date() / 1000);
 
 		it("Create repo for push to CWL viewer.", async() => {
+      workflowId=workflowId-2; // Reset to first workflow.
 			// If endpoint is unreachable test can't be performed.
 			const GIT_SERVER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.HOST") + config.get("gitserver.PORT");
 			try { await got(GIT_SERVER_URL, {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }
