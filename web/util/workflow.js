@@ -147,7 +147,7 @@ class Workflow {
     }
   }
 
-  // A workflow is defined as being a child of another if all but one of their steps overlap OR if all of their steps overlap.
+  // A workflow is defined as being a child of another if all but one of their steps overlap
   static async workflowChild(workflowId, exhaustive=false) {
     let workflows = await models.workflow.findAll();
     if(!workflows.filter(workflow=>workflow.id==workflowId).length) return;

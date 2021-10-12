@@ -145,7 +145,7 @@ function getCategories(csvFiles, name, valueFunction, descriptionFunction) {
         category=name+" - UK Biobank"+"--"+primarySecondary;
         categories[category]?categories[category].push(row["code"]):categories[category]=[row["code"]];
       } else {
-        console.error("WARN: No handler for: "+JSON.stringify(row)+" "+name);
+        logger.warn("No handler for: "+JSON.stringify(row)+" "+name);
         //return false;
       }
     }
@@ -159,7 +159,7 @@ function getCategories(csvFiles, name, valueFunction, descriptionFunction) {
   }
 
   if(Object.keys(categories).length == 0 || Object.keys(categories).indexOf("undefined - primary")>-1 || Object.keys(categories).indexOf("undefined - secondary")>-1) {
-    console.error("No category for " + name + ": " + JSON.stringify(categories));
+    logger.error("No category for " + name + ": " + JSON.stringify(categories));
     return false;
   }
 
@@ -420,12 +420,12 @@ async function existingWorkflow(name, about, userName, connectorStepName) {
             return workflow.id;
           }
         } catch(error) {
-          console.error("Unable to check for existing steps:"+error);
+          logger.error("Unable to check for existing steps:"+error);
         }
       }
     }
   } catch(error) {
-    console.error("Unable to check for existing workflow: "+error);
+    logger.error("Unable to check for existing workflow: "+error);
   }
   return false;
 

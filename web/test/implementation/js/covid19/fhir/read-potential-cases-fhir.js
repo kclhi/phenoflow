@@ -1,4 +1,4 @@
-// martinchapman, 2020.
+// martinchapman, 2021.
 
 const got = require("got");
 const fs = require('fs').promises;
@@ -36,7 +36,8 @@ function patientToCodes(patients, patient, code) {
   await fs.writeFile('covid-potential-cases.csv', "patient-id,dob,codes,last-encounter\n");
   for(let patient in patients) {
     try {
-      const row = patient+","+dobs[patient]+",\""+Array.from(patients[patient]).join(",")+"\","+lastEncounters[patient].toISOString()+"\n";
+      lastEncounters[patient] = lastEncounters[patient].toISOString();
+      const row = patient+","+dobs[patient]+",\""+Array.from(patients[patient]).join(",")+"\","+lastEncounters[patient].substring(0, lastEncounters[patient].length-1)+"\n";
       await fs.appendFile('covid-potential-cases.csv', row);
     } catch(error) {
       console.log(error);
