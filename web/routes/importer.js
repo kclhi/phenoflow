@@ -182,13 +182,6 @@ function getDescription(row) {
   return description;
 }
 
-function getName(file) {
-  let name = file.split("_")[0].split("-"); 
-  if(name[name.length-1].match(/[0-9]*/)>0) name.pop();
-  name[0] = name[0].charAt(0).toUpperCase() + name[0].substring(1);
-  return name.join(" ");
-}
-
 async function importLists(csvs, name, about, author, valueFunction, descriptionFunction, implementation) {
   let categories = await getCategories(csvs, name, valueFunction, descriptionFunction);
   if (categories) return await importPhenotype(name, about, categories, author, implementation);
@@ -197,12 +190,14 @@ async function importLists(csvs, name, about, author, valueFunction, description
 
 router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
-  if(await importLists(req.body.csvs.map((csv)=>csv.content), req.body.name?req.body.name:getName(req.body.csvs[0].filename), req.body.about?req.body.about:getName(req.body.csvs[0].filename), req.body.userName, getValue, getDescription, "code")) return res.sendStatus(200);
+  if(!req.body.csvs||!req.body.name||!req.body.about||!req.body.userName) res.status(500).send("Missing params.");
+  if(await importLists(req.body.csvs.map((csv)=>csv.content), req.body.name, req.body.about, req.body.userName, getValue, getDescription, "code")) return res.sendStatus(200);
   else return res.sendStatus(500);
 });
 
 router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
+  if(!req.body.keywords||!req.body.name||!req.body.about||!req.body.userName) res.status(500).send("Missing params.");
   function getValue(row) {
     if(row["keyword"]) return row["keyword"].replace(/\\\\b/g, "");
     return 0;
@@ -212,20 +207,20 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
     if(description&&description.includes(" ")) description=description.split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(categoryClean(word))).join(" ");
     return description;
   }
-  if(await importLists([req.body.keywords.content], req.body.name?req.body.name:getName(req.body.keywords.filename), req.body.about?req.body.about:getName(req.body.keywords.filename), req.body.userName, getValue, getDescription, "keywords")) return res.sendStatus(200);
+  
+  if(await importLists([req.body.keywords.content], req.body.name, req.body.about, req.body.userName, getValue, getDescription, "keywords")) return res.sendStatus(200);
   else return res.sendStatus(500);
 });
 
 router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
-  let name=getName(req.body.steplist.filename);
-  let about=name;
+  if(!req.body.steplist||!req.body.name||!req.body.about||!req.body.userName) res.status(500).send("Missing params.");
   let list=[];
   for(let row of req.body.steplist.content) {
     if(row["logicType"]=="codelist") {
       let file = row["param"].split(":")[0];
       let requiredCodes = row["param"].split(":")[1];
-      let categories = await getCategories(req.body.csvs.filter((csv)=>csv.filename==file).map((csv)=>csv.content), name, getValue, getDescription);
+      let categories = await getCategories(req.body.csvs.filter((csv)=>csv.filename==file).map((csv)=>csv.content), req.body.name, getValue, getDescription);
       list.push({"logicType":"codelist", "language":"python", "categories":categories, "requiredCodes":requiredCodes});
     } else if(row["logicType"]=="age") {
       list.push({"logicType":"age", "language":"python", "ageLower":row["param"].split(":")[0], "ageUpper":row["param"].split(":")[1]});
@@ -233,7 +228,7 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
       list.push({"logicType":"lastEncounter", "language":"python", "maxYears":row["param"]});
     }
   }
-  if(await importPhenotype(name, about, null, req.body.userName, null, list)) return res.sendStatus(200);
+  if(await importPhenotype(req.body.name, req.body.about, null, req.body.userName, null, list)) return res.sendStatus(200);
   else return res.sendStatus(500);
 });
 
