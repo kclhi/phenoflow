@@ -93,6 +93,16 @@ describe("phekb importer", () => {
       await testPhekbSteplist("abdominal-aortic-aneurysm-2.csv");
     }).timeout(0);
 
+    it("[PI6] Phekb validation set.", async() => { 
+      await testPhekbSteplist("abdominal-aortic-aneurysm-2.csv");
+      await testPhekbCodelist("rheumatoid-arthritis_icd.csv");
+      await testPhekbCodelist("rheumatoid-arthritis-2_icd.csv");
+      await testPhekbCodelist("rheumatoid-arthritis-3_icd.csv");
+      await testPhekbCodelist("type-2-diabetes_icd.csv");
+      await testPhekbCodelist("type-2-diabetes-2_icd.csv");
+      await testPhekbCodelist("type-2-diabetes-3_icd.csv");
+    }).timeout(0);
+    
   });
 
 });

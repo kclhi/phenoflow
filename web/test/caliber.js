@@ -172,6 +172,14 @@ describe("caliber importer", () => {
       expect(workflows.count).to.equal(3);
     }).timeout(0);
 
+    it("[CI8] Import CALIBER validation set.", async() => {
+      await testCaliberPhenotype("kuan_AAA_NJ2gf6ZTTxjayMcK5ksHXf.md");
+      await testCaliberPhenotype("kuan_diabetes_bYMFsBEu7tVB6YkrQ8aBvk.md");
+      await testCaliberPhenotype("sapey_diabetes_ZmgyhwLqB2QmAtxENwkL8X.md");
+      await testCaliberPhenotype("carr_diabetes_jQLxtg2Z3zPcXWge5Nv9tU.md");
+      await testCaliberPhenotype("kuan_RhA_EWvRLa7DNMCiGs2XvC2zKT.md");
+    }).timeout(0);
+    
   });
 
 });
