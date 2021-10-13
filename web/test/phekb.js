@@ -56,8 +56,11 @@ describe("phekb importer", () => {
   describe("/POST import phekb csv", () => {
 
 		it("[PI1] Should be able to add a new user.", async() => {
-			const result = await models.user.create({name:"phekb", password:config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://phekb.org"});
-			result.should.be.a("object");
+      const result = await models.user.findOrCreate({
+        where: {name:"phekb"},
+        defaults: {name:"phekb", password:config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://phekb.org"}
+      });
+			result.should.be.a("Array");
 		});
 
     it("[PI2] Should be able to import a codelist.", async() => { 
