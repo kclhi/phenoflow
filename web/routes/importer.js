@@ -407,7 +407,7 @@ async function existingWorkflow(name, about, userName, connectorStepName) {
   try {
     let workflows = await models.workflow.findAll({where: {name:name, about:about, userName:sanitizeHtml(userName)}});
     if(workflows.length) {
-      if(workflows.length>3) throw "More than one match when checking for existing workflows.";
+      if(workflows.length>4) throw "More than one match when checking for existing workflows.";
       for(let workflow of workflows) {
         try {
           let steps = await models.step.findAll({where:{workflowId:workflow.id}});
@@ -428,7 +428,7 @@ async function existingWorkflow(name, about, userName, connectorStepName) {
 
 async function importChangesExistingWorkflow(workflowId, categories) {
 
-  if(!workflowId) return false;
+  if(!workflowId||!categories) return false;
   let steps = await models.step.findAll({where:{workflowId:workflowId}});
   if(!steps.length) return false;
   let existingStepNames = steps.map((step)=>step.name).filter((step)=>!step.includes("read-")&&!step.includes("output-"));
