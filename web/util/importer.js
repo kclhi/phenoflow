@@ -26,7 +26,7 @@ class Importer {
 
     let filesContent="";
     for(let file of files) filesContent+=await fs.readFile(path+file);
-    return require('crypto').createHash('sha1').update(filesContent).digest('base64');
+    return require('crypto').createHash('sha1').update(filesContent).digest('base64').replace(/[^A-Za-z0-9]/g, "");
 
   }
 
