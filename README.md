@@ -4,7 +4,7 @@ Portable, workflow-based phenotype definitions.
 
 [https://kclhi.org/phenoflow](https://kclhi.org/phenoflow)
 
-Cite as _[Phenoflow: A Microservice Architecture for Portable Workflow-based Phenotype Definitions](https://www.medrxiv.org/content/10.1101/2020.07.01.20144196v2.full.pdf). Chapman, Martin et al.. AMIA Summits on Translational Science (forthcoming). 2021._
+Cite as _[Phenoflow: A Microservice Architecture for Portable Workflow-based Phenotype Definitions](https://pubmed.ncbi.nlm.nih.gov/34457128/). Chapman, Martin et al.. AMIA Summits on Translational Science. 2021._
 
 ___
 
