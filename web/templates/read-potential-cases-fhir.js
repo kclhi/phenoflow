@@ -1,9 +1,9 @@
 // martinchapman, 2021.
 
 const got = require("got");
-const fs = require('fs').promises;
+const fs = require("fs").promises;
 
-const FHIR_ENDPOINT="http://192.168.192.1:8081";
+const FHIR_ENDPOINT="http://localhost:8081";
 const FHIR_API_PATH="/hapi/fhir";
 
 function patientToCodes(patients, patient, code) {
@@ -33,12 +33,12 @@ function patientToCodes(patients, patient, code) {
     if(!lastEncounters[patientId]||new Date(associatedEncounter.body.period.end)>lastEncounters[patientId]) lastEncounters[patientId] = new Date(associatedEncounter.body.period.end);
   };
 
-  await fs.writeFile('[PHENOTYPE]-potential-cases.csv', "patient-id,dob,codes,last-encounter\n");
+  await fs.writeFile("[PHENOTYPE]-potential-cases.csv", "patient-id,dob,codes,last-encounter\n");
   for(let patient in patients) {
     try {
       lastEncounters[patient] = lastEncounters[patient].toISOString();
       const row = patient+","+dobs[patient]+",\""+Array.from(patients[patient]).join(",")+"\","+lastEncounters[patient].substring(0, lastEncounters[patient].length-1)+"\n";
-      await fs.appendFile('[PHENOTYPE]-potential-cases.csv', row);
+      await fs.appendFile("[PHENOTYPE]-potential-cases.csv", row);
     } catch(error) {
       console.log(error);
     }
