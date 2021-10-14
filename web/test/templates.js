@@ -6,19 +6,20 @@ const got = require("got");
 const fs = require("fs").promises;
 const { PythonShell: shell } = require("python-shell");
 const spawn = require("await-spawn");
+const parse = require('neat-csv');
 
-async function testReadData(source, port) {
+async function testReadData(format, port) {
 
   // If problem with source (e.g. not up), skip test.
   try { await got.get("http://localhost:"+port, {timeout:5000}); } catch(error) { return true; };
 
-  let codelistSource = await fs.readFile("templates/read-potential-cases-"+source+".js", "utf-8");
-  codelistSource = codelistSource.split("\n").filter((line)=>!line.trim().startsWith("/")).join("");
-  codelistSource = codelistSource.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
-  codelistSource = codelistSource.replaceAll("\n", ";");
+  let source = await fs.readFile("templates/read-potential-cases-"+format+".js", "utf-8");
+  source = source.split("\n").filter((line)=>!line.trim().startsWith("/")).join("");
+  source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
+  source = source.replaceAll("\n", ";");
 
   try {
-    const shell = await spawn('node', ['-e', codelistSource])
+    const shell = await spawn('node', ['-e', source])
   } catch (exception) {
     let issue = exception.stderr.toString();
     console.error(exception.stderr.toString());
@@ -27,20 +28,24 @@ async function testReadData(source, port) {
 
 }
 
+async function runPythonCode(codelistSource, input) {
+  return new Promise((resolve, reject) => {
+    shell.runString(codelistSource, {args:input}, function (error, results) {
+      if(error) reject(error);
+      resolve(results);
+    });
+  });
+}
+
 describe("templates", () => {
 
   describe("execute templates", () => {
 
     it("[T1] Should be able to read from disc.", async() => {
-      let codelistSource = await fs.readFile("templates/read-potential-cases-disc.py", "utf-8");
-      codelistSource = codelistSource.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
-
-      await new Promise((resolve, reject) => {
-        shell.runString(codelistSource, {args: ["test/fixtures/templates/sample-data.csv"]}, function (error, results) {
-          if(error) reject(error);
-          resolve(results);
-        });
-      })
+      let source = await fs.readFile("templates/read-potential-cases-disc.py", "utf-8");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
+      let results = await runPythonCode(source, "test/fixtures/templates/sample-data.csv");
+      if(results) console.log(results);
     });
 
     it("[T2] Should be able to read from i2b2 server.", async() => {
@@ -56,82 +61,79 @@ describe("templates", () => {
     }).timeout(0);
 
 		it("[T5] Should be able to execute codelist.", async() => {
-      let codelistSource = await fs.readFile("templates/codelist.py", "utf-8");
-      codelistSource = codelistSource.replaceAll("[AUTHOR]", "martinchapman");
-      codelistSource = codelistSource.replaceAll("[YEAR]", "2021");
-      codelistSource = codelistSource.replaceAll("[LIST]", "'code1'");
-      codelistSource = codelistSource.replaceAll("[REQUIRED_CODES]", "1");
-      codelistSource = codelistSource.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
-      codelistSource = codelistSource.replaceAll("[CATEGORY]", "category");
+      const TIMESTAMP = Date.now();
+      let source = await fs.readFile("templates/codelist.py", "utf-8");
+      source = source.replaceAll("[AUTHOR]", "martinchapman");
+      source = source.replaceAll("[YEAR]", "2021");
+      source = source.replaceAll("[LIST]", "'X01'");
+      source = source.replaceAll("[REQUIRED_CODES]", "1");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
+      source = source.replaceAll("[CATEGORY]", "category");
 
-      await new Promise((resolve, reject) => {
-        shell.runString(codelistSource, {args: ["test/fixtures/templates/sample-data.csv"]}, function (error, results) {
-          if(error) reject(error);
-          resolve(results);
-        });
-      })
+      const SAMPLE_DATA = "sample-data-T5-"+TIMESTAMP;
+      await fs.writeFile("/tmp/"+SAMPLE_DATA, 'patient-id,dob,codes,keywords,last-encounter\n');
+      await fs.appendFile("/tmp/"+SAMPLE_DATA, '1,1979-01-01,"X01,X02","keyword1,keyword2",2020-01-01\n');
+      await fs.appendFile("/tmp/"+SAMPLE_DATA, '2,1979-01-01,"Z01,Z02","keyword1,keyword2",2020-01-01\n');
+      let results = await runPythonCode(source, "/tmp/"+SAMPLE_DATA);
+      if(results) console.log(results);
+
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
+      expect(csv[0]['category-identified']).to.equal('CASE');
+      expect(csv[1]['category-identified']).to.equal('UNK');
     });
 
     it("[T6] Should be able to execute a keyword list.", async() => {
-      let codelistSource = await fs.readFile("templates/keywords.py", "utf-8");
-      codelistSource = codelistSource.replaceAll("[AUTHOR]", "martinchapman");
-      codelistSource = codelistSource.replaceAll("[YEAR]", "2021");
-      codelistSource = codelistSource.replaceAll("[LIST]", "'keyword1'");
-      codelistSource = codelistSource.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
-      codelistSource = codelistSource.replaceAll("[CATEGORY]", "category");
-
-      await new Promise((resolve, reject) => {
-        shell.runString(codelistSource, {args: ["test/fixtures/templates/sample-data.csv"]}, function (error, results) {
-          if(error) reject(error);
-          resolve(results);
-        });
-      })
+      let source = await fs.readFile("templates/keywords.py", "utf-8");
+      source = source.replaceAll("[AUTHOR]", "martinchapman");
+      source = source.replaceAll("[YEAR]", "2021");
+      source = source.replaceAll("[LIST]", "'keyword1'");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
+      source = source.replaceAll("[CATEGORY]", "category");
+      let results = await runPythonCode(source, "test/fixtures/templates/sample-data.csv");
+      if(results) console.log(results);
     });
 
     it("[T7] Should be able to execute an age check.", async() => {
-      let codelistSource = await fs.readFile("templates/age.py", "utf-8");
-      codelistSource = codelistSource.replaceAll("[AUTHOR]", "martinchapman");
-      codelistSource = codelistSource.replaceAll("[YEAR]", "2021");
-      codelistSource = codelistSource.replaceAll("[AGE_LOWER]", "30");
-      codelistSource = codelistSource.replaceAll("[AGE_UPPER]", "60");
-      codelistSource = codelistSource.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
-
-      await new Promise((resolve, reject) => {
-        shell.runString(codelistSource, {args: ["test/fixtures/templates/sample-data.csv"]}, function (error, results) {
-          if(error) reject(error);
-          resolve(results);
-        });
-      })
+      let source = await fs.readFile("templates/age.py", "utf-8");
+      source = source.replaceAll("[AUTHOR]", "martinchapman");
+      source = source.replaceAll("[YEAR]", "2021");
+      source = source.replaceAll("[AGE_LOWER]", "30");
+      source = source.replaceAll("[AGE_UPPER]", "60");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
+      let results = await runPythonCode(source, "test/fixtures/templates/sample-data.csv");
+      if(results) console.log(results);
     });
 
     it("[T8] Should be able to execute a last encounter check.", async() => {
-      let codelistSource = await fs.readFile("templates/last-encounter.py", "utf-8");
-      codelistSource = codelistSource.replaceAll("[AUTHOR]", "martinchapman");
-      codelistSource = codelistSource.replaceAll("[YEAR]", "2021");
-      codelistSource = codelistSource.replaceAll("[MAX_YEARS]", "10");
-      codelistSource = codelistSource.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
-
-      await new Promise((resolve, reject) => {
-        shell.runString(codelistSource, {args: ["test/fixtures/templates/sample-data.csv"]}, function (error, results) {
-          if(error) reject(error);
-          resolve(results);
-        });
-      })
+      let source = await fs.readFile("templates/last-encounter.py", "utf-8");
+      source = source.replaceAll("[AUTHOR]", "martinchapman");
+      source = source.replaceAll("[YEAR]", "2021");
+      source = source.replaceAll("[MAX_YEARS]", "10");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
+      let results = await runPythonCode(source, "test/fixtures/templates/sample-data.csv");
+      if(results) console.log(results);
     });
 
-    it("[T8] Should be able to execute output cases.", async() => {
-      let codelistSource = await fs.readFile("templates/output-cases.py", "utf-8");
-      codelistSource = codelistSource.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
+    it("[T9] Should be able to execute output cases.", async() => {
+      const TIMESTAMP = Date.now();
+      let source = await fs.readFile("templates/output-cases.py", "utf-8");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
 
-      await new Promise((resolve, reject) => {
-        shell.runString(codelistSource, {args: ["test/fixtures/templates/sample-data.csv"]}, function (error, results) {
-          if(error) reject(error);
-          resolve(results);
-        });
-      })
+      const SAMPLE_DATA = "sample-data-T5-"+TIMESTAMP;
+      await fs.writeFile("/tmp/"+SAMPLE_DATA, 'patient-id,dob,codes,keywords,age-exclusion,codesA-identified,codesB-identified,last-encounter\n');
+      await fs.appendFile("/tmp/"+SAMPLE_DATA, '1,1979-01-01,"X01,X02","keyword1,keyword2",TRUE,CASE,CASE,2020-01-01\n');
+      await fs.appendFile("/tmp/"+SAMPLE_DATA, '2,1979-01-01,"Z01,Z02","keyword1,keyword2",FALSE,UNK,CASE,2020-01-01\n');
+      let results = await runPythonCode(source, ["/tmp/"+SAMPLE_DATA]); 
+      if(results) console.log(results);
+      
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-cases.csv"));
+      expect(csv[0]['codesA-identified']).to.equal('UNK');
+      expect(csv[0]['codesB-identified']).to.equal('UNK');
+      expect(csv[0]['last-encounter']).to.equal('2020-01-01');
+      expect(csv[1]['codesA-identified']).to.equal('UNK');
+      expect(csv[1]['codesB-identified']).to.equal('CASE');
+      expect(csv[1]['last-encounter']).to.equal('2020-01-01');
     });
-
-   
 
   });
 

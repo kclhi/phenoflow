@@ -15,7 +15,7 @@ with open(sys.argv[1], 'r') as file_in, open('[PHENOTYPE]-potential-cases.csv', 
             # Iterate cell lists (e.g. codes)
             for item in row[cell].split(","):
               # If we previously excluded this individual due to their age, they cannot be a case now.
-              if(item in codes and not("age-exclusion" in row and row["age-exclusion"]=="TRUE") and not("last-encounter-exclusion" in row and row["last-encounter-exclusion"]=="TRUE")): codes_identified+=1;
+              if(item in codes): codes_identified+=1;
               if(codes_identified>=REQUIRED_CODES):
                   newRow["[CATEGORY]-identified"] = "CASE";
                   break;
