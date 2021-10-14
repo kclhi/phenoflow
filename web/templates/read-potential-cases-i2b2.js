@@ -43,13 +43,13 @@ function patientToCodes(patients, patient, code) {
   let lastEncountersSecondary = primaryPatients.reduce((acc,item) => ({...acc, [item.patient_id]: item.end_date}), {});
   let lastEncounter = {...lastEncountersPrimary, ...lastEncountersSecondary};
   let patients = {};
-  for(let patient of primaryPatients) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
-  for(let patient of secondaryPatients) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
+  for(let patient of primaryPatients) patients=patientToCodes(patients, patient.patient_id, "("+patient.concept_cd.split(":")[1]+","+(patient.end_date!=null?patient.end_date.slice(0, -1):"0000-00-00T00:00:00.000Z")+")");
+  for(let patient of secondaryPatients) patients=patientToCodes(patients, patient.patient_id, "("+patient.concept_cd.split(":")[1]+","+(patient.end_date!=null?patient.end_date.slice(0, -1):"0000-00-00T00:00:00.000Z")+")");
   await fs.appendFile('[PHENOTYPE]-potential-cases.csv', 'patient-id,dob,codes,last-encounter\n');
 
   for(let patient in patients) {
     try {
-      await fs.appendFile('[PHENOTYPE]-potential-cases.csv', patient+','+dobs[patient]+',\''+Array.from(patients[patient]).join(',')+'\','+lastEncounter[patient].substring(0,lastEncounter[patient].length-1)+'\n');
+      await fs.appendFile('[PHENOTYPE]-potential-cases.csv', patient+','+dobs[patient]+',\"'+Array.from(patients[patient]).join(',')+'\",'+lastEncounter[patient].slice(0, -1)+'\n');
     } catch(error) {
       console.log(error);
     }

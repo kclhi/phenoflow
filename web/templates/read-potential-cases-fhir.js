@@ -27,9 +27,9 @@ function patientToCodes(patients, patient, code) {
     condition = condition.resource;
     let patient = await got.get(FHIR_ENDPOINT+FHIR_API_PATH+"/"+condition.subject.reference, {responseType:"json"});
     let patientId = patient.body.id;
-    patients = patientToCodes(patients, patientId, condition.code.coding[0].code);
     dobs[patientId] = patient.body.birthDate?patient.body.birthDate:"0000-00-00";
     let associatedEncounter = await got.get(FHIR_ENDPOINT+FHIR_API_PATH+"/"+condition.context.reference, {responseType:"json"});
+    patients = patientToCodes(patients, patientId, "("+condition.code.coding[0].code+","+new Date(associatedEncounter.body.period.end).toISOString()+")");
     if(!lastEncounters[patientId]||new Date(associatedEncounter.body.period.end)>lastEncounters[patientId]) lastEncounters[patientId] = new Date(associatedEncounter.body.period.end);
   };
 
@@ -37,7 +37,7 @@ function patientToCodes(patients, patient, code) {
   for(let patient in patients) {
     try {
       lastEncounters[patient] = lastEncounters[patient].toISOString();
-      const row = patient+","+dobs[patient]+",\""+Array.from(patients[patient]).join(",")+"\","+lastEncounters[patient].substring(0, lastEncounters[patient].length-1)+"\n";
+      const row = patient+","+dobs[patient]+",\""+Array.from(patients[patient]).join(",")+"\","+lastEncounters[patient].slice(0,-1)+"\n";
       await fs.appendFile("[PHENOTYPE]-potential-cases.csv", row);
     } catch(error) {
       console.log(error);
