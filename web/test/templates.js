@@ -243,20 +243,20 @@ describe("templates", () => {
       if(timestamp) await testLastEncounterCheck(timestamp, ['FALSE', 'FALSE']);
     }).timeout(0);
 
-    it("[TE19] Should be able to execute codelist relationship.", async() => {
+    it("[TE19] Should be able to execute codelist temporal relationship.", async() => {
       
       const TIMESTAMP = Date.now();
       let source = await fs.readFile("templates/codelists-temporal.py", "utf-8");
       source = source.replaceAll("[AUTHOR]", "martinchapman");
       source = source.replaceAll("[YEAR]", "2021");
-      source = source.replaceAll("[LIST_A]", "'Y01','Y02'");
-      source = source.replaceAll("[LIST_B]", "'Z01','Z02'");
+      source = source.replaceAll("[LIST_BEFORE]", "'Y01','Y02'");
+      source = source.replaceAll("[LIST_AFTER]", "'Z01','Z02'");
       source = source.replaceAll("[MIN_DAYS]", "31");
       source = source.replaceAll("[MAX_DAYS]", "186");
       source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
       source = source.replaceAll("[CATEGORY]", "category");
     
-      const sampleDataFile = "sample-data-codes-"+TIMESTAMP;
+      const sampleDataFile = "sample-data-codes-temporal-"+TIMESTAMP;
       await writeGenericSampleData(sampleDataFile);
       let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
       if(results) console.log(results);
@@ -264,6 +264,28 @@ describe("templates", () => {
       csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
       expect(csv[0]['category-identified']).to.equal('CASE');
       expect(csv[1]['category-identified']).to.equal('UNK');
+
+    }).timeout(0);
+
+    it("[TE20] Should be able to execute codelist exclude.", async() => {
+      
+      const TIMESTAMP = Date.now();
+      let source = await fs.readFile("templates/codelist-exclude.py", "utf-8");
+      source = source.replaceAll("[AUTHOR]", "martinchapman");
+      source = source.replaceAll("[YEAR]", "2021");
+      source = source.replaceAll("[LIST_EXCLUDE]", "'X01'");
+      source = source.replaceAll("[LIST_INCLUDE]", "'Y01'");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
+      source = source.replaceAll("[CATEGORY]", "category");
+    
+      const sampleDataFile = "sample-data-codes-exclude-"+TIMESTAMP;
+      await writeGenericSampleData(sampleDataFile);
+      let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
+      if(results) console.log(results);
+    
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
+      expect(csv[0]['category-identified']).to.equal('UNK');
+      expect(csv[1]['category-identified']).to.equal('CASE');
 
     }).timeout(0);
 

@@ -51,13 +51,19 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
     } else if(row["logicType"]=="lastEncounter") {
       list.push({"logicType":"lastEncounter", "language":"python", "maxYears":row["param"]});
     } else if(row["logicType"]=="codelistsTemporal") {
-      let fileA = row["param"].split(":")[0];
-      let fileB = row["param"].split(":")[1];
-      let categoriesA = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==fileA).map((csv)=>csv.content), ImporterUtils.getName(fileA));
-      let categoriesB = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==fileB).map((csv)=>csv.content), ImporterUtils.getName(fileB));
+      let fileBefore = row["param"].split(":")[0];
+      let fileAfter = row["param"].split(":")[1];
+      let codesBefore = [...new Set(req.body.csvs.filter((csv)=>csv.filename==fileBefore).map((csv)=>csv.content)[0].map((row)=>"\""+ImporterUtils.getValue(row)+"\""))];
+      let categoriesAfter = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==fileAfter).map((csv)=>csv.content), ImporterUtils.getName(fileAfter));
       let minDays = row["param"].split(":")[2];
       let maxDays = row["param"].split(":")[3];
-      list.push({"logicType":"codelistsTemporal", "language":"python", "categoriesA":categoriesA, "categoriesB":categoriesB, "minDays":minDays, "maxDays":maxDays});
+      list.push({"logicType":"codelistsTemporal", "language":"python", "nameBefore":ImporterUtils.getName(fileBefore), "codesBefore":codesBefore, "categoriesAfter":categoriesAfter, "minDays":minDays, "maxDays":maxDays});
+    } else if(row["logicType"]=="codelistExclude") {
+      let fileExclude = row["param"].split(":")[0];
+      let fileInclude = row["param"].split(":")[1];
+      let codesExclude = [...new Set(req.body.csvs.filter((csv)=>csv.filename==fileExclude).map((csv)=>csv.content)[0].map((row)=>"\""+ImporterUtils.getValue(row)+"\""))];
+      let categoriesInclude = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==fileInclude).map((csv)=>csv.content), ImporterUtils.getName(fileInclude));
+      list.push({"logicType":"codelistExclude", "language":"python", "nameExclude":ImporterUtils.getName(fileExclude), "codesExclude":codesExclude, "categoriesInclude":categoriesInclude});
     }
   }
   if(await importPhenotype(req.body.name, req.body.about, null, req.body.userName, null, list)) return res.sendStatus(200);
@@ -282,25 +288,41 @@ async function createWorkflowStepsFromList(workflowId, name, outputExtension, li
       }
       position++;
     } else if(item.logicType=="codelistsTemporal") {
-      // Compare each 'target' category to each 'source' category in 'days after' relationship 
-      for(let categoryB in item.categoriesB) {
-        for(let categoryA in item.categoriesA) {
-          let stepShort = ImporterUtils.clean(categoryB.toLowerCase())+" "+item.minDays+" to "+item.maxDays+" days after "+ImporterUtils.clean(categoryA.toLowerCase());
-          let stepName = ImporterUtils.clean(stepShort);
-          let stepDoc = "Diagnosis of "+ImporterUtils.clean(categoryB, true)+" between "+item.minDays+" and "+item.maxDays+" days after a diagnosis of "+ImporterUtils.clean(categoryA, true);
-          let stepType = "logic";
-          let inputDoc = "Potential cases of "+name;
-          let outputDoc = "Patients with clinical codes indicating "+name+" related events in electronic health record.";
-          let fileName = ImporterUtils.clean(stepShort) + ".py";
+      // Compare each 'after' category to the single 'before' code list in 'days after' relationship 
+      for(let categoryAfter in item.categoriesAfter) {
+        let stepShort = ImporterUtils.clean(categoryAfter.toLowerCase())+" "+item.minDays+" to "+item.maxDays+" days after "+ImporterUtils.clean(item.nameBefore.toLowerCase());
+        let stepName = ImporterUtils.clean(stepShort);
+        let stepDoc = "Diagnosis of "+ImporterUtils.clean(categoryAfter, true)+" between "+item.minDays+" and "+item.maxDays+" days after a diagnosis of "+ImporterUtils.clean(item.nameBefore, true);
+        let stepType = "logic";
+        let inputDoc = "Potential cases of "+name;
+        let outputDoc = "Patients with clinical codes indicating "+name+" related events in electronic health record.";
+        let fileName = ImporterUtils.clean(stepShort) + ".py";
 
-          try {
-            await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelists-temporal.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "LIST_A":"\""+item.categoriesA[categoryA].join('","')+"\"", "LIST_B":"\""+item.categoriesB[categoryB].join('","')+"\"", "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":ImporterUtils.clean(categoryA.toLowerCase())+"-"+ImporterUtils.clean(categoryB.toLowerCase()), "AUTHOR":userName, "YEAR":new Date().getFullYear()});
-          } catch(error) {
-            error = "Error creating imported step (" + stepName + "): " + error;
-            throw error;
-          }
-          position++;
+        try {
+          await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelists-temporal.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "LIST_BEFORE":item.codesBefore, "LIST_AFTER":"\""+item.categoriesAfter[categoryAfter].join('","')+"\"", "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":ImporterUtils.clean(item.nameBefore.toLowerCase())+"-"+ImporterUtils.clean(categoryAfter.toLowerCase()), "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+        } catch(error) {
+          error = "Error creating imported step (" + stepName + "): " + error;
+          throw error;
         }
+        position++;
+      }
+    } else if(item.logicType=="codelistExclude") {
+      for(let categoryInclude in item.categoriesInclude) {
+        let stepShort = ImporterUtils.clean(categoryInclude.toLowerCase())+" without "+ImporterUtils.clean(item.nameExclude.toLowerCase());
+        let stepName = ImporterUtils.clean(stepShort);
+        let stepDoc = "Identify "+ImporterUtils.clean(categoryInclude, true)+" without a diagnosis of "+ImporterUtils.clean(item.nameExclude, true);
+        let stepType = "logic";
+        let inputDoc = "Potential cases of "+name;
+        let outputDoc = "Patients with clinical codes indicating "+name+" related events in electronic health record.";
+        let fileName = ImporterUtils.clean(stepShort) + ".py";
+
+        try {
+          await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelist-exclude.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "LIST_EXCLUDE":item.codesExclude, "LIST_INCLUDE":"\""+item.categoriesInclude[categoryInclude].join('","')+"\"", "CATEGORY":ImporterUtils.clean(categoryInclude.toLowerCase()), "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+        } catch(error) {
+          error = "Error creating imported step (" + stepName + "): " + error;
+          throw error;
+        }
+        position++;
       }
     }
   }
@@ -388,7 +410,10 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
   }
 
   let implementationTemplate = await fs.readFile(implementationTemplatePath, "utf8");
-  for(var substitution in substitutions) implementationTemplate = implementationTemplate.replace(new RegExp("\\\[" + substitution + "\\\]", "g"), substitutions[substitution]);
+  for(var substitution in substitutions) {
+    if(!implementationTemplate.includes(substitution)) throw "Attempted substitition of non-existent variable in template for " + implementationTemplatePath + " by " + stepName;
+    implementationTemplate = implementationTemplate.replace(new RegExp("\\\[" + substitution + "\\\]", "g"), substitutions[substitution]);
+  }
   const destination = "uploads/" + workflowId + "/" + language;
 
   try {
