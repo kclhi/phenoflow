@@ -13,9 +13,8 @@ const natural = require("natural");
 const stemmer = natural.PorterStemmer;
 
 const config = require("config");
-const Workflow = require("../util/workflow");
 const WorkflowUtils = require("../util/workflow");
-const { workflow } = require('../util/workflow');
+const ImporterUtils = require("../util/importer");
 
 function primaryCodeKeys() {
   return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid"];
@@ -226,6 +225,16 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
       list.push({"logicType":"age", "language":"python", "ageLower":row["param"].split(":")[0], "ageUpper":row["param"].split(":")[1]});
     } else if(row["logicType"]=="lastEncounter") {
       list.push({"logicType":"lastEncounter", "language":"python", "maxYears":row["param"]});
+    } else if(row["logicType"]=="codelistsTemporal") {
+      let fileA = row["param"].split(":")[0];
+      let fileB = row["param"].split(":")[1];
+      let codelistA = [...new Set(req.body.csvs.filter((csv)=>csv.filename==fileA).map((csv)=>csv.content)[0].map((row)=>"\""+getValue(row)+"\""))];
+      let codelistB = [...new Set(req.body.csvs.filter((csv)=>csv.filename==fileB).map((csv)=>csv.content)[0].map((row)=>"\""+getValue(row)+"\""))];
+      let conditionA = ImporterUtils.getName(fileA);
+      let conditionB = ImporterUtils.getName(fileB);
+      let minDays = row["param"].split(":")[2];
+      let maxDays = row["param"].split(":")[3];
+      list.push({"logicType":"codelistsTemporal", "language":"python", "conditionA":conditionA, "codelistA":codelistA, "conditionB":conditionB, "codelistB":codelistB, "minDays":minDays, "maxDays":maxDays});
     }
   }
   if(await importPhenotype(req.body.name, req.body.about, null, req.body.userName, null, list)) return res.sendStatus(200);
@@ -284,15 +293,12 @@ async function createStep(workflowId, stepName, stepDoc, stepType, position, inp
 }
 
 function categoryClean(input, spaces=false) {
-
   input = input.replace(/\//g, "").replace(/(\s)?\(.*\)/g, "").replace(/\,/g, "").replace(/&amp;/g, "and");
   if(!spaces) input = input.replace(/ /g, "-");
   return input;
-
 }
 
 async function createWorkflow(name, about, userName) {
-
   try {
     var workflow = await models.workflow.create({name:name, about:about, userName:sanitizeHtml(userName)});
     return workflow.id;
@@ -301,7 +307,6 @@ async function createWorkflow(name, about, userName) {
     logger.debug(error);
     return false;
   }
-
 }
 
 async function createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, categoryType, template, position=2, requiredCodes=1) {
@@ -330,28 +335,21 @@ async function createCategoryWorkflowSteps(workflowId, name, language, outputExt
 }
 
 async function addFileWrite(workflowId, position, name, outputExtension, language) {
-
   try {
     await createStep(workflowId, "output-cases", "Output cases", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, "output-cases.py", language, "templates/output-cases.py", {"PHENOTYPE":categoryClean(name.toLowerCase())});
   } catch(error) {
     error = "Error creating last step from import: " + error;
     throw error;
   }
-
-  await Workflow.workflowComplete(workflowId);
-
+  await WorkflowUtils.workflowComplete(workflowId);
 }
 
 async function createCodeWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2, requiredCodes=1) {
-
   return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "clinical codes", "templates/codelist.py", position, requiredCodes);
-
 }
 
 async function createKeywordWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, position=2) {
-
   return await createCategoryWorkflowSteps(workflowId, name, language, outputExtension, userName, categories, "keywords", "templates/keywords.py", position);
-
 }
 
 async function createWorkflowStepsFromList(workflowId, name, outputExtension, list, userName) {
@@ -390,6 +388,22 @@ async function createWorkflowStepsFromList(workflowId, name, outputExtension, li
 
       try {
         await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/last-encounter.py", {"PHENOTYPE":categoryClean(name.toLowerCase()), "MAX_YEARS":item.maxYears, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+      } catch(error) {
+        error = "Error creating imported step (" + stepName + "): " + error;
+        throw error;
+      }
+      position++;
+    } else if(item.logicType=="codelistsTemporal") {
+      let stepShort = item.conditionB.toLowerCase()+" "+item.minDays+" to "+item.maxDays+" days after "+item.conditionA.toLowerCase();
+      let stepName = categoryClean(stepShort);
+      let stepDoc = "Diagnosis of "+item.conditionB+" between "+item.minDays+" and "+item.maxDays+" days after a diagnosis of "+item.conditionA;
+      let stepType = "logic";
+      let inputDoc = "Potential cases of " + name;
+      let outputDoc = "Patients with "+item.conditionA+" and "+item.conditionB+" indicating "+name+" event in electronic health record.";
+      let fileName = categoryClean(stepShort) + ".py";
+
+      try {
+        await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelists-temporal.py", {"PHENOTYPE":categoryClean(name.toLowerCase()), "LIST_A":item.codelistA, "LIST_B":item.codelistB, "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":name, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
       } catch(error) {
         error = "Error creating imported step (" + stepName + "): " + error;
         throw error;
