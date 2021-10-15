@@ -51,6 +51,20 @@ describe("importer", () => {
     it("[IM1] Create children for imported phenotypes.", async() => {
       for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
     }).timeout(0);
+
+    it("[IM2] Common terms should be grouped by category.", async() => {
+      let categories = ImporterUtils.getCategories([[
+        {"code": "123", "description": "TermA TermB"},
+        {"code": "234", "description": "TermA TermC"},
+        {"code": "345", "description": "TermD TermE"}
+      ]], "Phenotype");
+      categories.should.have.property("Phenotype terma - secondary");
+      categories.should.have.property("Phenotype - secondary");
+      categories["Phenotype terma - secondary"].should.be.a("Array");
+      categories["Phenotype - secondary"].should.be.a("Array");
+      categories["Phenotype terma - secondary"].should.deep.equal(['123','234']);
+      categories["Phenotype - secondary"].should.deep.equal(['345']);
+    }).timeout(0);
   
   });
 
