@@ -246,7 +246,7 @@ describe("templates", () => {
     it("[TE19] Should be able to execute codelist relationship.", async() => {
       
       const TIMESTAMP = Date.now();
-      let source = await fs.readFile("templates/codelist-relationship.py", "utf-8");
+      let source = await fs.readFile("templates/codelists-temporal.py", "utf-8");
       source = source.replaceAll("[AUTHOR]", "martinchapman");
       source = source.replaceAll("[YEAR]", "2021");
       source = source.replaceAll("[LIST_A]", "'Y01','Y02'");
