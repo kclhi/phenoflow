@@ -228,13 +228,11 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
     } else if(row["logicType"]=="codelistsTemporal") {
       let fileA = row["param"].split(":")[0];
       let fileB = row["param"].split(":")[1];
-      let codelistA = [...new Set(req.body.csvs.filter((csv)=>csv.filename==fileA).map((csv)=>csv.content)[0].map((row)=>"\""+getValue(row)+"\""))];
-      let codelistB = [...new Set(req.body.csvs.filter((csv)=>csv.filename==fileB).map((csv)=>csv.content)[0].map((row)=>"\""+getValue(row)+"\""))];
-      let conditionA = ImporterUtils.getName(fileA);
-      let conditionB = ImporterUtils.getName(fileB);
+      let categoriesA = await getCategories(req.body.csvs.filter((csv)=>csv.filename==fileA).map((csv)=>csv.content), ImporterUtils.getName(fileA), getValue, getDescription);
+      let categoriesB = await getCategories(req.body.csvs.filter((csv)=>csv.filename==fileB).map((csv)=>csv.content), ImporterUtils.getName(fileB), getValue, getDescription);
       let minDays = row["param"].split(":")[2];
       let maxDays = row["param"].split(":")[3];
-      list.push({"logicType":"codelistsTemporal", "language":"python", "conditionA":conditionA, "codelistA":codelistA, "conditionB":conditionB, "codelistB":codelistB, "minDays":minDays, "maxDays":maxDays});
+      list.push({"logicType":"codelistsTemporal", "language":"python", "categoriesA":categoriesA, "categoriesB":categoriesB, "minDays":minDays, "maxDays":maxDays});
     }
   }
   if(await importPhenotype(req.body.name, req.body.about, null, req.body.userName, null, list)) return res.sendStatus(200);
@@ -394,21 +392,26 @@ async function createWorkflowStepsFromList(workflowId, name, outputExtension, li
       }
       position++;
     } else if(item.logicType=="codelistsTemporal") {
-      let stepShort = item.conditionB.toLowerCase()+" "+item.minDays+" to "+item.maxDays+" days after "+item.conditionA.toLowerCase();
-      let stepName = categoryClean(stepShort);
-      let stepDoc = "Diagnosis of "+item.conditionB+" between "+item.minDays+" and "+item.maxDays+" days after a diagnosis of "+item.conditionA;
-      let stepType = "logic";
-      let inputDoc = "Potential cases of " + name;
-      let outputDoc = "Patients with "+item.conditionA+" and "+item.conditionB+" indicating "+name+" event in electronic health record.";
-      let fileName = categoryClean(stepShort) + ".py";
+      // Compare each 'target' category to each 'source' category in 'days after' relationship 
+      for(let categoryB in item.categoriesB) {
+        for(let categoryA in item.categoriesA) {
+          let stepShort = categoryClean(categoryB.toLowerCase())+" "+item.minDays+" to "+item.maxDays+" days after "+categoryClean(categoryA.toLowerCase());
+          let stepName = categoryClean(stepShort);
+          let stepDoc = "Diagnosis of "+categoryClean(categoryB, true)+" between "+item.minDays+" and "+item.maxDays+" days after a diagnosis of "+categoryClean(categoryA, true);
+          let stepType = "logic";
+          let inputDoc = "Potential cases of "+name;
+          let outputDoc = "Patients with clinical codes indicating "+name+" related events in electronic health record.";
+          let fileName = categoryClean(stepShort) + ".py";
 
-      try {
-        await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelists-temporal.py", {"PHENOTYPE":categoryClean(name.toLowerCase()), "LIST_A":item.codelistA, "LIST_B":item.codelistB, "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":name, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
-      } catch(error) {
-        error = "Error creating imported step (" + stepName + "): " + error;
-        throw error;
+          try {
+            await createStep(workflowId, stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelists-temporal.py", {"PHENOTYPE":categoryClean(name.toLowerCase()), "LIST_A":"\""+item.categoriesA[categoryA].join('","')+"\"", "LIST_B":"\""+item.categoriesB[categoryB].join('","')+"\"", "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":categoryClean(categoryA.toLowerCase())+"-"+categoryClean(categoryB.toLowerCase()), "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+          } catch(error) {
+            error = "Error creating imported step (" + stepName + "): " + error;
+            throw error;
+          }
+          position++;
+        }
       }
-      position++;
     }
   }
 
@@ -441,14 +444,12 @@ async function existingWorkflow(name, about, userName, connectorStepName) {
 }
 
 async function importChangesExistingWorkflow(workflowId, categories) {
-
   if(!workflowId||!categories) return false;
   let steps = await models.step.findAll({where:{workflowId:workflowId}});
   if(!steps.length) return false;
   let existingStepNames = steps.map((step)=>step.name).filter((step)=>!step.includes("read-")&&!step.includes("output-"));
   let newStepNames = Object.keys(categories).map((category)=>categoryClean(category.toLowerCase()));
   return !(existingStepNames.sort().toString()==newStepNames.sort().toString());
-
 }
 
 async function importPhenotype(name, about, categories, userName, implementation="code", list=null) {
