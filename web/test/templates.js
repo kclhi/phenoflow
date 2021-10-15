@@ -40,8 +40,8 @@ async function testReadData(format, port) {
 
 async function writeGenericSampleData(sampleDataFile) {
   await fs.writeFile("/tmp/"+sampleDataFile, 'patient-id,dob,codes,keywords,last-encounter\n');
-  await fs.appendFile("/tmp/"+sampleDataFile, '1,1979-01-01,"(X01,2005-10-17T00:00:00.000),(X02,2005-10-17T00:00:00.000)","keyword1,keyword2",2020-01-01\n');
-  await fs.appendFile("/tmp/"+sampleDataFile, '2,2020-01-01,"(Z01,2005-10-17T00:00:00.000),(Z02,2005-10-17T00:00:00.000)","keyword1,keyword2",1920-01-01\n');
+  await fs.appendFile("/tmp/"+sampleDataFile, '1,1979-01-01,"(X01,2004-10-17T00:00:00.000),(Y01,2004-10-17T00:00:00.000),(Y02,2005-04-17T00:00:00.000),(Z01,2005-10-17T00:00:00.000),(Z02,2006-10-17T00:00:00.000)","keyword1,keyword2",2020-01-01\n');
+  await fs.appendFile("/tmp/"+sampleDataFile, '2,2020-01-01,"(Y01,2004-10-17T00:00:00.000),(Y02,2005-10-17T00:00:00.000),(Z01,2004-10-17T00:00:00.000),(Z02,2005-10-17T00:00:00.000)","keyword1,keyword2",1920-01-01\n');
 }
 
 async function testCodelist(existingTimestamp=null, codelist="X01") {
@@ -182,11 +182,11 @@ describe("templates", () => {
       let source = await fs.readFile("templates/output-cases.py", "utf-8");
       source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
 
-      const SAMPLE_DATA = "sample-data-T5-"+TIMESTAMP;
-      await fs.writeFile("/tmp/"+SAMPLE_DATA, 'patient-id,dob,codes,keywords,age-exclusion,codesA-identified,codesB-identified,last-encounter\n');
-      await fs.appendFile("/tmp/"+SAMPLE_DATA, '1,1979-01-01,"X01,X02","keyword1,keyword2",TRUE,CASE,CASE,2020-01-01\n');
-      await fs.appendFile("/tmp/"+SAMPLE_DATA, '2,1979-01-01,"Z01,Z02","keyword1,keyword2",FALSE,UNK,CASE,2020-01-01\n');
-      let results = await runPythonCode(source, ["/tmp/"+SAMPLE_DATA]); 
+      const SAMPLE_DATA_FILE = "sample-data-output-"+TIMESTAMP;
+      await fs.writeFile("/tmp/"+SAMPLE_DATA_FILE, 'patient-id,dob,codes,keywords,age-exclusion,codesA-identified,codesB-identified,last-encounter\n');
+      await fs.appendFile("/tmp/"+SAMPLE_DATA_FILE, '1,1979-01-01,"X01,X02","keyword1,keyword2",TRUE,CASE,CASE,2020-01-01\n');
+      await fs.appendFile("/tmp/"+SAMPLE_DATA_FILE, '2,1979-01-01,"Z01,Z02","keyword1,keyword2",FALSE,UNK,CASE,2020-01-01\n');
+      let results = await runPythonCode(source, ["/tmp/"+SAMPLE_DATA_FILE]); 
       if(results) console.log(results);
       
       csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-cases.csv"));
@@ -241,6 +241,30 @@ describe("templates", () => {
     it("[TE18] FHIR output to encounter check.", async() => {
       let timestamp = await testReadData("fhir", 8081);
       if(timestamp) await testLastEncounterCheck(timestamp, ['FALSE', 'FALSE']);
+    }).timeout(0);
+
+    it("[TE19] Should be able to execute codelist relationship.", async() => {
+      
+      const TIMESTAMP = Date.now();
+      let source = await fs.readFile("templates/codelist-relationship.py", "utf-8");
+      source = source.replaceAll("[AUTHOR]", "martinchapman");
+      source = source.replaceAll("[YEAR]", "2021");
+      source = source.replaceAll("[LIST_A]", "'Y01','Y02'");
+      source = source.replaceAll("[LIST_B]", "'Z01','Z02'");
+      source = source.replaceAll("[MIN_DAYS]", "31");
+      source = source.replaceAll("[MAX_DAYS]", "186");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
+      source = source.replaceAll("[CATEGORY]", "category");
+    
+      const sampleDataFile = "sample-data-codes-"+TIMESTAMP;
+      await writeGenericSampleData(sampleDataFile);
+      let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
+      if(results) console.log(results);
+    
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
+      expect(csv[0]['category-identified']).to.equal('CASE');
+      expect(csv[1]['category-identified']).to.equal('UNK');
+
     }).timeout(0);
 
   });
