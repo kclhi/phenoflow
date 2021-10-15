@@ -23,7 +23,7 @@ class Importer {
       if(row["logicType"]=="codelist") {
         let file = row["param"].split(":")[0];
         csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
-      } else if(row["logicType"]=="codelistsTemporal") {
+      } else if(row["logicType"]=="codelistsTemporal"||row["logicType"]=="codelistExclude") {
         for(let file of [row["param"].split(":")[0], row["param"].split(":")[1]]) csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
       }
     }
