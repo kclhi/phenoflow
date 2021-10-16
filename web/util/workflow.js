@@ -225,8 +225,8 @@ class Workflow {
   }
 
   static ignoreInStepName(word) {
-    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction", "accident"];
-    let ignoreWords = ["not", "use", "type"];
+    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction", "accident", "difficulty", "symptom", "symptoms"];
+    let ignoreWords = ["not", "use", "type", "using", "anything", "enjoying"];
     let nlpd = nlp(word);
     return word.length <= 2
       || conditionSynonyms.concat(ignoreWords).includes(word.toLowerCase()) 

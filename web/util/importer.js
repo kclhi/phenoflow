@@ -18,6 +18,16 @@ class Importer {
     return ["icdcode", "icd10code", "icd11code", "opcs4code", "icdcodeuncat"];
   }
 
+  static splitExpression() {
+    return /\s?\/\s?|\s?\+\s?|\s?\_\s?|\s/;
+  }
+
+  static termAndName(term, name) {
+    return name.split(" ").map(word=>this.clean(word)).filter(word=>word.includes(term)).length
+        || name.split(" ").map(word=>this.clean(stemmer.stem(word))).filter(word=>word.includes(stemmer.stem(term))).length 
+        || name.split(" ").filter(word=>term.includes(this.clean(word)||stemmer.stem(term).includes(this.clean(stemmer.stem(word))))).length;
+  }
+
   static fullClean(input) {
     if(!input) return input;
     return input.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -40,8 +50,14 @@ class Importer {
   static getDescription(row) {
     const descriptions = ["description", "conceptname", "proceduredescr", "icd10term", "icd11term", "snomedterm", "icd10codedescr", "icdterm", "readterm", "readcodedescr", "term", "snomedctterm"];
     let description = row[Object.keys(row).filter(key=>descriptions.includes(Importer.clean(key)))[0]];
-    if(description) description = description.replace("[X]", "").replace("[D]", "")
-    if(description&&description.includes(" ")) description=description.split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word))).join(" ");
+    let splitDescription = [];
+    if(description) {
+      description = description.replace("[X]", "").replace("[D]", "");
+      splitDescription = description.split(Importer.splitExpression());
+    }
+    // 'Shortness of breath' becomes 'breath shortness', for example, so as not to lose meaning when removing ignored words.
+    if(splitDescription.length==3&&splitDescription[1]=="of") splitDescription=[splitDescription[2],splitDescription[0]];
+    if(description&&splitDescription.length>1) description=splitDescription.filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word))).join(" ");    
     return description;
   }
 
@@ -52,12 +68,20 @@ class Importer {
     const codingSystems = primaryCodingSystems.concat(secondaryCodingSystems);
     function singular(term) { return nlp(term).nouns().toSingular().text() || term; }
     function getKeyTerm(phrase, name) {
-      if(phrase.split(" ").filter(word=>name.toLowerCase().includes(word.toLowerCase()))) return name;
-      let nouns = nlp(phrase).nouns().text().split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(this.clean(word)));
-      let adjectives = nlp(phrase).adjectives().text().split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(this.clean(word)));
-      return nouns.length?this.clean(nouns[0]):this.clean(adjectives[0]);
+      if(phrase.split(Importer.splitExpression()).length==1) return phrase;
+      if(phrase.split(Importer.splitExpression()).filter(term=>!Importer.termAndName(term,name)).length>0) return name;
+      let nouns = nlp(phrase).nouns().text().split(Importer.splitExpression()).filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
+      let adjectives = nlp(phrase).adjectives().text().split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
+      return nouns.length?Importer.clean(nouns[0]):Importer.clean(adjectives[0]);
     }
     function orderKey(key) {
+      let nameReplacement;
+      // For definitions with multiple words in their name, use the last word when ordering
+      if(key!=name&&key.includes(name)&&name.split(" ").length>1) {
+        nameReplacement = name.split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
+        nameReplacement = nameReplacement[nameReplacement.length-1];
+        key = key.replace(name, nameReplacement);
+      }
       // Don't attempt reorder on more than two words
       let keyTerms = key.split(" ");
       if(keyTerms.length!=2) return key.charAt(0).toUpperCase() + key.slice(1);
@@ -70,6 +94,7 @@ class Importer {
           key=keyTerms[1].toLowerCase();
           key+=" "+keyTerms[0].toLowerCase();
       }
+      if(nameReplacement) key = key.replace(nameReplacement, name);
       key=key.charAt(0).toUpperCase() + key.slice(1);
       return key;
     }
@@ -100,12 +125,10 @@ class Importer {
         }
         let description=descriptionFunction(row);
         if(description) {
-          for(let term of description.split(" ")) {
+          for(let term of description.split(this.splitExpression())) {
             term = singular(this.fullClean(term));
-            if(name.split(" ").map(word=>this.clean(word)).filter(word=>word.includes(term)).length
-            || name.split(" ").map(word=>this.clean(stemmer.stem(word))).filter(word=>word.includes(stemmer.stem(term))).length 
-            || name.split(" ").filter(word=>term.includes(this.clean(word)||stemmer.stem(term).includes(this.clean(stemmer.stem(word))))).length 
-            || term.length<=4) continue;
+            // Term shouldn't be in phenotype name
+            if(this.termAndName(term, name)||term.length<=4) continue;
             Object.keys(termCount).includes(term)?termCount[term]=termCount[term]+=1:termCount[term]=1;
           }
         }
