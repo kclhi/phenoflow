@@ -292,7 +292,7 @@ async function createWorkflowStepsFromList(workflowId, name, outputExtension, li
       for(let categoryAfter in item.categoriesAfter) {
         let stepShort = ImporterUtils.clean(categoryAfter.toLowerCase())+" "+item.minDays+" to "+item.maxDays+" days after "+ImporterUtils.clean(item.nameBefore.toLowerCase());
         let stepName = ImporterUtils.clean(stepShort);
-        let stepDoc = "Diagnosis of "+ImporterUtils.clean(categoryAfter, true)+" between "+item.minDays+" and "+item.maxDays+" days after a diagnosis of "+ImporterUtils.clean(item.nameBefore, true);
+        let stepDoc = "Diagnosis of "+ImporterUtils.clean(categoryAfter, true).replace("- primary", "(primary)").replace("- secondary", "(secondary)")+" between "+item.minDays+" and "+item.maxDays+" days after a diagnosis of "+ImporterUtils.clean(item.nameBefore, true);
         let stepType = "logic";
         let inputDoc = "Potential cases of "+name;
         let outputDoc = "Patients with clinical codes indicating "+name+" related events in electronic health record.";
@@ -310,7 +310,7 @@ async function createWorkflowStepsFromList(workflowId, name, outputExtension, li
       for(let categoryInclude in item.categoriesInclude) {
         let stepShort = ImporterUtils.clean(categoryInclude.toLowerCase())+" without "+ImporterUtils.clean(item.nameExclude.toLowerCase());
         let stepName = ImporterUtils.clean(stepShort);
-        let stepDoc = "Identify "+ImporterUtils.clean(categoryInclude, true)+" without a diagnosis of "+ImporterUtils.clean(item.nameExclude, true);
+        let stepDoc = "Identify "+ImporterUtils.clean(categoryInclude, true).replace("- primary", "(primary)").replace("- secondary", "(secondary)")+" without a diagnosis of "+ImporterUtils.clean(item.nameExclude, true);
         let stepType = "logic";
         let inputDoc = "Potential cases of "+name;
         let outputDoc = "Patients with clinical codes indicating "+name+" related events in electronic health record.";
