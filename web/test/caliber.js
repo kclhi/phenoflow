@@ -154,7 +154,7 @@ describe("caliber importer", () => {
         }
         expect(yaml).to.include("phenoflow");
         ids.push(id);
-        await fs.writeFile("test/output/importer/" + file, yaml);
+        await fs.writeFile("test/fixtures/caliber/output/" + file, yaml);
       }
     }).timeout(0);
 
