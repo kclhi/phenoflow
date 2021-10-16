@@ -50,11 +50,11 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add a new implementation, for a step.", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
 		it("Should be able to add an alternative implementation, for a step.", async() => {
-			await Workflow.implementation(stepId, "js", "test/implementation/js/", "hello-world.js");
+			await Workflow.implementation(stepId, "js", "test/fixtures/basic/js/", "hello-world.js");
 		});
 
 		// Update:
@@ -76,7 +76,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to update an implementation's details.", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-there.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-there.py");
 		});
 
 		// Add second (and completness checks):
@@ -112,11 +112,11 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add implementation to second step.", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
 		it("Should be able to add alternative implementation to second step.", async() => {
-			await Workflow.implementation(stepId, "js", "test/implementation/js/", "hello-world.js");
+			await Workflow.implementation(stepId, "js", "test/fixtures/basic/js/", "hello-world.js");
 		});
 
 		it("Complete workflow should be marked as such.", async() => {
@@ -147,7 +147,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add implementation to second step (of a second workflow).", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
 		let workflows;
@@ -171,7 +171,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add a new implementation, for a step (of a second workflow).", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
 		it("Second workflow should be marked as a child of the first (overlapping workflows should be marked as such).", async() => {
@@ -204,7 +204,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add implementation to second step (of a third workflow).", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
 		it("Identical workflows are not considered to be children.", async() => {

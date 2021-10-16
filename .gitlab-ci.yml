@@ -1,7 +1,7 @@
 stages:
   - build_web
-  - test_web
   - build_generator
+  - test_web
   - test_generator
 
 # Change pip's cache directory to be inside the project directory since we can
@@ -21,7 +21,7 @@ cache:
     - generator/venv/
 
 install_node_dependencies:
-  image: node:latest
+  image: nikolaik/python-nodejs:python3.7-nodejs16
   stage: build_web
   before_script:
     - cd web
@@ -30,13 +30,6 @@ install_node_dependencies:
   artifacts:
     paths:
       - web/node_modules/
-
-test_web:
-  image: node:latest
-  stage: test_web
-  before_script:
-    - cd web
-  script: npm test
 
 install_python_dependencies:
   image: "python:3.7"
@@ -53,6 +46,14 @@ install_python_dependencies:
     paths:
       - generator/.cache/pip
       - generator/venv/
+
+test_web:
+  image: nikolaik/python-nodejs:python3.7-nodejs16
+  stage: test_web
+  before_script:
+    - pip install swifter
+    - cd web
+  script: npm test
 
 test_generator:
   image: "python:3.7"

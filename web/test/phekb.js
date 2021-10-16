@@ -4,51 +4,30 @@ chai.use(require("chai-http"));
 const fs = require("fs").promises;
 const config = require("config");
 const models = require('../models');
-const importerUtils = require("../util/importer");
+const ImporterUtils = require("../util/importer");
 
 async function importPhekbCodelists(path, files) {
-  
   let csvs=[];
-  for(let file of files) csvs.push({"filename":file, "content":await importerUtils.openCSV(path, file)});
-  let id = await importerUtils.hashFiles(path, files);
-  return await Importer.importCodelists(csvs, importerUtils.getName(files[0]), id+" - "+importerUtils.getName(files[0]), "phekb");
-
-}
-
-async function importPhekbSteplist(path, file) {
-  
-  let stepList = {"filename":file, "content":await importerUtils.openCSV(path, file)};
-  let csvs = [];
-  for(let row of stepList.content) {
-    if(row["logicType"]=="codelist") {
-      let file = row["param"].split(":")[0];
-      csvs.push({"filename":file, "content": await importerUtils.openCSV(path, file)});
-    }
-  }
-  let id = await importerUtils.hashFiles(path, csvs.map((csv)=>csv.filename));
-  return await Importer.importSteplist(stepList, csvs, importerUtils.getName(stepList.filename), id+" - "+importerUtils.getName(stepList.filename), "phekb");
-
+  for(let file of files) csvs.push({"filename":file, "content":await ImporterUtils.openCSV(path, file)});
+  let id = await ImporterUtils.hashFiles(path, files);
+  return await Importer.importCodelists(csvs, ImporterUtils.getName(files[0]), id+" - "+ImporterUtils.getName(files[0]), "phekb");
 }
 
 async function testPhekbCodelist(file) {
-
   const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
   // Can't perform test if file doesn't exist.
   try { await fs.stat(PATH) } catch(error) { return true; }
   let res = await importPhekbCodelists(PATH, [file]);
   res.body.should.be.a("object");
   res.should.have.status(200);
-
 }
 
 async function testPhekbSteplist(list) {
-
   const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
   try { await fs.stat(PATH) } catch(error) { return true; }
-  let res = await importPhekbSteplist(PATH, list);
+  let res = await Importer.processAndImportSteplist(path, file, "phekb");
   res.body.should.be.a("object");
   res.should.have.status(200);
-
 }
 
 describe("phekb importer", () => {
