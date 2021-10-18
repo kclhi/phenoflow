@@ -42,7 +42,7 @@ class Importer {
   static getValue(row) {
     if(row["code"]) return row["code"];
     let otherKeyCodes;
-    const codeKeys = this.primaryCodeKeys().concat(this.secondaryCodeKeys());
+    const codeKeys = Importer.primaryCodeKeys().concat(Importer.secondaryCodeKeys());
     if((otherKeyCodes=Object.keys(row).filter(key=>codeKeys.includes(key.toLowerCase())))&&otherKeyCodes) for(let keyCode of otherKeyCodes) if(row[keyCode]) return row[keyCode];
     throw "No usable value for "+JSON.stringify(row)+" "+otherKeyCodes;
   }
@@ -65,11 +65,10 @@ class Importer {
     let categories = {};
     const primaryCodingSystems = ["read", "snomed", "snomedct"];
     const secondaryCodingSystems = ["icd9", "icd10", "cpt", "icd10cm", "icd9cm", "icd9diagnosis", "icd10diagnosis"];
-    const codingSystems = primaryCodingSystems.concat(secondaryCodingSystems);
     function singular(term) { return nlp(term).nouns().toSingular().text() || term; }
     function getKeyTerm(phrase, name) {
       if(phrase.split(Importer.splitExpression()).length==1) return phrase;
-      if(phrase.split(Importer.splitExpression()).filter(term=>!Importer.termAndName(term,name)).length>0) return name;
+      if(phrase.split(Importer.splitExpression()).filter(term=>!Importer.termAndName(term, name.toLowerCase())).length) return name;
       let nouns = nlp(phrase).nouns().text().split(Importer.splitExpression()).filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
       let adjectives = nlp(phrase).adjectives().text().split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
       return nouns.length?Importer.clean(nouns[0]):Importer.clean(adjectives[0]);
@@ -94,8 +93,8 @@ class Importer {
           key=keyTerms[1].toLowerCase();
           key+=" "+keyTerms[0].toLowerCase();
       }
-      if(nameReplacement) key = key.replace(nameReplacement, name);
-      key=key.charAt(0).toUpperCase() + key.slice(1);
+      if(nameReplacement) key=key.toLowerCase().replace(nameReplacement.toLowerCase(), name);
+      key=key.charAt(0).toUpperCase()+key.slice(1);
       return key;
     }
     function findAndCapitaliseName(text) {
@@ -108,7 +107,8 @@ class Importer {
     }
     for(let csvFile of csvFiles) {
       let codingSystem, termCount={};
-      csvFile=csvFile.filter(row=>(row["case_incl"]&&row["case_incl"]!="N")||!row["case_incl"]);
+      let filename = csvFile.filename.split(".")[0];
+      csvFile=csvFile.content.filter(row=>(row["case_incl"]&&row["case_incl"]!="N")||!row["case_incl"]);
       // Initial cleaning and counting terms
       for(let row of csvFile) {
         // Remove special characters from keys that prevent indexing
@@ -133,7 +133,11 @@ class Importer {
           }
         }
       }
-      var primarySecondary = ((codingSystem=csvFile[0]["codingsystem"]||csvFile[0]["codetype"]||csvFile[0]["vocabulary"])&&primaryCodingSystems.includes(this.fullClean(codingSystem)))||this.primaryCodeKeys().filter(primaryCodeKey=>Object.keys(csvFile[0]).map(key=>this.fullClean(key)).includes(this.fullClean(primaryCodeKey))).length?"primary":"secondary";
+      function isCodingSystemGroup(groupSystems, groupKeys) {
+        return ((codingSystem=csvFile[0]["codingsystem"]||csvFile[0]["codetype"]||csvFile[0]["vocabulary"])&&groupSystems.includes(Importer.fullClean(codingSystem)))||groupKeys().filter(codeKey=>Object.keys(csvFile[0]).map(key=>Importer.fullClean(key)).includes(Importer.fullClean(codeKey))).length;
+      }
+      
+      var codingSystemGroup = isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)?"--primary":isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)?"--secondary":"";
       const NOT_DIFFERENTIATING_CUTOFF=0.15;
       let termCountArray = Object.keys(termCount).map(key=>[key, termCount[key]]).filter(term=>term[1]>1);
       termCountArray.sort(function(first, second) { return second[1]-first[1]; });
@@ -144,7 +148,8 @@ class Importer {
 
       for(let row of csvFile) {
         let category, description=descriptionFunction(row);
-        if(description) {
+        const OTHER_CODING_SYSTEMS = ["UK Biobank", "TADDS"];
+        if(description&&(isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)||isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)||(codingSystemGroup="--"+OTHER_CODING_SYSTEMS.filter((system)=>Importer.fullClean(system)==Importer.fullClean(filename.split("_")[filename.split("_").length-1]))[0]))) {
           let code=valueFunction(row);
           // Remaining work to categorise descriptions
           if(termCountArray.length) {
@@ -153,7 +158,7 @@ class Importer {
               if(description.split(" ").filter(word=>stringSimilarity.compareTwoStrings(singular(this.fullClean(word)), term) >= 0.8 
               || term.includes(singular(this.fullClean(word))) 
               || singular(this.fullClean(word)).includes(term)).length) {
-                categories[term+"--"+primarySecondary]?categories[term+"--"+primarySecondary].push(code):categories[term+"--"+primarySecondary]=[code];
+                categories[term+codingSystemGroup]?categories[term+codingSystemGroup].push(code):categories[term+codingSystemGroup]=[code];
                 matched=true;
                 break;
               }
@@ -161,27 +166,24 @@ class Importer {
             // If no common term, pick most representative term from description
             if(!matched) {
               let keyTerm = getKeyTerm(description, name);
-              categories[keyTerm+"--"+primarySecondary]?categories[keyTerm+"--"+primarySecondary].push(code):categories[keyTerm+"--"+primarySecondary]=[code];
+              categories[keyTerm+codingSystemGroup]?categories[keyTerm+codingSystemGroup].push(code):categories[keyTerm+codingSystemGroup]=[code];
             }
           } else if(csvFile.length==1) {
             // If there's only one code, use its description
-            category=findAndCapitaliseName(description)+"--"+primarySecondary;
+            category=findAndCapitaliseName(description)+codingSystemGroup;
             categories[category]?categories[category].push(code):categories[category]=[code];
           } else {
             // Otherwise, just use the name of the definition itself
-            category=name+"--"+primarySecondary;
+            category=name+codingSystemGroup;
             categories[category]?categories[category].push(code):categories[category]=[code];
           }
         } else if(category=row["category"]||row["calibercategory"]) {
           let code=valueFunction(row);
-          category+="--"+primarySecondary;
+          category+=codingSystemGroup;
           categories[category]?categories[category].push(code):categories[category]=[code];
         } else if(row["prodcode"]) {
-          category="Use of "+row["drugsubstance"]+"--"+primarySecondary;
+          category="Use of "+row["drugsubstance"]+codingSystemGroup;
           categories[category]?categories[category].push(row["prodcode"]):categories[category]=[row["prodcode"]];
-        } else if(row["code"]) {
-          category=name+" - UK Biobank"+"--"+primarySecondary;
-          categories[category]?categories[category].push(row["code"]):categories[category]=[row["code"]];
         } else {
           logger.warn("No handler for: "+JSON.stringify(row)+" "+name);
           //return false;
@@ -191,9 +193,9 @@ class Importer {
 
     let formattedCategories = {};
     for(const [term, codes] of Object.entries(categories)) {
-      let termAndPrimarySecondary = term.split("--");
-      let suffix = (!this.fullClean(termAndPrimarySecondary[0]).includes(this.fullClean(name))&&!this.fullClean(name).includes(this.fullClean(termAndPrimarySecondary[0])))?" "+name:"";
-      termAndPrimarySecondary[0]==name?formattedCategories[termAndPrimarySecondary[0]+suffix+" - "+termAndPrimarySecondary[1]] = categories[term]:formattedCategories[orderKey(termAndPrimarySecondary[0]+suffix)+" - "+termAndPrimarySecondary[1]] = categories[term];
+      let termAndCodeGroup = term.split("--");
+      let suffix = (!this.fullClean(termAndCodeGroup[0]).includes(this.fullClean(name))&&!this.fullClean(name).includes(this.fullClean(termAndCodeGroup[0])))?" "+name:"";
+      termAndCodeGroup[0]==name?formattedCategories[termAndCodeGroup[0]+suffix+" - "+termAndCodeGroup[1]] = categories[term]:formattedCategories[orderKey(termAndCodeGroup[0]+suffix)+" - "+termAndCodeGroup[1]] = categories[term];
     }
 
     if(Object.keys(categories).length == 0 || Object.keys(categories).indexOf("undefined - primary")>-1 || Object.keys(categories).indexOf("undefined - secondary")>-1) {

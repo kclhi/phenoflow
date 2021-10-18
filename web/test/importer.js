@@ -53,11 +53,13 @@ describe("importer", () => {
     }).timeout(0);
 
     it("[IM2] Common terms should be grouped by category.", async() => {
-      let categories = ImporterUtils.getCategories([[
-        {"code": "123", "description": "TermA TermB"},
-        {"code": "234", "description": "TermA TermC"},
-        {"code": "345", "description": "TermD TermE"}
-      ]], "Phenotype");
+      let categories = ImporterUtils.getCategories([{"filename":"file.csv", 
+        "content": [
+          {"ICD-10 code": "123", "description": "TermA TermB"},
+          {"ICD-10 code": "234", "description": "TermA TermC"},
+          {"ICD-10 code": "345", "description": "TermD TermE"}
+        ]
+      }], "Phenotype");
       categories.should.have.property("Phenotype terma - secondary");
       categories.should.have.property("Phenotype - secondary");
       categories["Phenotype terma - secondary"].should.be.a("Array");
