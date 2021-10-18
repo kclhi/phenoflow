@@ -15,7 +15,7 @@ const ImporterUtils = require("../util/importer");
 router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
   if(!req.body.csvs||!req.body.name||!req.body.about||!req.body.userName) res.status(500).send("Missing params.");
-  if(await importLists(req.body.csvs.map((csv)=>csv.content), req.body.name, req.body.about, req.body.userName, getValue, getDescription, "code")) return res.sendStatus(200);
+  if(await importLists(req.body.csvs, req.body.name, req.body.about, req.body.userName, ImporterUtils.getValue, ImporterUtils.getDescription, "code")) return res.sendStatus(200);
   else return res.sendStatus(500);
 });
 
@@ -32,7 +32,7 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
     return description;
   }
   
-  if(await importLists([req.body.keywords.content], req.body.name, req.body.about, req.body.userName, getValue, getDescription, "keywords")) return res.sendStatus(200);
+  if(await importLists([req.body.keywords], req.body.name, req.body.about, req.body.userName, getValue, getDescription, "keywords")) return res.sendStatus(200);
   else return res.sendStatus(500);
 });
 
@@ -44,7 +44,7 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
     if(row["logicType"]=="codelist") {
       let file = row["param"].split(":")[0];
       let requiredCodes = row["param"].split(":")[1];
-      let categories = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==file).map((csv)=>csv.content), req.body.name);
+      let categories = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==file), req.body.name);
       list.push({"logicType":"codelist", "language":"python", "categories":categories, "requiredCodes":requiredCodes});
     } else if(row["logicType"]=="age") {
       list.push({"logicType":"age", "language":"python", "ageLower":row["param"].split(":")[0], "ageUpper":row["param"].split(":")[1]});
@@ -54,7 +54,7 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
       let fileBefore = row["param"].split(":")[0];
       let fileAfter = row["param"].split(":")[1];
       let codesBefore = [...new Set(req.body.csvs.filter((csv)=>csv.filename==fileBefore).map((csv)=>csv.content)[0].map((row)=>"\""+ImporterUtils.getValue(row)+"\""))];
-      let categoriesAfter = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==fileAfter).map((csv)=>csv.content), ImporterUtils.getName(fileAfter));
+      let categoriesAfter = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==fileAfter), ImporterUtils.getName(fileAfter));
       let minDays = row["param"].split(":")[2];
       let maxDays = row["param"].split(":")[3];
       list.push({"logicType":"codelistsTemporal", "language":"python", "nameBefore":ImporterUtils.getName(fileBefore), "codesBefore":codesBefore, "categoriesAfter":categoriesAfter, "minDays":minDays, "maxDays":maxDays});
@@ -62,7 +62,7 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
       let fileExclude = row["param"].split(":")[0];
       let fileInclude = row["param"].split(":")[1];
       let codesExclude = [...new Set(req.body.csvs.filter((csv)=>csv.filename==fileExclude).map((csv)=>csv.content)[0].map((row)=>"\""+ImporterUtils.getValue(row)+"\""))];
-      let categoriesInclude = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==fileInclude).map((csv)=>csv.content), ImporterUtils.getName(fileInclude));
+      let categoriesInclude = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==fileInclude), ImporterUtils.getName(fileInclude));
       list.push({"logicType":"codelistExclude", "language":"python", "nameExclude":ImporterUtils.getName(fileExclude), "codesExclude":codesExclude, "categoriesInclude":categoriesInclude});
     }
   }
@@ -292,7 +292,8 @@ async function createWorkflowStepsFromList(workflowId, name, outputExtension, li
       for(let categoryAfter in item.categoriesAfter) {
         let stepShort = ImporterUtils.clean(categoryAfter.toLowerCase())+" "+item.minDays+" to "+item.maxDays+" days after "+ImporterUtils.clean(item.nameBefore.toLowerCase());
         let stepName = ImporterUtils.clean(stepShort);
-        let stepDoc = "Diagnosis of "+ImporterUtils.clean(categoryAfter, true).replace("- primary", "(primary)").replace("- secondary", "(secondary)")+" between "+item.minDays+" and "+item.maxDays+" days after a diagnosis of "+ImporterUtils.clean(item.nameBefore, true);
+        categoryAfter = ImporterUtils.clean(categoryAfter, true);
+        let stepDoc = "Diagnosis of "+(categoryAfter.substr(0, categoryAfter.lastIndexOf("-"))+ "("+categoryAfter.substr(categoryAfter.lastIndexOf("-")+2)+")")+" between "+item.minDays+" and "+item.maxDays+" days after a diagnosis of "+ImporterUtils.clean(item.nameBefore, true);
         let stepType = "logic";
         let inputDoc = "Potential cases of "+name;
         let outputDoc = "Patients with clinical codes indicating "+name+" related events in electronic health record.";
@@ -310,7 +311,8 @@ async function createWorkflowStepsFromList(workflowId, name, outputExtension, li
       for(let categoryInclude in item.categoriesInclude) {
         let stepShort = ImporterUtils.clean(categoryInclude.toLowerCase())+" without "+ImporterUtils.clean(item.nameExclude.toLowerCase());
         let stepName = ImporterUtils.clean(stepShort);
-        let stepDoc = "Identify "+ImporterUtils.clean(categoryInclude, true).replace("- primary", "(primary)").replace("- secondary", "(secondary)")+" without a diagnosis of "+ImporterUtils.clean(item.nameExclude, true);
+        categoryInclude = ImporterUtils.clean(categoryInclude, true);
+        let stepDoc = "Identify "+(categoryInclude.substr(0, categoryInclude.lastIndexOf("-"))+"("+categoryInclude.substr(categoryInclude.lastIndexOf("-")+2)+")")+" without a diagnosis of "+ImporterUtils.clean(item.nameExclude, true);
         let stepType = "logic";
         let inputDoc = "Potential cases of "+name;
         let outputDoc = "Patients with clinical codes indicating "+name+" related events in electronic health record.";
