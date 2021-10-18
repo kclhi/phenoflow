@@ -159,17 +159,21 @@ describe("caliber importer", () => {
     }).timeout(0);
 
     it("[CI6] Importing the same (CALIBER) phenotype should result in no changes.", async() => {
+      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
+      try { await fs.stat(PATH) } catch(error) { return true; }
       await testCaliberPhenotype("blood-pressure.md");
       await testCaliberPhenotype("blood-pressure.md");
       let workflows = await models.workflow.findAndCountAll();
-      expect(workflows.count).to.equal(3);
+      expect(workflows.count).to.equal(4);
     }).timeout(0);
 
     it("[CI7] Importing an update to the same (CALIBER) phenotype should edit the existing definition.", async() => {
+      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
+      try { await fs.stat(PATH) } catch(error) { return true; }
       await testCaliberPhenotype("blood-pressure.md");
       await testCaliberPhenotype("blood-pressure-alt.md");
       let workflows = await models.workflow.findAndCountAll();
-      expect(workflows.count).to.equal(3);
+      expect(workflows.count).to.equal(4);
     }).timeout(0);
 
     it("[CI8] Import CALIBER validation set.", async() => {
