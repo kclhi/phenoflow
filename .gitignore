@@ -1,6 +1,9 @@
 # Created by https://www.gitignore.io/api/git,node,data,latex,python,images,dropbox,certificates,archlinuxpackages
 # Edit at https://www.gitignore.io/?templates=git,node,data,latex,python,images,dropbox,certificates,archlinuxpackages
 
+### MacOS Desktop Services Store
+.DS_Store
+
 ### ArchLinuxPackages ###
 *.tar
 *.tar.*
