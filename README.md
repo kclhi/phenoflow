@@ -23,8 +23,8 @@ Components of the Phenoflow architecture.
 
 ### Certificate generation
 
-1. Run [visualiser/git-server/certs/ge-ca-cert.sh](visualiser/git-server/certs/gen-ca-cert.sh).
-2. Run [visualiser/git-server/certs/ge-domain-cert.sh](visualiser/git-server/certs/gen-domain-cert.sh).
+1. Run [visualiser/git-server/certs/gen-ca-cert.sh](visualiser/git-server/certs/gen-ca-cert.sh).
+2. Run [visualiser/git-server/certs/gen-domain-cert.sh](visualiser/git-server/certs/gen-domain-cert.sh).
 3. Copy visualiser/git-server/certs/pf.pem to a new folder visualiser/spring/certs.
 4. Copy visualiser/git-server/certs/pf.pem to a new folder web/certs.
 4. Copy visualiser/git-server/certs/pf.* to [web/proxy/certs](web/proxy/certs).
