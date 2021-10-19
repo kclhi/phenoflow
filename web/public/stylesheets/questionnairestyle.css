@@ -1,0 +1,83 @@
+html, body {
+    min-height: 100%;
+    background-color: #f5f6fc;
+    font-family: 'Poppins', sans-serif!important;
+}
+body, div, form, input, p { 
+    padding: 0;
+    margin: 0;
+    outline: none;
+    font-family: Roboto, Arial, sans-serif;
+    font-size: 16px;
+    color: #666;
+    line-height: 28px;
+}
+h1 {
+    font-weight: 400;
+}
+h4 {
+    margin: 25px 0 5px;
+}
+.testbox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: inherit;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 30px;
+    padding-bottom: 5px;
+    background-color: #17a2b8!important;
+}
+form {
+    width: 100%;
+    padding: 20px;
+    background: #f5f6fc;
+    box-shadow: 0 2px 5px #ccc; 
+}
+input {
+    width: auto;
+    margin-right: 15px;
+    vertical-align: middle;
+}
+.question-answer label {
+    display: block;
+}
+textarea {
+    width: calc(100% - 12px);
+    padding: 5px;
+}
+textarea:hover {
+    outline: none;
+    border: 1px solid #095484;
+}
+.btn-block {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: inherit;
+    /* padding: 30px; */
+    background-color: #17a2b8!important;
+    /* margin-top: 20px; */
+    text-align: center;
+}
+button {
+    width: 150px;
+    padding: 10px;
+    border: none;
+    outline: none;
+    -webkit-border-radius: 5px; 
+    -moz-border-radius: 5px; 
+    border-radius: 5px; 
+    background-color: #0e7e8f;
+    font-size: 16px;
+    color: #fff;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #0a6b7a;
+}
+input:hover, select:hover, textarea:hover {
+    outline: none;
+    box-shadow: 0 0 5px 0 #095484;
+}

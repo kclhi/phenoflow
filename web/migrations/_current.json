@@ -373,6 +373,39 @@
                 }
             },
             "indexes": []
+        },
+        "questionnaires": {
+            "tableName": "questionnaire",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "primaryKey": true,
+                    "autoIncrement": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "username": {
+                    "field": "username",
+                    "seqType": "Sequelize.STRING",
+                    "allowNull": true
+                },
+                "answers": {
+                    "field": "answers",
+                    "seqType": "Sequelize.STRING",
+                    "allowNull": true
+                },
+                "createdAt": {
+                    "allowNull": true,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": true,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": []
         }
     },
     "revision": 1
