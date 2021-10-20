@@ -4,6 +4,7 @@ const logger = require("../config/winston");
 const models = require("../models");
 const config = require("config");
 const got = require("got");
+const bcrypt = require("bcrypt");
 const sanitizeHtml = require('sanitize-html');
 const jwt = require('express-jwt');
 const Workflow = require("../util/workflow");
@@ -35,8 +36,18 @@ router.get("/all/:filter/:offset?", async function(req, res, next) {
 
   let offset = processOffset(req.params.offset);
   if(offset===false) return res.sendStatus(404);
-  let workflows = await Workflow.completeWorkflows(req.params.filter, offset);
-  res.render("all",{title:"Library of '" + req.params.filter + "' phenotypes", workflows:workflows, listPrefix:"/phenoflow/phenotype/download/", limit:config.get("ui.PAGE_LIMIT"), previous:offset-config.get("ui.PAGE_LIMIT"), next:offset+config.get("ui.PAGE_LIMIT")})
+  let user = await models.user.findOne({where:{name:req.params.filter}});
+  if(user&&user.restricted) {
+    const b64auth = (req.headers.authorization||'').split(' ')[1]||'';
+    const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':')
+    if(!login||!password||login!=user.name||!bcrypt.compare(password, user.password)) { 
+      res.set('WWW-Authenticate', 'Basic realm="restricted"');
+      res.status(401).send('Authentication required.');
+      return;
+    }
+  }
+  let workflows = (user&&user.restricted)?await Workflow.restrictedWorkflows(req.params.filter, offset):await Workflow.completeWorkflows(req.params.filter, offset);
+  res.render("all", {title:"Library of '" + req.params.filter + "' phenotypes", workflows:workflows, listPrefix:"/phenoflow/phenotype/download/", limit:config.get("ui.PAGE_LIMIT"), previous:offset-config.get("ui.PAGE_LIMIT"), next:offset+config.get("ui.PAGE_LIMIT")})
 
 });
 

@@ -55,15 +55,19 @@ class Workflow {
     return workflow;
   }
 
-  static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
+  static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT"), getRestricted=false) {
     try {
-      let workflows = await models.workflow.findAll({where:{complete:true, [op.or]:[{name:{[op.like]:"%"+category+"%"}},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}], order:[['name', 'ASC']]});
+      let workflows = await models.workflow.findAll({where:{complete:true, '$user.restricted$':getRestricted, [op.or]:[{name:{[op.like]:"%"+category+"%"}},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false},{model:models.user}], order:[['name', 'ASC']]});
       return workflows.slice(offset, offset+limit);
     } catch(error) {
       error = "Error getting complete workflows: " + error;
       logger.debug(error);
       throw error;
     }
+  }
+
+  static async restrictedWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
+    return await this.completeWorkflows(category, offset, limit, true);
   }
 
   static async deleteStepsFromWorkflow(workflowId) {

@@ -13,6 +13,10 @@ module.exports = function(sequelize, DataTypes) {
 		 type: DataTypes.STRING,
 		 allowNull: false
 	 	},
+    restricted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
 	 	verified: DataTypes.BOOLEAN,
 	 	homepage: DataTypes.STRING
 	});
