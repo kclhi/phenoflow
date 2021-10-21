@@ -138,10 +138,10 @@ Create database:
 npm run migrate
 ```
 
-Run server:
+Run server, referencing generated certificate:
 
 ```
-npm start
+NODE_EXTRA_CA_CERTS=certs/pf.pem npm start
 ```
 
 ## Deployment

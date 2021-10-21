@@ -32,20 +32,25 @@ router.get("/all/:offset?", async function(req, res, next) {
 
 });
 
-router.get("/all/:filter/:offset?", async function(req, res, next) {
-
-  let offset = processOffset(req.params.offset);
-  if(offset===false) return res.sendStatus(404);
-  let user = await models.user.findOne({where:{name:req.params.filter}});
+function credentialsCheck(user, req, res) {
   if(user&&user.restricted) {
     const b64auth = (req.headers.authorization||'').split(' ')[1]||'';
     const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':')
     if(!login||!password||login!=user.name||!bcrypt.compare(password, user.password)) { 
       res.set('WWW-Authenticate', 'Basic realm="restricted"');
       res.status(401).send('Authentication required.');
-      return;
+      return false;
     }
   }
+  return true;
+}
+
+router.get("/all/:filter/:offset?", async function(req, res, next) {
+
+  let offset = processOffset(req.params.offset);
+  if(offset===false) return res.sendStatus(404);
+  let user = await models.user.findOne({where:{name:req.params.filter}});
+  if(!credentialsCheck(user, req, res)) return;
   let workflows = (user&&user.restricted)?await Workflow.restrictedWorkflows(req.params.filter, offset):await Workflow.completeWorkflows(req.params.filter, offset);
   res.render("all", {title:"Library of '" + req.params.filter + "' phenotypes", workflows:workflows, listPrefix:"/phenoflow/phenotype/download/", limit:config.get("ui.PAGE_LIMIT"), previous:offset-config.get("ui.PAGE_LIMIT"), next:offset+config.get("ui.PAGE_LIMIT")})
 
@@ -92,7 +97,8 @@ router.get("/define/:workflowId", async function(req, res, next) {
 router.get("/download", async function(req, res, next) {
 
   try {
-    let workflow = await Workflow.getRandomWorkflow(req.params.workflowId);
+    let workflow = await Workflow.getRandomWorkflow();
+    if(!workflow) return res.redirect("/phenoflow");
     let user = await models.user.findOne({where:{name: workflow.userName}});
     res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow, userName:user.name, verified:user.verified});
   } catch(error) {
@@ -109,6 +115,7 @@ router.get("/download/:workflowId", async function(req, res, next) {
     workflow = await Workflow.addChildrenToStep(workflow);
     if(!workflow) res.sendStatus(500);
     let user = await models.user.findOne({where:{name: workflow.userName}});
+    if(!credentialsCheck(user, req, res)) return;
     res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow, userName:user.name, verified:user.verified, homepage:user.homepage});
   } catch(error) {
     logger.error("Get workflow error: " + error);
@@ -170,21 +177,12 @@ async function generateWorkflow(workflowId, language=null, implementationUnits=n
 
 }
 
-router.get("/generate/:workflowId/:language", async function(req, res, next) {
-
-  if(req.body.implementationUnits) return res.sendStatus(404);
-  try {
-    if(!await generateWorkflow(req.params.workflowId, req.params.language, null, res)) return res.sendStatus(500);
-  } catch(error) {
-    logger.debug("Generate workflow error: " + error);
-    return res.sendStatus(500);
-  }
-
-});
-
 router.post("/generate/:workflowId", async function(req, res, next) {
 
   if(!req.body.implementationUnits) return res.sendStatus(404);
+  if(!req.body.userName) return res.sendStatus(500);
+  let user = await models.user.findOne({where:{name: req.body.userName}});
+  if(!credentialsCheck(user, req, res)) return;
   try {
     if (!await generateWorkflow(req.params.workflowId, null, req.body.implementationUnits, res)) return res.sendStatus(500);
   } catch(error) {
