@@ -75,7 +75,7 @@ block pageJS
           document.getElementById("downloadSpinner").style.display = "none";
         }
       }
-      xhr.send(JSON.stringify({"implementationUnits":implementationUnits}));
+      xhr.send(JSON.stringify({"implementationUnits":implementationUnits, "userName":"!{userName}"}));
     }
     function showImplementation(workflowId, position) {
       const language = document.getElementById("step" + position).getElementsByClassName("implementation")[0].value;
