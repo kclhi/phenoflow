@@ -213,6 +213,33 @@ describe("basic", () => {
 			expect(await workflows.filter((workflow)=>{return workflow.id==3})[0].countParent()).equal(0);
 		});
 
+    //
+
+    it("Should be able to add a user with restricted definitions.", async() => {
+			const result = await models.user.create({name: "restrictedUser", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "", restricted:true});
+			result.should.be.a("object");
+		});
+
+    it("Should be able to add a restricted workflow.", async() => {
+			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "restrictedUser");
+		});
+
+		it("Should be able to add first step (of a restricted workflow).", async() => {
+			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "firstStepDoc", "firstStepType", "restrictedUser");
+		});
+
+		it("Should be able to add input to first step (of a restricted workflow).", async() => {
+			await Workflow.input(stepId, "firstInputDoc", "restrictedUser");
+		});
+
+		it("Should be able to add output to first step (of a restricted workflow).", async() => {
+			await Workflow.output(stepId, "firstOutputDoc", "csv", "restrictedUser");
+		});
+
+		it("Should be able to add implementation to first step (of a restricted workflow).", async() => {
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py", "restrictedUser");
+		});
+
 		// Other service interaction:
 
 		let workflow = "class: Workflow\ncwlVersion: v1.0\ninputs:\n  inputModule1:\n    doc: Python implementation unit\n    id: inputModule1\n    type: File\n  inputModule2:\n    doc: Python implementation unit\n    id: inputModule2\n    type: File\n  potentialCases:\n    doc: Input of potential cases for processing\n    id: potentialCases\n    type: File\noutputs:\n  cases:\n    id: cases\n    outputBinding:\n      glob: '*.extension'\n    outputSource: 2/output\n    type: File\nrequirements:\n  SubworkflowFeatureRequirement: {}\nsteps:\n  '1':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule1\n      potentialCases:\n        id: potentialCases\n        source: potentialCases\n    out:\n      - output\n    run: stepName1.cwl\n  '2':\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule2\n      potentialCases:\n        id: potentialCases\n        source: 1/output\n    out:\n     - output\n    run: stepName2.cwl\n";

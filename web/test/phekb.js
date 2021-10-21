@@ -22,10 +22,10 @@ async function testPhekbCodelist(file) {
   res.should.have.status(200);
 }
 
-async function testPhekbSteplist(list) {
+async function testPhekbSteplist(file) {
   const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
   try { await fs.stat(PATH) } catch(error) { return true; }
-  let res = await Importer.processAndImportSteplist(path, file, "phekb");
+  let res = await Importer.processAndImportSteplist(PATH, file, "phekb");
   res.body.should.be.a("object");
   res.should.have.status(200);
 }
@@ -43,7 +43,7 @@ describe("phekb importer", () => {
 		});
 
     it("[PI2] Should be able to import a codelist.", async() => { 
-      await testPhekbCodelist("rheumatoid-arthritis-3_icd.csv");
+      await testPhekbCodelist("abdominal-aortic-aneurysm-2_cpt.csv");
     }).timeout(0);
 
     it("[PI3] Should be able to import all codelists.", async() => { 
