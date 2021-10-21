@@ -20,10 +20,10 @@ class Importer {
     let stepList = {"filename":file, "content":await ImporterUtils.openCSV(path, file)};
     let csvs = [];
     for(let row of stepList.content) {
-      if(row["logicType"]=="codelist") {
+      if(row["logicType"]=="codelist"||row["logicType"]=="codelistExclude") {
         let file = row["param"].split(":")[0];
         csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
-      } else if(row["logicType"]=="codelistsTemporal"||row["logicType"]=="codelistExclude") {
+      } else if(row["logicType"]=="codelistsTemporal"||row["logicType"]=="codelistExcludeInclude"||row["logicType"]=="codelistPreviousExclude") {
         for(let file of [row["param"].split(":")[0], row["param"].split(":")[1]]) csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
       }
     }

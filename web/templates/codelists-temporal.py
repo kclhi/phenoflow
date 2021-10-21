@@ -15,6 +15,7 @@ with open(sys.argv[1], 'r') as file_in, open('[PHENOTYPE]-potential-cases.csv', 
     codes_identified = 0;
     for row in csv_reader:
         new_row = row.copy();
+        new_row["[CATEGORY]-identified"] = "UNK";
         matching_before_codes=[];
         matching_after_codes=[];
         for cell in row:
@@ -24,9 +25,9 @@ with open(sys.argv[1], 'r') as file_in, open('[PHENOTYPE]-potential-cases.csv', 
                 date = datetime.fromisoformat(item.split(",")[1]);
                 if(code in codes_before): matching_before_codes.append((code, date));
                 if(code in codes_after): matching_after_codes.append((code, date));
-                sorted(matching_before_codes, key=lambda code_date: code_date[1]);
-                sorted(matching_after_codes, key=lambda code_date: code_date[1]);
-                matching_before_codes.reverse();
+        sorted(matching_before_codes, key=lambda code_date: code_date[1]);
+        sorted(matching_after_codes, key=lambda code_date: code_date[1]);
+        matching_before_codes.reverse();
         if(len(matching_before_codes)>0 and len(matching_after_codes)>0): 
             if(MIN_DAYS < (matching_after_codes[0][1]-matching_before_codes[0][1]).days and (matching_after_codes[0][1]-matching_before_codes[0][1]).days < MAX_DAYS):
                 new_row["[CATEGORY]-identified"] = "CASE";
