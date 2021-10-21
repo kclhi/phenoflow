@@ -83,19 +83,19 @@ class Importer {
       }
       // Don't attempt reorder on more than two words
       let keyTerms = key.split(" ");
-      if(keyTerms.length!=2) return key.charAt(0).toUpperCase() + key.slice(1);
-      let nlpKey = nlp(key);
-      let adjectives = nlpKey.adjectives()?nlpKey.adjectives().out("text").split(" "):null;
-      let nouns = nlpKey.nouns()?nlpKey.nouns().out("text").split(" "):null;
-      // Adjectives first; both nouns, condition first
-      if(adjectives&&adjectives.length==1&&adjectives[0]!=keyTerms[0]
-        ||nouns&&nouns.length==2&&name!=keyTerms[0]) {
-          key=keyTerms[1].toLowerCase();
-          key+=" "+keyTerms[0].toLowerCase();
+      if(keyTerms.length==2) {
+        let nlpKey = nlp(key);
+        let adjectives = nlpKey.adjectives()?nlpKey.adjectives().out("text").split(" "):null;
+        let nouns = nlpKey.nouns()?nlpKey.nouns().out("text").split(" "):null;
+        // Adjectives first; both nouns, condition first
+        if(adjectives&&adjectives.length==1&&adjectives[0]!=keyTerms[0]
+          ||nouns&&nouns.length==2&&name!=keyTerms[0]) {
+            key=keyTerms[1].toLowerCase();
+            key+=" "+keyTerms[0].toLowerCase();
+        }
       }
       if(nameReplacement) key=key.toLowerCase().replace(nameReplacement.toLowerCase(), name);
-      key=key.charAt(0).toUpperCase()+key.slice(1);
-      return key;
+      return key.charAt(0).toUpperCase()+key.slice(1);
     }
     function findAndCapitaliseName(text) {
       let newText="";

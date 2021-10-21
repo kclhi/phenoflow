@@ -40,7 +40,7 @@ async function testReadData(format, port) {
 
 async function writeGenericSampleData(sampleDataFile) {
   await fs.writeFile("/tmp/"+sampleDataFile, 'patient-id,dob,codes,keywords,last-encounter\n');
-  await fs.appendFile("/tmp/"+sampleDataFile, '1,1979-01-01,"(X01,2004-10-17T00:00:00.000),(Y01,2004-10-17T00:00:00.000),(Y02,2005-04-17T00:00:00.000),(Z01,2005-10-17T00:00:00.000),(Z02,2006-10-17T00:00:00.000)","keyword1,keyword2",2020-01-01\n');
+  await fs.appendFile("/tmp/"+sampleDataFile, '1,1979-01-01,"(X01,2004-10-17T00:00:00.000),(Y01,2004-10-17T00:00:00.000),(Y02,2005-04-17T00:00:00.000),(Z01,2005-10-17T00:00:00.000),(Z02,2006-10-17T00:00:00.000),(E01,3000-10-17T00:00:00.000)","keyword1,keyword2",2020-01-01\n');
   await fs.appendFile("/tmp/"+sampleDataFile, '2,2020-01-01,"(Y01,2004-10-17T00:00:00.000),(Y02,2005-10-17T00:00:00.000),(Z01,2004-10-17T00:00:00.000),(Z02,2005-10-17T00:00:00.000)","keyword1,keyword2",1920-01-01\n');
 }
 
@@ -267,14 +267,35 @@ describe("templates", () => {
 
     }).timeout(0);
 
-    it("[TE20] Should be able to execute codelist exclude.", async() => {
+    it("[TE20] Should be able to execute codelist exclude and include.", async() => {
+      
+      const TIMESTAMP = Date.now();
+      let source = await fs.readFile("templates/codelist-exclude-include.py", "utf-8");
+      source = source.replaceAll("[AUTHOR]", "martinchapman");
+      source = source.replaceAll("[YEAR]", "2021");
+      source = source.replaceAll("[LIST_EXCLUDE]", "'X01'");
+      source = source.replaceAll("[LIST_INCLUDE]", "'Y01'");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
+      source = source.replaceAll("[CATEGORY]", "category");
+    
+      const sampleDataFile = "sample-data-codes-include-exclude-"+TIMESTAMP;
+      await writeGenericSampleData(sampleDataFile);
+      let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
+      if(results) console.log(results);
+    
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
+      expect(csv[0]['category-identified']).to.equal('UNK');
+      expect(csv[1]['category-identified']).to.equal('CASE');
+
+    }).timeout(0);
+
+    it("[TE21] Should be able to execute codelist exclude.", async() => {
       
       const TIMESTAMP = Date.now();
       let source = await fs.readFile("templates/codelist-exclude.py", "utf-8");
       source = source.replaceAll("[AUTHOR]", "martinchapman");
       source = source.replaceAll("[YEAR]", "2021");
-      source = source.replaceAll("[LIST_EXCLUDE]", "'X01'");
-      source = source.replaceAll("[LIST_INCLUDE]", "'Y01'");
+      source = source.replaceAll("[LIST_EXCLUDE]", "'E01'");
       source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
       source = source.replaceAll("[CATEGORY]", "category");
     
@@ -284,8 +305,30 @@ describe("templates", () => {
       if(results) console.log(results);
     
       csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
-      expect(csv[0]['category-identified']).to.equal('UNK');
-      expect(csv[1]['category-identified']).to.equal('CASE');
+      expect(csv[0]['category-exclusion']).to.equal('TRUE');
+      expect(csv[1]['category-exclusion']).to.equal('FALSE');
+
+    }).timeout(0);
+
+    it("[TE22] Should be able to execute codelist exclude with previous.", async() => {
+      
+      const TIMESTAMP = Date.now();
+      let source = await fs.readFile("templates/codelist-previous-exclude.py", "utf-8");
+      source = source.replaceAll("[AUTHOR]", "martinchapman");
+      source = source.replaceAll("[YEAR]", "2021");
+      source = source.replaceAll("[LIST_PREVIOUS]", "'X01'");
+      source = source.replaceAll("[LIST_EXCLUDE]", "'E01'");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
+      source = source.replaceAll("[CATEGORY]", "category");
+    
+      const sampleDataFile = "sample-data-codes-previous-exclude-"+TIMESTAMP;
+      await writeGenericSampleData(sampleDataFile);
+      let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
+      if(results) console.log(results);
+    
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
+      expect(csv[0]['category-exclusion']).to.equal('TRUE');
+      expect(csv[1]['category-exclusion']).to.equal('FALSE');
 
     }).timeout(0);
 
