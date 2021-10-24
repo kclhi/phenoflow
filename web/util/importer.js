@@ -15,7 +15,7 @@ class Importer {
   }
 
   static secondaryCodeKeys() {
-    return ["icdcode", "icd10code", "icd11code", "opcs4code", "icdcodeuncat"];
+    return ["icdcode", "icd10code", "icd11code", "opcs4code", "icdcodeuncat", "keyword"];
   }
 
   static splitExpression() {
@@ -37,6 +37,22 @@ class Importer {
     input = input.replace(/\//g, "").replace(/(\s)?\(.*\)/g, "").replace(/\,/g, "").replace(/&amp;/g, "and");
     if(!spaces) input = input.replace(/ /g, "-");
     return input;
+  }
+
+  static cleanCSVHeaders(row) {
+    // Remove special characters from keys that prevent indexing
+    for(const [key, value] of Object.entries(row)) {
+      if(key!=this.fullClean(key)) {
+        row[this.fullClean(key)] = row[key];
+        delete row[key];
+        continue;
+      }
+      if(key!=key.toLowerCase()) {
+        row[key.toLowerCase()] = row[key];
+        delete row[key];
+      }
+    }
+    return row;
   }
 
   static getValue(row) {
@@ -111,18 +127,7 @@ class Importer {
       csvFile=csvFile.content.filter(row=>(row["case_incl"]&&row["case_incl"]!="N")||!row["case_incl"]);
       // Initial cleaning and counting terms
       for(let row of csvFile) {
-        // Remove special characters from keys that prevent indexing
-        for(const [key, value] of Object.entries(row)) {
-          if(key!=this.fullClean(key)) {
-            row[this.fullClean(key)] = row[key];
-            delete row[key];
-            continue;
-          }
-          if(key!=key.toLowerCase()) {
-            row[key.toLowerCase()] = row[key];
-            delete row[key];
-          }
-        }
+        row = this.cleanCSVHeaders(row);
         let description=descriptionFunction(row);
         if(description) {
           for(let term of description.split(this.splitExpression())) {
@@ -137,7 +142,7 @@ class Importer {
         return ((codingSystem=csvFile[0]["codingsystem"]||csvFile[0]["codetype"]||csvFile[0]["vocabulary"])&&groupSystems.includes(Importer.fullClean(codingSystem)))||groupKeys().filter(codeKey=>Object.keys(csvFile[0]).map(key=>Importer.fullClean(key)).includes(Importer.fullClean(codeKey))).length;
       }
       
-      var codingSystemGroup = isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)?"--primary":isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)?"--secondary":"";
+      var codingSystemGroup = isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)?"--primary":(isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)?"--secondary":"");
       const NOT_DIFFERENTIATING_CUTOFF=0.15;
       let termCountArray = Object.keys(termCount).map(key=>[key, termCount[key]]).filter(term=>term[1]>1);
       termCountArray.sort(function(first, second) { return second[1]-first[1]; });
@@ -206,6 +211,15 @@ class Importer {
     return formattedCategories;
   }
 
+  static templateReplace(source, substitutions) {
+    for(let substitution in substitutions) {
+      if(!source.includes("["+substitution+"]")) console.warn("Attempted substitition of non-existent variable in template: " + substitution);
+      if(substitution=="EXCLUSION_IDENTIFIED") source = substitutions[substitution]=="exclusion"?source.replaceAll("[FALSE_UNK]", "FALSE").replaceAll("[TRUE_CASE]", "TRUE"):source.replaceAll("[FALSE_UNK]", "UNK").replaceAll("[TRUE_CASE]", "CASE");
+      source = source.replaceAll("["+substitution+"]", substitutions[substitution]);
+    }
+    return source;
+  }
+
   static async openCSV(path, file) {
     let csvFile, csv;
     try {
@@ -221,10 +235,14 @@ class Importer {
     return csv;
   }
 
+  static hash(filesContent) {
+    return require('crypto').createHash('sha1').update(filesContent).digest('base64').replace(/[^A-Za-z0-9]/g, "");
+  }
+
   static async hashFiles(path, files) {
     let filesContent="";
     for(let file of files) filesContent+=await fs.readFile(path+file);
-    return require('crypto').createHash('sha1').update(filesContent).digest('base64').replace(/[^A-Za-z0-9]/g, "");
+    return this.hash(filesContent);
   }
 
   static getName(file) {
