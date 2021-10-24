@@ -8,6 +8,8 @@ const { PythonShell: shell } = require("python-shell");
 const spawn = require("await-spawn");
 const parse = require('neat-csv');
 
+const ImporterUtils = require("../util/importer");
+
 async function testReadData(format, port) {
 
   // If problem with source (e.g. not up), skip test.
@@ -270,14 +272,8 @@ describe("templates", () => {
     it("[TE20] Should be able to execute codelist exclude and include.", async() => {
       
       const TIMESTAMP = Date.now();
-      let source = await fs.readFile("templates/codelist-exclude-include.py", "utf-8");
-      source = source.replaceAll("[AUTHOR]", "martinchapman");
-      source = source.replaceAll("[YEAR]", "2021");
-      source = source.replaceAll("[LIST_EXCLUDE]", "'X01'");
-      source = source.replaceAll("[LIST_INCLUDE]", "'Y01'");
-      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
-      source = source.replaceAll("[CATEGORY]", "category");
-    
+      let source = await fs.readFile("templates/codelist-previous-current.py", "utf-8");
+      source = ImporterUtils.templateReplace(source, {"AUTHOR":"martinchapman", "YEAR":"2021", "LIST_PREVIOUS":"'X01'", "LIST_CURRENT":"'Y01'", "PREVIOUS_PRESENT":"False", "CURRENT_PRESENT":"True", "EXCLUSION_IDENTIFIED":"identified", "PHENOTYPE":"/tmp/phenotype-"+TIMESTAMP, "CATEGORY":"category"});
       const sampleDataFile = "sample-data-codes-include-exclude-"+TIMESTAMP;
       await writeGenericSampleData(sampleDataFile);
       let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
@@ -313,14 +309,8 @@ describe("templates", () => {
     it("[TE22] Should be able to execute codelist exclude with previous.", async() => {
       
       const TIMESTAMP = Date.now();
-      let source = await fs.readFile("templates/codelist-previous-exclude.py", "utf-8");
-      source = source.replaceAll("[AUTHOR]", "martinchapman");
-      source = source.replaceAll("[YEAR]", "2021");
-      source = source.replaceAll("[LIST_PREVIOUS]", "'X01'");
-      source = source.replaceAll("[LIST_EXCLUDE]", "'E01'");
-      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
-      source = source.replaceAll("[CATEGORY]", "category");
-    
+      let source = await fs.readFile("templates/codelist-previous-current.py", "utf-8");
+      source = ImporterUtils.templateReplace(source, {"AUTHOR":"martinchapman", "YEAR":"2021", "LIST_PREVIOUS":"'X01'", "LIST_CURRENT":"'E01'", "PREVIOUS_PRESENT":"True", "CURRENT_PRESENT":"True", "EXCLUSION_IDENTIFIED":"exclusion", "PHENOTYPE":"/tmp/phenotype-"+TIMESTAMP, "CATEGORY":"category"});
       const sampleDataFile = "sample-data-codes-previous-exclude-"+TIMESTAMP;
       await writeGenericSampleData(sampleDataFile);
       let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
@@ -329,6 +319,22 @@ describe("templates", () => {
       csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
       expect(csv[0]['category-exclusion']).to.equal('TRUE');
       expect(csv[1]['category-exclusion']).to.equal('FALSE');
+
+    }).timeout(0);
+
+    it("[TE23] Should be able to execute codelist include with previous.", async() => {
+      
+      const TIMESTAMP = Date.now();
+      let source = await fs.readFile("templates/codelist-previous-current.py", "utf-8");
+      source = ImporterUtils.templateReplace(source, {"AUTHOR":"martinchapman", "YEAR":"2021", "LIST_PREVIOUS":"'X01'", "LIST_CURRENT":"'E01'", "PREVIOUS_PRESENT":"True", "CURRENT_PRESENT":"True", "EXCLUSION_IDENTIFIED":"identified", "PHENOTYPE":"/tmp/phenotype-"+TIMESTAMP, "CATEGORY":"category"});
+      const sampleDataFile = "sample-data-codes-previous-include-"+TIMESTAMP;
+      await writeGenericSampleData(sampleDataFile);
+      let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
+      if(results) console.log(results);
+    
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
+      expect(csv[0]['category-identified']).to.equal('CASE');
+      expect(csv[1]['category-identified']).to.equal('UNK');
 
     }).timeout(0);
 
