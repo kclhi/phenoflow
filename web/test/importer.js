@@ -27,7 +27,8 @@ class Importer {
         for(let file of [row["param"].split(":")[0], row["param"].split(":")[1]]) csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
       }
     }
-    let id = await ImporterUtils.hashFiles(path, csvs.map((csv)=>csv.filename));
+    let uniqueCSVs = csvs.filter(({filename}, index)=>!csvs.map(csv=>csv.filename).includes(filename, index+1));
+    let id = await ImporterUtils.hashFiles(path, uniqueCSVs.map((csv)=>csv.filename));
     let name = ImporterUtils.getName(stepList.filename);
     return await this.importSteplist(stepList, csvs, name, id+" - "+ImporterUtils.getName(stepList.filename), author);
   }

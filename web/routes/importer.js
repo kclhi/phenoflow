@@ -54,7 +54,9 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
       let file = row["param"].split(":")[0];
       let requiredCodes = row["param"].split(":")[1];
       let categories = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==file), req.body.name);
-      list.push({"logicType":"codelist", "language":"python", "categories":categories, "requiredCodes":requiredCodes});
+      // Prepare additional terms to differentiate categories, if as a part of a steplist the same categories are identified for different lists
+      let fileCategory = ImporterUtils.getFileCategory(req.body.csvs.filter((csv)=>csv.filename==file)[0].content, req.body.name);
+      list.push({"logicType":"codelist", "language":"python", "categories":categories, "requiredCodes":requiredCodes, "fileCategory":fileCategory});
     } else if(row["logicType"]=="codelistExclude") {
       let categoriesExclude = ImporterUtils.getCategories(req.body.csvs.filter((csv)=>csv.filename==row["param"]), ImporterUtils.getName(row["param"]));
       list.push({"logicType":"codelistExclude", "language":"python", "categoriesExclude":categoriesExclude});
@@ -308,11 +310,12 @@ async function getPreviousCurrentStep(workflowId, name, position, language, outp
 
 async function getWorkflowStepsFromList(workflowId, name, outputExtension, list, userName) {
   
-  let steps=[], position=2;
+  let steps=[], position=2, positionToFileCategory={};
 
   for(let item of list) {
     if(item.logicType=="codelist") {
       let codeSteps = await getCodeWorkflowSteps(workflowId, name, item.language, outputExtension, userName, item.categories, position, item.requiredCodes);
+      if(item.fileCategory) for(let currentPosition=position; currentPosition<position+codeSteps.length; currentPosition++) if(item.fileCategory.length) positionToFileCategory[currentPosition] = item.fileCategory;
       position+=codeSteps.length;
       steps = steps.concat(codeSteps);
     } else if(item.logicType=="keywordlist") {
@@ -397,7 +400,17 @@ async function getWorkflowStepsFromList(workflowId, name, outputExtension, list,
     }
   }
 
+  if(steps.filter(({stepName}, index)=>!steps.map(step=>step.stepName).includes(stepName, index+1)).length!=steps.length) steps = steps.map(function(step) {
+    let replacementStepName = Object.keys(positionToFileCategory).includes(step.position.toString())?step.stepName.split("---")[0]+"-"+positionToFileCategory[step.position]+"---"+step.stepName.split("---")[1]:step.stepName;
+    let replacementStepDoc = Object.keys(positionToFileCategory).includes(step.position.toString())?step.stepDoc.split(" - ")[0]+" "+positionToFileCategory[step.position]+" - "+step.stepDoc.split(" - ")[1]:step.stepDoc;
+    Object.assign(step, {"stepName":replacementStepName});
+    Object.assign(step, {"fileName":replacementStepName+".py"});
+    Object.assign(step, {"stepDoc":replacementStepDoc});
+    return step;
+  });
+
   steps.push(await getFileWrite(workflowId, position, name, outputExtension, "python"));
+
   return steps;
   
 }
