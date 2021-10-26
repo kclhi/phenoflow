@@ -83,7 +83,7 @@ class Workflow {
             await fs.unlink("uploads/"+workflowId+"/"+implementation.language+"/"+implementation.fileName);
           } 
         } catch(exception) {
-          console.log("Error deleting implementation:"+error);
+          console.error("Error deleting implementation:"+error);
         }
         try {
           await models.implementation.destroy({where:{stepId:step.id}});
