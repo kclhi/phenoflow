@@ -20,5 +20,5 @@ six==1.15.0
 sklearn==0.0
 starlette==0.14.2
 threadpoolctl==2.1.0
-urllib3==1.26.4
+urllib3==1.26.5
 uvicorn==0.13.4
