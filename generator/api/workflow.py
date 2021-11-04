@@ -1,5 +1,6 @@
 import cwlgen, requests, uuid, time
 from datetime import datetime
+import oyaml as yaml
 
 def createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, language="knime"):
 
@@ -43,6 +44,26 @@ def createPythonStep(id, type, doc, input_doc, extension, output_doc):
 def createJSStep(id, type, doc, input_doc, extension, output_doc):
 
     return createGenericStep(id, "kclhi/node:latest", "node", type, doc, input_doc, extension, output_doc);
+
+def createNestedWorkflowStep(workflow, position, nested_workflow):
+
+    file_binding = cwlgen.CommandLineBinding();
+
+    workflow_step = cwlgen.WorkflowStep(str(position), "-".join([step['name'] for step in nested_workflow['steps']]) + ".cwl");
+    nested_workflow_inputs = yaml.safe_load(nested_workflow['workflow'])['inputs'];
+    for workflow_input in [nested_workflow_input for nested_workflow_input in nested_workflow_inputs if 'inputModule' in nested_workflow_input]: 
+        workflow_step.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule" + str(position) + "-" + str(list(nested_workflow_inputs.keys()).index(workflow_input))));
+        input_module = cwlgen.InputParameter("inputModule" + str(position) + "-" + str(list(nested_workflow_inputs.keys()).index(workflow_input)+1), param_type='File', input_binding=file_binding, doc=nested_workflow_inputs[workflow_input]['doc']);
+        workflow.inputs.append(input_module);
+
+    # Assume nested workflow isn't first or last in workflow
+    workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=str(position - 1) + "/output"))
+
+    workflow_step.out.append(cwlgen.WorkflowStepOutput("output"));
+    workflow.steps = workflow.steps + [ workflow_step ];
+    
+    return workflow;
+
 
 def createWorkflowStep(workflow, position, id, type, language="KNIME", extension=None):
 
