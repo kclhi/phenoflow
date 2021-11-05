@@ -23,7 +23,7 @@ class Importer {
       if(row["logicType"]=="codelist"||row["logicType"]=="codelistExclude") {
         let file = row["param"].split(":")[0];
         csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
-      } else if(row["logicType"]=="codelistsTemporal"||row["logicType"]=="codelistExcludeInclude"||row["logicType"]=="codelistPreviousExclude"||row["logicType"]=="codelistPreviousInclude") {
+      } else if(row["logicType"]=="codelistsTemporal") {
         for(let file of [row["param"].split(":")[0], row["param"].split(":")[1]]) csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
       }
     }
@@ -53,9 +53,21 @@ class Importer {
       ]},
       {"filename":"listB_system.csv",
       "content": [
-        {"ICD-10 code": "456", "description": "TermF TermG"},
-        {"ICD-10 code": "567", "description": "TermF TermH"},
-        {"ICD-10 code": "678", "description": "TermI TermJ"}
+        {"SNOMED code": "456", "description": "TermF TermG"},
+        {"SNOMED code": "567", "description": "TermF TermH"},
+        {"SNOMED code": "678", "description": "TermI TermJ"}
+      ]},
+      {"filename":"listC_system.csv",
+      "content": [
+        {"SNOMED code": "456", "description": "TermK TermL"},
+        {"SNOMED code": "567", "description": "TermK TermL"},
+        {"SNOMED code": "678", "description": "TermK TermL"}
+      ]},
+      {"filename":"listD_system.csv",
+      "content": [
+        {"SNOMED code": "456", "description": "TermM TermN"},
+        {"SNOMED code": "567", "description": "TermM TermN"},
+        {"SNOMED code": "678", "description": "TermM TermN"}
       ]}
     ]
   }
@@ -86,37 +98,26 @@ describe("importer", () => {
       await Importer.importCodelists(Importer.getCSVs(), "Imported codelist", "Imported codelist", "martinchapman");
     }).timeout(0);
 
-    it("[IM3] Should be able to import a 'codelistExcludeInclude' steplist.", async() => {
+    it("[IM3] Should be able to import a steplist that references a branch.", async() => {
       let stepList = 
-        {"filename":"codelistExcludeInclude-steplist.csv",
+        {"filename":"codelist-steplist-branch.csv",
           "content": [
-            {"logicType": "codelistExcludeInclude", "param": "listA_system.csv:listB_system.csv"}
+            {"logicType": "codelist", "param": "listA_system.csv"},
+            {"logicType": "branch", "param": "branch-a.csv"},
+            {"logicType": "codelist", "param": "listB_system.csv"}
+          ],
+          "branches": [
+            {"filename":"branch-a.csv",
+            "content": [
+              {"logicType": "codelist", "param": "listC_system.csv"},
+              {"logicType": "codelist", "param": "listD_system.csv"},
+            ]}
           ]
         };
       await Importer.importSteplist(stepList, Importer.getCSVs(), ImporterUtils.getName(stepList.filename), ImporterUtils.hash(Importer.getCSVs().map(csv=>csv.content).join(""))+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
     }).timeout(0);
 
-    it("[IM4] Should be able to import a 'codelistPreviousExclude' steplist.", async() => {
-      let stepList = 
-        {"filename":"codelistPreviousExclude-steplist.csv",
-          "content": [
-            {"logicType": "codelistPreviousExclude", "param": "listA_system.csv:listB_system.csv"}
-          ]
-        };
-      await Importer.importSteplist(stepList, Importer.getCSVs(), ImporterUtils.getName(stepList.filename), ImporterUtils.hash(Importer.getCSVs().map(csv=>csv.content).join(""))+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
-    }).timeout(0);
-
-    it("[IM5] Should be able to import a 'codelistPreviousInclude' steplist.", async() => {
-      let stepList = 
-        {"filename":"codelistPreviousInclude-steplist.csv",
-          "content": [
-            {"logicType": "codelistPreviousInclude", "param": "listA_system.csv:listB_system.csv"}
-          ]
-        };
-      await Importer.importSteplist(stepList, Importer.getCSVs(), ImporterUtils.getName(stepList.filename), ImporterUtils.hash(Importer.getCSVs().map(csv=>csv.content).join(""))+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
-    }).timeout(0);
-
-    it("[IM6] Should be able to import a keyword list.", async() => {
+    it("[IM4] Should be able to import a keyword list.", async() => {
       let keywords = {
         filename: "keywords.csv",
         content: [
@@ -128,7 +129,7 @@ describe("importer", () => {
       await Importer.importKeywordList(keywords, "Imported keywords", "Imported keywords", "martinchapman");
     }).timeout(0);
 
-    it("[IM7] Create children for imported phenotypes.", async() => {
+    it("[IM5] Create children for imported phenotypes.", async() => {
       for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
     }).timeout(0);
   

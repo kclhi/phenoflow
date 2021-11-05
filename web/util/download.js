@@ -22,23 +22,27 @@ class Download {
 
   static async createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise) {
 
-    await Zip.add(archive, workflow, name + ".cwl");
-    await Zip.add(archive, workflowInputs, name + "-inputs.yml");
+    await Zip.add(archive, workflow, name+".cwl");
+    await Zip.add(archive, workflowInputs, name+"-inputs.yml");
     if(steps && steps[0] && steps[0].type.indexOf("external") < 0) await Zip.addFile(archive, "templates/", "replaceMe.csv");
 
-    for(const step in steps) {
-      await Zip.add(archive, steps[step].content, steps[step].name + ".cwl");
-      await Zip.addFile(archive, "uploads/" + id + "/", (implementationUnits[steps[step].name]?implementationUnits[steps[step].name]:implementationUnits) + "/" + steps[step].fileName);
+    for(let step of steps) {
+      await Zip.add(archive, step.content, step.name+".cwl");
+      try {
+        if(step.fileName) await Zip.addFile(archive, "uploads/"+step.workflowId+"/", (implementationUnits[step.name]?implementationUnits[step.name]:implementationUnits)+"/"+step.fileName);
+      } catch(addFileError) {
+        logger.error("Failed to add file to archive: "+addFileError);
+      }
     }
 
     if(visualise) {
       const timestamp="" + Math.floor(new Date() / 1000);
 			const GIT_SERVER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.HOST") + config.get("gitserver.PORT");
 			if(await Visualise.commitPushWorkflowRepo(id, timestamp, name, workflow, steps)) {
-  			let png = await Visualise.getWorkflowPNGFromViewer(id + timestamp, name);
+  			let png = await Visualise.getWorkflowPNGFromViewer(id+timestamp, name);
   			if (!png) {
   				let queueLocation = await Visualise.addWorkflowToViewer(id + timestamp, name);
-  				png = await Visualise.getWorkflowFromViewer(id + timestamp, name, queueLocation);
+  				png = await Visualise.getWorkflowFromViewer(id+timestamp, name, queueLocation);
           await Zip.add(archive, png, "abstract.png");
   			}
       } else {

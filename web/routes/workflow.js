@@ -157,17 +157,29 @@ router.post("/update/:id", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algori
 
 async function generateWorkflow(workflowId, language=null, implementationUnits=null, res) {
 
-  let workflow = await Workflow.getFullWorkflow(workflowId, language, implementationUnits);
+  let workflow;
+  try {
+    workflow = await Workflow.getFullWorkflow(workflowId, language, implementationUnits);
+    workflow.steps = await Promise.all(workflow.steps.map(async (workflowStep)=>!workflowStep.implementation.fileName.includes(".")?Object.assign(workflowStep, {"implementation":await Workflow.getFullWorkflow(workflowStep.implementation.fileName)}):workflowStep));
+  } catch(getFullWorkflowError) {
+    logger.error("Error getting full workflow: " + getFullWorkflowError);
+  }
   try {
     var generate = await got.post(config.get("generator.URL") + "/generate", {json:workflow.steps, responseType:"json"});
   } catch(error) {
     logger.debug("Error contacting generator: " + error + " " + JSON.stringify(workflow.steps));
     return false;
   }
+  implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().map((step) => ({[step.name]: step.implementation.language})));
+  generate.body.steps = generate.body.steps.concat(generate.body.steps.map(step=>step.steps).filter(step=>step!=undefined)).flat();
   if(generate.statusCode==200&&generate.body&&generate.body.workflow&&generate.body.workflowInputs&&generate.body.steps) {
-    if(!await Download.createPFZipResponse(res, workflowId, workflow.name, generate.body.workflow, generate.body.workflowInputs, language?language:implementationUnits, generate.body.steps, workflow.about)) {
-      logger.debug("Error generating workflow.");
-      return false;
+    try {
+      if(!await Download.createPFZipResponse(res, workflowId, workflow.name, generate.body.workflow, generate.body.workflowInputs, language?language:implementationUnits, generate.body.steps, workflow.about)) {
+        logger.debug("Error generating workflow.");
+        return false;
+      }
+    } catch(createPFZipResponseError) {
+      logger.error("Error creating ZIP: " + createPFZipResponseError);
     }
   } else {
     logger.debug("Error generating workflow.");

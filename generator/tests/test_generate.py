@@ -53,7 +53,28 @@ class BasicTests(unittest.TestCase):
         "implementation":{"id":1,"fileName":"hello-world-outer.py","language":"python","createdAt":"2020-04-02T10:11:47.891Z","updatedAt":"2020-04-02T10:11:47.891Z","stepId":1}
       },
        {"id":2,"name":"stepName","doc":"doc","type":"type","position":2,"createdAt":"2020-04-02T10:11:47.899Z","updatedAt":"2020-04-02T10:11:47.899Z","workflowId":1,
-        "implementation":json.loads(twosteps_response.content)
+        "implementation": {
+          "steps": [
+            {"id":1,"name":"stepName","doc":"doc","type":"type","position":1,"createdAt":"2020-04-02T10:11:47.805Z","updatedAt":"2020-04-02T10:11:47.805Z","workflowId":1,
+              "inputs":[
+                {"id":1,"doc":"doc","createdAt":"2020-04-02T10:11:47.829Z","updatedAt":"2020-04-02T10:11:47.829Z","stepId":1}
+              ],
+              "outputs":[
+                {"id":1,"doc":"doc","extension":"extension","createdAt":"2020-04-02T10:11:47.850Z","updatedAt":"2020-04-02T10:11:47.850Z","stepId":1}
+              ],
+              "implementation":{"id":1,"fileName":"hello-world.py","language":"python","createdAt":"2020-04-02T10:11:47.891Z","updatedAt":"2020-04-02T10:11:47.891Z","stepId":1}
+            },
+            {"id":2,"name":"stepName","doc":"doc","type":"type","position":2,"createdAt":"2020-04-02T10:11:47.899Z","updatedAt":"2020-04-02T10:11:47.899Z","workflowId":1,
+              "inputs":[
+                {"id":2,"doc":"doc","createdAt":"2020-04-02T10:11:47.908Z","updatedAt":"2020-04-02T10:11:47.908Z","stepId":2}
+              ],
+              "outputs":[
+                {"id":2,"doc":"doc","extension":"extension","createdAt":"2020-04-02T10:11:47.915Z","updatedAt":"2020-04-02T10:11:47.915Z","stepId":2}
+              ],
+              "implementation":{"id":2,"fileName":"hello-world.py","language":"python","createdAt":"2020-04-02T10:11:47.931Z","updatedAt":"2020-04-02T10:11:47.931Z","stepId":2}
+            }
+          ]
+        }
       },
       {"id":3,"name":"stepName","doc":"doc","type":"type","position":3,"createdAt":"2020-04-02T10:11:47.899Z","updatedAt":"2020-04-02T10:11:47.899Z","workflowId":1,
         "inputs":[
