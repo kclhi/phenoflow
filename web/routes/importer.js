@@ -90,8 +90,14 @@ class Importer {
         let nestedWorkflowName = ImporterUtils.summariseSteplist(nestedSteplist);
         let steps = (await Importer.getGroupedWorkflowStepsFromList(name, "csv", branchList, userName, 1)).flat();
         steps.pop();
-        let workflowId = await Importer.createWorkflow(name, nestedWorkflowName, userName);
-        await Importer.createSteps(workflowId, steps);
+        let id = ImporterUtils.steplistHash(nestedSteplist, csvs);
+        let existingWorkflowId = await Importer.existingWorkflow(name, id+" - "+nestedWorkflowName, userName);
+        let workflowId = existingWorkflowId||await Importer.createWorkflow(name, id+" - "+nestedWorkflowName, userName);
+        let existingWorkflowChanged = await Importer.importChangesExistingWorkflow(existingWorkflowId, steps);
+        if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) { 
+          if(existingWorkflowChanged) await WorkflowUtils.deleteStepsFromWorkflow(existingWorkflowId);
+          await Importer.createSteps(workflowId, steps);
+        }
         list.push({"logicType":"branch", "nestedWorkflowName":nestedWorkflowName, "nestedWorkflowId":workflowId});
       }
     }
@@ -279,7 +285,7 @@ class Importer {
     return false;
   }
 
-  static async existingWorkflow(name, about, userName, connectorStepName) {
+  static async existingWorkflow(name, about, userName, connectorStepName="") {
     try {
       let workflows = await models.workflow.findAll({where: {name:name, about:about, userName:sanitizeHtml(userName)}});
       if(workflows.length) {
@@ -287,7 +293,7 @@ class Importer {
         for(let workflow of workflows) {
           try {
             let steps = await models.step.findAll({where:{workflowId:workflow.id}});
-            if(steps.map((step)=>step.name).includes(connectorStepName)) {
+            if(!connectorStepName||steps.map((step)=>step.name).includes(connectorStepName)) {
               return workflow.id;
             }
           } catch(error) {

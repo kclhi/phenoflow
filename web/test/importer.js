@@ -32,12 +32,11 @@ class Importer {
     }
     return csvs;
   }
-
+  
   static async processAndImportSteplist(path, file, author) {
     let stepList = {"filename":file, "content":await ImporterUtils.openCSV(path, file)};
     let csvs = await this.getSteplistCSVs(stepList.content, path);
-    let uniqueCSVs = csvs.filter(({filename}, index)=>!csvs.map(csv=>csv.filename).includes(filename, index+1));
-    let id = await ImporterUtils.hashFiles(path, uniqueCSVs.map((csv)=>csv.filename));
+    let id = await ImporterUtils.steplistHash(stepList, csvs);
     let name = ImporterUtils.getName(stepList.filename);
     return await this.importSteplist(stepList, csvs, name, id+" - "+ImporterUtils.getName(stepList.filename), author);
   }
@@ -124,25 +123,27 @@ describe("importer", () => {
 
     it("[IM3] Should be able to import a steplist that references a branch.", async() => {
       let stepList = 
-        {"filename":"codelist-steplist-branch.csv",
+        {"filename":"codelist-steplist-branch-A.csv",
           "content": [
             {"logicType": "codelist", "param": "listA_system.csv:1"},
             {"logicType": "branch", "param": "branch-a.csv"},
             {"logicType": "codelist", "param": "listB_system.csv:1"}
           ]
         };
-      await Importer.importSteplist(stepList, Importer.getCSVs().concat(Importer.getBranchCSVs()), ImporterUtils.getName(stepList.filename), ImporterUtils.hash(Importer.getCSVs().map(csv=>csv.content).join(""))+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
+      await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
     }).timeout(0);
 
     it("[IM4] Should be able to import a branch only steplist.", async() => {
       let stepList = 
-        {"filename":"codelist-steplist-branch.csv",
+        {"filename":"codelist-steplist-branch-B.csv",
           "content": [
             {"logicType": "branch", "param": "branch-a.csv"},
             {"logicType": "branch", "param": "branch-b.csv"}
           ]
         };
-      await Importer.importSteplist(stepList, Importer.getCSVs().concat(Importer.getBranchCSVs()), ImporterUtils.getName(stepList.filename), ImporterUtils.hash(Importer.getCSVs().map(csv=>csv.content).join(""))+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+        let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
+      await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
     }).timeout(0);
 
     it("[IM5] Should be able to import a keyword list.", async() => {
