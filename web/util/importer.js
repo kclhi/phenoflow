@@ -227,7 +227,7 @@ class Importer {
     }
 
     if(Object.keys(categories).length == 0 || Object.keys(categories).indexOf("undefined - primary")>-1 || Object.keys(categories).indexOf("undefined - secondary")>-1) {
-      logger.error("No category for " + name + ": " + JSON.stringify(categories));
+      logger.error("No category for " + name + ": " + JSON.stringify(categories) + JSON.stringify(csvFiles));
       return false;
     }
 
@@ -274,6 +274,29 @@ class Importer {
     if(name[name.length-1].match(/[0-9]*/)>0) name.pop();
     name[0] = name[0].charAt(0).toUpperCase() + name[0].substring(1);
     return name.join(" ").replace(".csv","");
+  }
+
+  static conditionFromFilename(filename) {
+    return filename.substring(0, filename.lastIndexOf("_")).split("-").join(" ");
+  }
+
+  static summariseSteplist(steplist) {
+    let usedCodelists=[], includes=[], without=[];
+    steplist = steplist.content.reverse();
+    for(let step of steplist) {
+      let splitParams = step.param.split(":");
+      if(step.logicType=="codelistsTemporal") {
+        if(usedCodelists.includes(splitParams[0])||usedCodelists.includes(splitParams[1])) continue;
+        let phrase = "Diagnosis of "+this.conditionFromFilename(splitParams[1])+" "+splitParams[2]+" days to "+splitParams[3]+" days after "+this.conditionFromFilename(splitParams[0]);
+        splitParams[4]=="T"?includes.push(phrase):without.push(phrase);
+        usedCodelists = usedCodelists.concat([splitParams[0], splitParams[1]]);
+      } else if(step.logicType="codelist") {
+        if(usedCodelists.includes(splitParams[0])) continue;
+        let phrase = this.conditionFromFilename(splitParams[0]);
+        splitParams[2]=="T"?includes.push(phrase):without.push(phrase);
+      }
+    }
+    return includes[0]+(includes.length>1?" following "+includes.slice(1).join(" and "):"")+(without.length?", without "+without.join(" and "):"");
   }
 
 }

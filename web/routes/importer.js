@@ -41,7 +41,7 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
   if(!req.body.steplist||!req.body.name||!req.body.about||!req.body.userName) res.status(500).send("Missing params.");
   let list;
   try {
-    list= await Importer.getSteplist(req.body.steplist, req.body.csvs, req.body.name, req.body.userName);
+    list = await Importer.getSteplist(req.body.steplist, req.body.csvs, req.body.name, req.body.userName);
   } catch(getStepListError) {
     logger.error(getStepListError);
     return res.sendStatus(500);
@@ -65,7 +65,7 @@ class Importer {
       if(row["logicType"]=="codelist") {
         let file = row["param"].split(":")[0];
         let requiredCodes = row["param"].split(":")[1];
-        let categories = ImporterUtils.getCategories(csvs.filter((csv)=>csv.filename==file), name);
+        let categories = ImporterUtils.getCategories(csvs.filter((csv)=>csv.filename==file), ImporterUtils.clean(name.toLowerCase())==file.substring(0, file.lastIndexOf("_"))?name:file.substring(0, file.lastIndexOf("_")).split("_").join(" "));
         // Prepare additional terms to differentiate categories, if as a part of a steplist the same categories are identified for different lists
         let fileCategory = ImporterUtils.getFileCategory(csvs.filter((csv)=>csv.filename==file)[0].content, name);
         list.push({"logicType":"codelist", "language":"python", "categories":categories, "requiredCodes":requiredCodes, "fileCategory":fileCategory});
@@ -85,11 +85,12 @@ class Importer {
         let maxDays = row["param"].split(":")[3];
         list.push({"logicType":"codelistsTemporal", "language":"python", "nameBefore":ImporterUtils.getName(fileBefore), "codesBefore":codesBefore, "categoriesAfter":categoriesAfter, "minDays":minDays, "maxDays":maxDays});
       } else if(row["logicType"]=="branch") {
-        let branchList = await Importer.getSteplist(steplist.branches.filter(branch=>branch.filename==row["param"])[0], csvs, name, userName);
-        let steps = await Importer.getWorkflowStepsFromList(name+"-branch", "csv", branchList, userName, 1);
+        let nestedSteplist = csvs.filter(csv=>csv.filename==row["param"])[0];
+        let branchList = await Importer.getSteplist(nestedSteplist, csvs, name, userName);
+        let nestedWorkflowName = ImporterUtils.summariseSteplist(nestedSteplist);
+        let steps = (await Importer.getGroupedWorkflowStepsFromList(name, "csv", branchList, userName, 1)).flat();
         steps.pop();
-        let nestedWorkflowName = steps.map(step=>step.stepName).join("--");
-        let workflowId = await Importer.createWorkflow(nestedWorkflowName, name+"-branch", userName);
+        let workflowId = await Importer.createWorkflow(name, nestedWorkflowName, userName);
         await Importer.createSteps(workflowId, steps);
         list.push({"logicType":"branch", "nestedWorkflowName":nestedWorkflowName, "nestedWorkflowId":workflowId});
       }
@@ -301,6 +302,10 @@ class Importer {
   }
 
   static async getWorkflowStepsFromList(name, outputExtension, list, userName, position=2) {
+    return (await Importer.getGroupedWorkflowStepsFromList(name, outputExtension, list, userName, position)).flat();
+  }
+
+  static async getGroupedWorkflowStepsFromList(name, outputExtension, list, userName, position=2) {
     
     let steps=[], positionToFileCategory={};
 
@@ -309,11 +314,11 @@ class Importer {
         let codeSteps = await Importer.getCodeWorkflowSteps(name, item.language, outputExtension, userName, item.categories, position, item.requiredCodes);
         if(item.fileCategory) for(let currentPosition=position; currentPosition<position+codeSteps.length; currentPosition++) if(item.fileCategory.length) positionToFileCategory[currentPosition] = item.fileCategory;
         position+=codeSteps.length;
-        steps = steps.concat(codeSteps);
+        steps.push(codeSteps);
       } else if(item.logicType=="keywordlist") {
         let keywordSteps = await Importer.getKeywordWorkflowSteps(name, item.language, outputExtension, userName, item.categories, position);
         position+=keywordSteps.length;
-        steps = steps.concat(keywordSteps);
+        steps.push(keywordSteps);
       } else if(item.logicType=="age") {
         let stepShort = "age between " + item.ageLower + " and " + item.ageUpper + " yo";
         let stepName = ImporterUtils.clean(stepShort);
@@ -325,7 +330,7 @@ class Importer {
 
         try {
           let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/age.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "AGE_LOWER":item.ageLower, "AGE_UPPER":item.ageUpper, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
-          steps.push(step);
+          steps.push([step]);
         } catch(error) {
           error = "Error creating imported step (" + stepName + "): " + error;
           throw error;
@@ -334,7 +339,7 @@ class Importer {
       } else if(item.logicType=="codelistExclude") {
         let codeSteps = await Importer.getCodeWorkflowSteps(name, item.language, outputExtension, userName, item.categoriesExclude, position, item.requiredCodes, true);
         position+=codeSteps.length;
-        steps = steps.concat(codeSteps);
+        steps.push(codeSteps);
       } else if(item.logicType=="lastEncounter") {
         let stepShort = "last encounter not greater than " + item.maxYears + " years";
         let stepName = ImporterUtils.clean(stepShort);
@@ -346,13 +351,14 @@ class Importer {
 
         try {
           let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/last-encounter.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "MAX_YEARS":item.maxYears, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
-          steps.push(step);
+          steps.push([step]);
         } catch(error) {
           error = "Error creating imported step (" + stepName + "): " + error;
           throw error;
         }
         position++;
       } else if(item.logicType=="codelistsTemporal") {
+        let temporalSteps = [];
         // Compare each 'after' category to the single 'before' code list in 'days after' relationship 
         for(let categoryAfter in item.categoriesAfter) {
           let stepShort = ImporterUtils.clean(categoryAfter.toLowerCase())+" "+item.minDays+" to "+item.maxDays+" days after "+ImporterUtils.clean(item.nameBefore.toLowerCase());
@@ -366,7 +372,7 @@ class Importer {
 
           try {
             let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelists-temporal.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "LIST_BEFORE":item.codesBefore, "LIST_AFTER":"\""+item.categoriesAfter[categoryAfter].join('","')+"\"", "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":stepShort, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
-            steps.push(step);
+            temporalSteps.push(step);
           } catch(error) {
             error = "Error creating imported step (" + stepName + "): " + error;
             throw error;
@@ -374,17 +380,19 @@ class Importer {
           position++;
           
         }
+        steps.push(temporalSteps);
       } else if(item.logicType=="branch") {
-        let stepShort = ImporterUtils.clean(item.nestedWorkflowName);
+        let stepShort = ImporterUtils.clean(item.nestedWorkflowName).toLowerCase();
         let stepName = stepShort;
-        let stepDoc = stepName;
+        let stepDoc = item.nestedWorkflowName.split("-").join(" ");
+        stepDoc = stepDoc.charAt(0).toUpperCase()+stepDoc.substring(1);
         let stepType = "logic";
         let inputDoc = "Potential cases of "+name;
         let outputDoc = "Patients with logic indicating "+name+" related events in electronic health record.";
 
         try {
           let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, item.nestedWorkflowId, "", "", {});
-          steps.push(step);
+          steps.push([step]);
         } catch(error) {
           error = "Error creating imported step (" + stepName + "): " + error;
           throw error;
@@ -394,7 +402,7 @@ class Importer {
       }
     }
 
-    if(steps.filter(({stepName}, index)=>!steps.map(step=>step.stepName).includes(stepName, index+1)).length!=steps.length) steps = steps.map(function(step) {
+    if(steps.flat().filter(({stepName}, index)=>!steps.flat().map(step=>step.stepName).includes(stepName, index+1)).length!=steps.flat().length) steps = steps.flat().map(function(step) {
       let replacementStepName = Object.keys(positionToFileCategory).includes(step.position.toString())?step.stepName.split("---")[0]+"-"+positionToFileCategory[step.position]+"---"+step.stepName.split("---")[1]:step.stepName;
       let replacementStepDoc = Object.keys(positionToFileCategory).includes(step.position.toString())?step.stepDoc.split(" - ")[0]+" "+positionToFileCategory[step.position]+" - "+step.stepDoc.split(" - ")[1]:step.stepDoc;
       Object.assign(step, {"stepName":replacementStepName});
@@ -403,7 +411,7 @@ class Importer {
       return step;
     });
 
-    steps.push(await Importer.getFileWrite(position, name, outputExtension, "python"));
+    steps.push([await Importer.getFileWrite(position, name, outputExtension, "python")]);
 
     return steps;
     

@@ -7,21 +7,16 @@ const Zip = require("./zip");
 class Download {
 
   static async createPFZipFile(id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise=false) {
-
     let archive = await Zip.createFile(name);
     return await Download.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise)
-
   }
 
   static async createPFZipResponse(res, id, name, workflow, workflowInputs, implementationUnits, steps, about) {
-
     let archive = await Zip.createResponse(name, res);
     return await Download.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, true)
-
   }
 
   static async createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise) {
-
     await Zip.add(archive, workflow, name+".cwl");
     await Zip.add(archive, workflowInputs, name+"-inputs.yml");
     if(steps && steps[0] && steps[0].type.indexOf("external") < 0) await Zip.addFile(archive, "templates/", "replaceMe.csv");
@@ -60,7 +55,6 @@ class Download {
     await Zip.add(archive, license, "LICENSE.md");
     await Zip.output(archive);
     return true;
-
   }
 
 }

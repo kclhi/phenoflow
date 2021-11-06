@@ -178,7 +178,7 @@ class Workflow {
             if(!candidateChildStepInput) throw new Error(ERROR_PREFIX + "Error getting candidate child step input.");
             let candidateChildStepOutput=await models.output.findOne({where:{stepId:candidateChildStep.id}});
             if(!candidateChildStepOutput) throw new Error(ERROR_PREFIX + "Error getting candidate child step output.");
-            let workflowStepInput = await models.input.findOne({where:{stepId:workflowStep[0].id}});
+            let workflowStepInput = await models.input.findAll({where:{stepId:workflowStep[0].id}})[0];
             if(!workflowStepInput) throw new Error(ERROR_PREFIX + "Error getting workflow step input.");
             let workflowStepOutput = await models.output.findOne({where:{stepId:workflowStep[0].id}});
             if(!workflowStepOutput) throw new Error(ERROR_PREFIX + "Error getting workflow step output.");

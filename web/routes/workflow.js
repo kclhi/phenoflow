@@ -172,6 +172,8 @@ async function generateWorkflow(workflowId, language=null, implementationUnits=n
   }
   implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().map((step) => ({[step.name]: step.implementation.language})));
   generate.body.steps = generate.body.steps.concat(generate.body.steps.map(step=>step.steps).filter(step=>step!=undefined)).flat();
+  let stepNames = generate.body.steps.map(step=>step.name);
+  generate.body.steps = generate.body.steps.filter(({name}, index)=>!stepNames.includes(name, index+1))
   if(generate.statusCode==200&&generate.body&&generate.body.workflow&&generate.body.workflowInputs&&generate.body.steps) {
     try {
       if(!await Download.createPFZipResponse(res, workflowId, workflow.name, generate.body.workflow, generate.body.workflowInputs, language?language:implementationUnits, generate.body.steps, workflow.about)) {
