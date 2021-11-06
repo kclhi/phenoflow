@@ -88,20 +88,39 @@ class Importer {
         let nestedSteplist = csvs.filter(csv=>csv.filename==row["param"])[0];
         let branchList = await Importer.getSteplist(nestedSteplist, csvs, name, userName);
         let nestedWorkflowName = ImporterUtils.summariseSteplist(nestedSteplist);
-        let steps = (await Importer.getGroupedWorkflowStepsFromList(name, "csv", branchList, userName, 1)).flat();
-        steps.pop();
         let id = ImporterUtils.steplistHash(nestedSteplist, csvs);
-        let existingWorkflowId = await Importer.existingWorkflow(name, id+" - "+nestedWorkflowName, userName);
-        let workflowId = existingWorkflowId||await Importer.createWorkflow(name, id+" - "+nestedWorkflowName, userName);
-        let existingWorkflowChanged = await Importer.importChangesExistingWorkflow(existingWorkflowId, steps);
-        if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) { 
-          if(existingWorkflowChanged) await WorkflowUtils.deleteStepsFromWorkflow(existingWorkflowId);
-          await Importer.createSteps(workflowId, steps);
-        }
+        let workflowId = await Importer.importNestedPhenotype(name, nestedWorkflowName, id+" - "+nestedWorkflowName, userName, branchList, nestedSteplist.content.map(item=>item.param.split(":")[item.param.split(":").length-1]));
         list.push({"logicType":"branch", "nestedWorkflowName":nestedWorkflowName, "nestedWorkflowId":workflowId});
       }
     }
     return list;
+  }
+
+  static async importNestedPhenotype(name, parentStepName, about, userName, list, truthValues) {
+    const OUTPUT_EXTENSION = "csv";
+    let steps = await Importer.getGroupedWorkflowStepsFromList(name, OUTPUT_EXTENSION, list, userName, 1);
+    steps.pop();
+    if(truthValues.length!=steps.length) throw "Not enough truth values to constructed nested workflow.";
+    steps.push(await this.getOutputCasesConditional(steps.flat().length+1, name, OUTPUT_EXTENSION, "python", parentStepName, steps, truthValues));
+    steps = steps.flat();
+    let existingWorkflowId = await Importer.existingWorkflow(name, about, userName);
+    let workflowId = existingWorkflowId||await Importer.createWorkflow(name, about, userName);
+    let existingWorkflowChanged = await Importer.importChangesExistingWorkflow(existingWorkflowId, steps);
+    if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) { 
+      if(existingWorkflowChanged) await WorkflowUtils.deleteStepsFromWorkflow(existingWorkflowId);
+      await Importer.createSteps(workflowId, steps);
+    }
+    return workflowId;
+  }
+
+  static async getOutputCasesConditional(position, name, outputExtension, language, parentStepName, steps, truthValues) {
+    let conditionGroups = truthValues.reduce((acc, truth, index)=>({...acc, [truth]:[...(acc[truth]||[]), steps[index].map(step=>step.stepName+"-identified")]}), {});
+    try {
+      return await Importer.getStep("output-cases-conditional", "Output cases subject to conditions", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, "output-cases-conditional.py", language, "templates/output-cases-conditional.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "NESTED":ImporterUtils.clean(parentStepName.toLowerCase()), "CASES":JSON.stringify(conditionGroups.T), "UNKS":JSON.stringify(conditionGroups.F)});
+    } catch(error) {
+      error = "Error creating output conditional for nested step from import: " + error;
+      throw error;
+    }
   }
 
   static async importLists(csvs, name, about, author, valueFunction, descriptionFunction, implementation) {
@@ -377,7 +396,7 @@ class Importer {
           let fileName = ImporterUtils.clean(stepShort) + ".py";
 
           try {
-            let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelists-temporal.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "LIST_BEFORE":item.codesBefore, "LIST_AFTER":"\""+item.categoriesAfter[categoryAfter].join('","')+"\"", "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":stepShort, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+            let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelists-temporal.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "LIST_BEFORE":item.codesBefore, "LIST_AFTER":"\""+item.categoriesAfter[categoryAfter].join('","')+"\"", "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":stepName, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
             temporalSteps.push(step);
           } catch(error) {
             error = "Error creating imported step (" + stepName + "): " + error;

@@ -237,9 +237,7 @@ class Importer {
   static templateReplace(source, substitutions) {
     for(let substitution in substitutions) {
       if(!source.includes("["+substitution+"]")) console.warn("Attempted substitition of non-existent variable in template: " + substitution);
-      if(substitution=="EXCLUSION_IDENTIFIED") source = substitutions[substitution]=="exclusion"?source.replace(new RegExp("\\\[FALSE_UNK\\\]", "g"), "FALSE").replace(new RegExp("\\\[TRUE_CASE\\\]", "g"), "TRUE"):source.replace(new RegExp("\\\[FALSE_UNK\\\]", "g"), "UNK").replace(new RegExp("\\\[TRUE_CASE\\\]", "g"), "CASE");
       source = source.replace(new RegExp("\\\["+substitution+"\\\]", "g"), substitutions[substitution]);
-      
     }
     return source;
   }
@@ -306,6 +304,7 @@ class Importer {
         splitParams[2]=="T"?includes.push(phrase):without.push(phrase);
       }
     }
+    steplist = steplist.reverse();
     return includes[0]+(includes.length>1?" following "+includes.slice(1).join(" and "):"")+(without.length?", without "+without.join(" and "):"");
   }
 

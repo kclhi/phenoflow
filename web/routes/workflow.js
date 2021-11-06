@@ -170,7 +170,7 @@ async function generateWorkflow(workflowId, language=null, implementationUnits=n
     logger.debug("Error contacting generator: " + error + " " + JSON.stringify(workflow.steps));
     return false;
   }
-  implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().map((step) => ({[step.name]: step.implementation.language})));
+  implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().map((step)=>({[step.name]: step.implementation.language})));
   generate.body.steps = generate.body.steps.concat(generate.body.steps.map(step=>step.steps).filter(step=>step!=undefined)).flat();
   let stepNames = generate.body.steps.map(step=>step.name);
   generate.body.steps = generate.body.steps.filter(({name}, index)=>!stepNames.includes(name, index+1))
