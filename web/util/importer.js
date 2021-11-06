@@ -260,13 +260,23 @@ class Importer {
   }
 
   static hash(filesContent) {
-    return require('crypto').createHash('sha1').update(filesContent).digest('base64').replace(/[^A-Za-z0-9]/g, "");
+    return require('crypto').createHash('sha1').update(JSON.stringify(filesContent)).digest('base64').replace(/[^A-Za-z0-9]/g, "");
   }
 
-  static async hashFiles(path, files) {
-    let filesContent="";
-    for(let file of files) filesContent+=await fs.readFile(path+file);
-    return this.hash(filesContent);
+  static steplistHash(stepList, allCSVs) {
+    let csvs=[];
+    for(let row of stepList.content) {
+      if(row["logicType"]=="codelist"||row["logicType"]=="codelistExclude") {
+        let file = row["param"].split(":")[0];
+        csvs.push(allCSVs.filter(csv=>csv.filename==file)[0]);
+      } else if(row["logicType"]=="codelistsTemporal") {
+        for(let file of [row["param"].split(":")[0], row["param"].split(":")[1]]) csvs.push(allCSVs.filter(csv=>csv.filename==file)[0]);
+      } else if(row["logicType"]=="branch") {
+        csvs.push({filename:row["param"], content:this.steplistHash(allCSVs.filter(csv=>csv.filename==row["param"])[0], allCSVs)});
+      }
+    }
+    let uniqueCSVs = csvs.filter(({filename}, index)=>!csvs.map(csv=>csv.filename).includes(filename, index+1));
+    return this.hash(uniqueCSVs.map(csv=>csv.content));
   }
 
   static getName(file) {

@@ -9,7 +9,7 @@ const ImporterUtils = require("../util/importer");
 async function importPhekbCodelists(path, files) {
   let csvs=[];
   for(let file of files) csvs.push({"filename":file, "content":await ImporterUtils.openCSV(path, file)});
-  let id = await ImporterUtils.hashFiles(path, files);
+  let id = await ImporterUtils.hash(csvs.map(csv=>csv.content));
   return await Importer.importCodelists(csvs, ImporterUtils.getName(files[0]), id+" - "+ImporterUtils.getName(files[0]), "phekb");
 }
 
