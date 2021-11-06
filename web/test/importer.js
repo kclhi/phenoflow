@@ -16,17 +16,26 @@ class Importer {
     return res;
   }
   
-  static async processAndImportSteplist(path, file, author) {
-    let stepList = {"filename":file, "content":await ImporterUtils.openCSV(path, file)};
+  static async getSteplistCSVs(stepList, path) {
     let csvs = [];
-    for(let row of stepList.content) {
+    for(let row of stepList) {
       if(row["logicType"]=="codelist"||row["logicType"]=="codelistExclude") {
         let file = row["param"].split(":")[0];
         csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
       } else if(row["logicType"]=="codelistsTemporal") {
         for(let file of [row["param"].split(":")[0], row["param"].split(":")[1]]) csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
+      } else if(row["logicType"]=="branch") {
+        let nestedSteplist = await ImporterUtils.openCSV(path, row["param"]);
+        csvs.push({"filename":row["param"], "content":nestedSteplist});
+        csvs = csvs.concat(await this.getSteplistCSVs(nestedSteplist, path));
       }
     }
+    return csvs;
+  }
+
+  static async processAndImportSteplist(path, file, author) {
+    let stepList = {"filename":file, "content":await ImporterUtils.openCSV(path, file)};
+    let csvs = await this.getSteplistCSVs(stepList.content, path);
     let uniqueCSVs = csvs.filter(({filename}, index)=>!csvs.map(csv=>csv.filename).includes(filename, index+1));
     let id = await ImporterUtils.hashFiles(path, uniqueCSVs.map((csv)=>csv.filename));
     let name = ImporterUtils.getName(stepList.filename);
@@ -72,6 +81,21 @@ class Importer {
     ]
   }
 
+  static getBranchCSVs() {
+    return [
+      {"filename":"branch-a.csv",
+      "content": [
+        {"logicType": "codelist", "param": "listA_system.csv:1:T"},
+        {"logicType": "codelist", "param": "listB_system.csv:1:T"},
+      ]},
+      {"filename":"branch-b.csv",
+      "content": [
+        {"logicType": "codelist", "param": "listC_system.csv:1:F"},
+        {"logicType": "codelist", "param": "listD_system.csv:1:T"},
+      ]}
+    ];
+  }
+
 }
 
 describe("importer", () => {
@@ -102,22 +126,26 @@ describe("importer", () => {
       let stepList = 
         {"filename":"codelist-steplist-branch.csv",
           "content": [
-            {"logicType": "codelist", "param": "listA_system.csv"},
+            {"logicType": "codelist", "param": "listA_system.csv:1"},
             {"logicType": "branch", "param": "branch-a.csv"},
-            {"logicType": "codelist", "param": "listB_system.csv"}
-          ],
-          "branches": [
-            {"filename":"branch-a.csv",
-            "content": [
-              {"logicType": "codelist", "param": "listC_system.csv"},
-              {"logicType": "codelist", "param": "listD_system.csv"},
-            ]}
+            {"logicType": "codelist", "param": "listB_system.csv:1"}
           ]
         };
-      await Importer.importSteplist(stepList, Importer.getCSVs(), ImporterUtils.getName(stepList.filename), ImporterUtils.hash(Importer.getCSVs().map(csv=>csv.content).join(""))+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      await Importer.importSteplist(stepList, Importer.getCSVs().concat(Importer.getBranchCSVs()), ImporterUtils.getName(stepList.filename), ImporterUtils.hash(Importer.getCSVs().map(csv=>csv.content).join(""))+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
     }).timeout(0);
 
-    it("[IM4] Should be able to import a keyword list.", async() => {
+    it("[IM4] Should be able to import a branch only steplist.", async() => {
+      let stepList = 
+        {"filename":"codelist-steplist-branch.csv",
+          "content": [
+            {"logicType": "branch", "param": "branch-a.csv"},
+            {"logicType": "branch", "param": "branch-b.csv"}
+          ]
+        };
+      await Importer.importSteplist(stepList, Importer.getCSVs().concat(Importer.getBranchCSVs()), ImporterUtils.getName(stepList.filename), ImporterUtils.hash(Importer.getCSVs().map(csv=>csv.content).join(""))+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+    }).timeout(0);
+
+    it("[IM5] Should be able to import a keyword list.", async() => {
       let keywords = {
         filename: "keywords.csv",
         content: [
@@ -129,7 +157,7 @@ describe("importer", () => {
       await Importer.importKeywordList(keywords, "Imported keywords", "Imported keywords", "martinchapman");
     }).timeout(0);
 
-    it("[IM5] Create children for imported phenotypes.", async() => {
+    it("[IM6] Create children for imported phenotypes.", async() => {
       for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
     }).timeout(0);
   
