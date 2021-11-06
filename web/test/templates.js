@@ -269,74 +269,25 @@ describe("templates", () => {
 
     }).timeout(0);
 
-    it("[TE20] Should be able to execute codelist exclude and include.", async() => {
-      
+    it("[TE20] Should be able to execute output cases conditional.", async() => {
       const TIMESTAMP = Date.now();
-      let source = await fs.readFile("templates/codelist-previous-current.py", "utf-8");
-      source = ImporterUtils.templateReplace(source, {"AUTHOR":"martinchapman", "YEAR":"2021", "LIST_PREVIOUS":"'X01'", "LIST_CURRENT":"'Y01'", "PREVIOUS_PRESENT":"False", "CURRENT_PRESENT":"True", "EXCLUSION_IDENTIFIED":"identified", "PHENOTYPE":"/tmp/phenotype-"+TIMESTAMP, "CATEGORY":"category"});
-      const sampleDataFile = "sample-data-codes-include-exclude-"+TIMESTAMP;
-      await writeGenericSampleData(sampleDataFile);
-      let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
-      if(results) console.log(results);
-    
-      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
-      expect(csv[0]['category-identified']).to.equal('UNK');
-      expect(csv[1]['category-identified']).to.equal('CASE');
-
-    }).timeout(0);
-
-    it("[TE21] Should be able to execute codelist exclude.", async() => {
-      
-      const TIMESTAMP = Date.now();
-      let source = await fs.readFile("templates/codelist-exclude.py", "utf-8");
-      source = source.replaceAll("[AUTHOR]", "martinchapman");
-      source = source.replaceAll("[YEAR]", "2021");
-      source = source.replaceAll("[LIST_EXCLUDE]", "'E01'");
+      let source = await fs.readFile("templates/output-cases-conditional.py", "utf-8");
       source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
-      source = source.replaceAll("[CATEGORY]", "category");
-    
-      const sampleDataFile = "sample-data-codes-exclude-"+TIMESTAMP;
-      await writeGenericSampleData(sampleDataFile);
-      let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
+      source = source.replaceAll("[CASES]", "['codesA-categoryA-identified','codesA-categoryB-identified'],['codesC-categoryA-identified']");
+      source = source.replaceAll("[UNKS]", "['codesB-categoryA-identified']");
+      source = source.replaceAll("[NESTED]", "nested-phenotype-name");
+
+      const SAMPLE_DATA_FILE = "sample-data-output-conditional-"+TIMESTAMP;
+      await fs.writeFile("/tmp/"+SAMPLE_DATA_FILE, 'patient-id,dob,codes,keywords,codesA-categoryA-identified,codesA-categoryB-identified,codesB-categoryA-identified,codesC-categoryA-identified\n');
+      await fs.appendFile("/tmp/"+SAMPLE_DATA_FILE, '1,1979-01-01,"X01,X02","keyword1,keyword2",UNK,CASE,UNK,CASE\n');
+      await fs.appendFile("/tmp/"+SAMPLE_DATA_FILE, '2,1979-01-01,"Z01,Z02","keyword1,keyword2",UNK,UNK,CASE,CASE\n');
+      let results = await runPythonCode(source, ["/tmp/"+SAMPLE_DATA_FILE]); 
       if(results) console.log(results);
-    
-      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
-      expect(csv[0]['category-exclusion']).to.equal('TRUE');
-      expect(csv[1]['category-exclusion']).to.equal('FALSE');
-
-    }).timeout(0);
-
-    it("[TE22] Should be able to execute codelist exclude with previous.", async() => {
       
-      const TIMESTAMP = Date.now();
-      let source = await fs.readFile("templates/codelist-previous-current.py", "utf-8");
-      source = ImporterUtils.templateReplace(source, {"AUTHOR":"martinchapman", "YEAR":"2021", "LIST_PREVIOUS":"'X01'", "LIST_CURRENT":"'E01'", "PREVIOUS_PRESENT":"True", "CURRENT_PRESENT":"True", "EXCLUSION_IDENTIFIED":"exclusion", "PHENOTYPE":"/tmp/phenotype-"+TIMESTAMP, "CATEGORY":"category"});
-      const sampleDataFile = "sample-data-codes-previous-exclude-"+TIMESTAMP;
-      await writeGenericSampleData(sampleDataFile);
-      let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
-      if(results) console.log(results);
-    
-      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
-      expect(csv[0]['category-exclusion']).to.equal('TRUE');
-      expect(csv[1]['category-exclusion']).to.equal('FALSE');
-
-    }).timeout(0);
-
-    it("[TE23] Should be able to execute codelist include with previous.", async() => {
-      
-      const TIMESTAMP = Date.now();
-      let source = await fs.readFile("templates/codelist-previous-current.py", "utf-8");
-      source = ImporterUtils.templateReplace(source, {"AUTHOR":"martinchapman", "YEAR":"2021", "LIST_PREVIOUS":"'X01'", "LIST_CURRENT":"'E01'", "PREVIOUS_PRESENT":"True", "CURRENT_PRESENT":"True", "EXCLUSION_IDENTIFIED":"identified", "PHENOTYPE":"/tmp/phenotype-"+TIMESTAMP, "CATEGORY":"category"});
-      const sampleDataFile = "sample-data-codes-previous-include-"+TIMESTAMP;
-      await writeGenericSampleData(sampleDataFile);
-      let results = await runPythonCode(source, "/tmp/"+sampleDataFile);
-      if(results) console.log(results);
-    
-      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
-      expect(csv[0]['category-identified']).to.equal('CASE');
-      expect(csv[1]['category-identified']).to.equal('UNK');
-
-    }).timeout(0);
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-cases.csv"));
+      expect(csv[0]['nested-phenotype-name-identified']).to.equal('CASE');
+      expect(csv[1]['nested-phenotype-name-identified']).to.equal('UNK');
+    });
 
   });
 
