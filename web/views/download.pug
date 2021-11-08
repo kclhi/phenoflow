@@ -23,14 +23,19 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
       div(class="col-1")
       div(class="box col")
         div(style="padding-top: 20px;")
-          | Select implementation:
-          div
-            select(class="implementation", placeholder="about")
-              each implementation in implementations
-                option(value=implementation.language, selected=true) #{implementation.language}
-          div
-            a(onclick="showImplementation(" + workflow.id + "," + position + ")" class="a-button")
-              | VIEW
+          if(implementations[0].language)
+            | Select implementation:
+            div
+              select(class="implementation", placeholder="about", onchange="updateImplementationUnits()")
+                each implementation in implementations
+                  option(value=implementation.language) #{implementation.language}
+            div
+              a(onclick="showImplementation(" + workflow.id + "," + position + ")" class="a-button")
+                | VIEW
+          else
+            div(class="d-flex align-items-center justify-content-center")
+              a(onclick="showSub(" + implementations[0].fileName + ")" class="a-button")
+                | VIEW BRANCH
     if children
       div(class="row")
         | Switch to:&nbsp;
@@ -51,15 +56,41 @@ mixin createStep(position, name, doc, type, inputDoc, outputDoc, outputExtension
 
 block pageJS
   script.
+    ready(function(event) {
+      let params = getParams();
+      if(!params||!params.parent) {
+        localStorage.removeItem("downloadLink");
+        localStorage.removeItem(getImplementationUnitsStorageId());
+      }
+    });
+    function getDownloadLink() {
+      let params = getParams();
+      return (params&&params.parent?"/phenoflow/phenotype/generate/"+params.parent:"/phenoflow/phenotype/generate/#{workflow.id}");
+    }
+    function getParams() {
+      const urlSearchParams = new URLSearchParams(window.location.search);
+      return Object.fromEntries(urlSearchParams.entries());
+    }
+    function getImplementationUnitsStorageId() {
+      let params = getParams();
+      return (params&&params.parent?params.parent:#{workflow.id})+"implementationUnits";
+    }
+    function updateImplementationUnits() {
+      let implementationUnits = {};
+      for (let step of document.getElementsByClassName("step")) {
+        if(step.getElementsByClassName("implementation")&&step.getElementsByClassName("implementation")[0]&&step.getElementsByClassName("implementation")[0].value) implementationUnits[step.getElementsByClassName("name")[0].innerText.replace(/\'/g, "")] = step.getElementsByClassName("implementation")[0].value;
+      }
+      let implementationUnitsStorageId = getImplementationUnitsStorageId();
+      localStorage.setItem(implementationUnitsStorageId, JSON.stringify(Object.assign({}, localStorage.getItem(implementationUnitsStorageId)?JSON.parse(localStorage.getItem(implementationUnitsStorageId)):{}, implementationUnits)));
+    }
     function downloadWorkflow() {
       document.getElementById("download").style.display = "none";
       document.getElementById("downloadSpinner").removeAttribute("style")
-      let implementationUnits = {};
-      for (let step of document.getElementsByClassName("step")) {
-        implementationUnits[step.getElementsByClassName("name")[0].innerText.replace(/\'/g, "")] = step.getElementsByClassName("implementation")[0].value;
-      }
+      updateImplementationUnits();
+      let implementationUnits = JSON.parse(localStorage.getItem(getImplementationUnitsStorageId()));
+      console.log(localStorage.getItem(getImplementationUnitsStorageId()));
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/phenoflow/phenotype/generate/#{workflow.id}", true);
+      xhr.open("POST", getDownloadLink(), true);
       xhr.setRequestHeader("Content-Type", "application/json");
       xhr.responseType = "blob";
       xhr.onload = function(event) {
@@ -79,14 +110,18 @@ block pageJS
     }
     function showImplementation(workflowId, position) {
       const language = document.getElementById("step" + position).getElementsByClassName("implementation")[0].value;
-      window.open("/phenoflow/implementation/" + workflowId + "/" + position + "/" + language);
+      window.open("/phenoflow/implementation/"+workflowId+"/"+position+"/"+language);
+    }
+    function showSub(workflowId) {
+      updateImplementationUnits();
+      window.open("/phenoflow/phenotype/download/"+workflowId+"?parent=#{workflow.id}");
     }
 
 block header
   div
     span #{workflow&&workflow.about?workflow.about:""}&nbsp;
     a(id="download" class="a-button" onclick="downloadWorkflow(); return false;")
-      | DOWNLOAD
+      | #{download}
     span(id="downloadSpinner" class="spinner-border text-info" role="status" style="display:none;")
       span(class="sr-only") Loading...
 

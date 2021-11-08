@@ -116,7 +116,7 @@ router.get("/download/:workflowId", async function(req, res, next) {
     if(!workflow) res.sendStatus(500);
     let user = await models.user.findOne({where:{name: workflow.userName}});
     if(!credentialsCheck(user, req, res)) return;
-    res.render("download", {title:"'" + workflow.name + "' phenotype", workflow:workflow, userName:user.name, verified:user.verified, homepage:user.homepage});
+    res.render("download", {title:"'" + workflow.name + "' phenotype"+(req.query.parent?" branch":""), workflow:workflow, userName:user.name, verified:user.verified, homepage:user.homepage, download:"DOWNLOAD "+(req.query.parent?"FULL DEFINITION":"")});
   } catch(error) {
     logger.error("Get workflow error: " + error);
     res.sendStatus(500);
@@ -160,7 +160,7 @@ async function generateWorkflow(workflowId, language=null, implementationUnits=n
   let workflow;
   try {
     workflow = await Workflow.getFullWorkflow(workflowId, language, implementationUnits);
-    workflow.steps = await Promise.all(workflow.steps.map(async (workflowStep)=>!workflowStep.implementation.fileName.includes(".")?Object.assign(workflowStep, {"implementation":await Workflow.getFullWorkflow(workflowStep.implementation.fileName)}):workflowStep));
+    workflow.steps = await Promise.all(workflow.steps.map(async (workflowStep)=>!workflowStep.implementation.fileName.includes(".")?Object.assign(workflowStep, {"implementation":await Workflow.getFullWorkflow(workflowStep.implementation.fileName, language, implementationUnits)}):workflowStep));
   } catch(getFullWorkflowError) {
     logger.error("Error getting full workflow: " + getFullWorkflowError);
   }
@@ -170,7 +170,7 @@ async function generateWorkflow(workflowId, language=null, implementationUnits=n
     logger.debug("Error contacting generator: " + error + " " + JSON.stringify(workflow.steps));
     return false;
   }
-  implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().map((step)=>({[step.name]: step.implementation.language})));
+  implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().filter(step=>!Object.keys(implementationUnits).includes(step.name)).map((step)=>({[step.name]: step.implementation.language})));
   generate.body.steps = generate.body.steps.concat(generate.body.steps.map(step=>step.steps).filter(step=>step!=undefined)).flat();
   let stepNames = generate.body.steps.map(step=>step.name);
   generate.body.steps = generate.body.steps.filter(({name}, index)=>!stepNames.includes(name, index+1))
