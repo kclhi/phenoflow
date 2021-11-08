@@ -38,10 +38,11 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
 
 router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
-  if(!req.body.steplist||!req.body.name||!req.body.about||!req.body.userName) res.status(500).send("Missing params.");
+  if(!req.body.steplist||!req.body.name||!req.body.about||!req.body.userName||!req.body.csvs) res.status(500).send("Missing params.");
   let list;
+  let uniqueCSVs = req.body.csvs.filter(({filename}, index)=>!req.body.csvs.map(csv=>csv.filename).includes(filename, index+1));
   try {
-    list = await Importer.getSteplist(req.body.steplist, req.body.csvs, req.body.name, req.body.userName);
+    list = await Importer.getSteplist(req.body.steplist, uniqueCSVs, req.body.name, req.body.userName);
   } catch(getStepListError) {
     logger.error(getStepListError);
     return res.sendStatus(500);
@@ -65,12 +66,12 @@ class Importer {
       if(row["logicType"]=="codelist") {
         let file = row["param"].split(":")[0];
         let requiredCodes = row["param"].split(":")[1];
-        let categories = ImporterUtils.getCategories(csvs.filter((csv)=>csv.filename==file), ImporterUtils.clean(name.toLowerCase())==file.substring(0, file.lastIndexOf("_"))?name:file.substring(0, file.lastIndexOf("_")).split("_").join(" "));
+        let categories = ImporterUtils.getCategories([csvs.filter((csv)=>csv.filename==file)[0]], ImporterUtils.clean(name.toLowerCase())==file.substring(0, file.lastIndexOf("_"))?name:file.substring(0, file.lastIndexOf("_")).split("_").join(" "));
         // Prepare additional terms to differentiate categories, if as a part of a steplist the same categories are identified for different lists
         let fileCategory = ImporterUtils.getFileCategory(csvs.filter((csv)=>csv.filename==file)[0].content, name);
         list.push({"logicType":"codelist", "language":"python", "categories":categories, "requiredCodes":requiredCodes, "fileCategory":fileCategory});
       } else if(row["logicType"]=="codelistExclude") {
-        let categoriesExclude = ImporterUtils.getCategories(csvs.filter((csv)=>csv.filename==row["param"]), ImporterUtils.getName(row["param"]));
+        let categoriesExclude = ImporterUtils.getCategories([csvs.filter((csv)=>csv.filename==row["param"])[0]], ImporterUtils.getName(row["param"]));
         list.push({"logicType":"codelistExclude", "language":"python", "categoriesExclude":categoriesExclude});
       } else if(row["logicType"]=="age") {
         list.push({"logicType":"age", "language":"python", "ageLower":row["param"].split(":")[0], "ageUpper":row["param"].split(":")[1]});
@@ -80,7 +81,7 @@ class Importer {
         let fileBefore = row["param"].split(":")[0];
         let fileAfter = row["param"].split(":")[1];
         let codesBefore = [...new Set(csvs.filter((csv)=>csv.filename==fileBefore).map((csv)=>csv.content)[0].map((row)=>"\""+ImporterUtils.getValue(row)+"\""))];
-        let categoriesAfter = ImporterUtils.getCategories(csvs.filter((csv)=>csv.filename==fileAfter), ImporterUtils.getName(fileAfter));
+        let categoriesAfter = ImporterUtils.getCategories([csvs.filter((csv)=>csv.filename==fileAfter)[0]], ImporterUtils.getName(fileAfter));
         let minDays = row["param"].split(":")[2];
         let maxDays = row["param"].split(":")[3];
         list.push({"logicType":"codelistsTemporal", "language":"python", "nameBefore":ImporterUtils.getName(fileBefore), "codesBefore":codesBefore, "categoriesAfter":categoriesAfter, "minDays":minDays, "maxDays":maxDays});
@@ -116,7 +117,7 @@ class Importer {
   static async getOutputCasesConditional(position, name, outputExtension, language, parentStepName, steps, truthValues) {
     let conditionGroups = truthValues.reduce((acc, truth, index)=>({...acc, [truth]:[...(acc[truth]||[]), steps[index].map(step=>step.stepName+"-identified")]}), {});
     try {
-      return await Importer.getStep("output-cases-conditional", "Output cases subject to conditions", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, "output-cases-conditional.py", language, "templates/output-cases-conditional.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "NESTED":ImporterUtils.clean(parentStepName.toLowerCase()), "CASES":JSON.stringify(conditionGroups.T), "UNKS":JSON.stringify(conditionGroups.F)});
+      return await Importer.getStep("output-cases-conditional", "Output cases subject to conditions", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, [{"fileName":"output-cases-conditional.py", "language":language, "implementationTemplatePath":"templates/output-cases-conditional.py", "substitutions":{"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "NESTED":ImporterUtils.clean(parentStepName.toLowerCase()), "CASES":JSON.stringify(conditionGroups.T), "UNKS":JSON.stringify(conditionGroups.F)}}]);
     } catch(error) {
       error = "Error creating output conditional for nested step from import: " + error;
       throw error;
@@ -145,7 +146,7 @@ class Importer {
     
     // Add data read
     try {
-      steps.push(await Importer.getStep("read-potential-cases-disc", "Read potential cases from disc", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, "read-potential-cases.py", language, "templates/read-potential-cases-disc.py", {"PHENOTYPE":ImporterUtils.clean(NAME.toLowerCase())}));
+      steps.push(await Importer.getStep("read-potential-cases-disc", "Read potential cases from disc", "load", 1, "Potential cases of " + NAME, "Initial potential cases, read from disc.", OUTPUT_EXTENSION, [{"fileName":"read-potential-cases.py", "language":language, "implementationTemplatePath":"templates/read-potential-cases-disc.py", "substitutions":{"PHENOTYPE":ImporterUtils.clean(NAME.toLowerCase())}}, {"fileName":"read-potential-cases.js", "language":"js", "implementationTemplatePath":"templates/read-potential-cases-disc.js", "substitutions":{"PHENOTYPE":ImporterUtils.clean(NAME.toLowerCase())}}]));
     } catch(error) {
       logger.debug("Error creating first step from import: " + error);
       return false;
@@ -179,7 +180,7 @@ class Importer {
 
     // Add data read (i2b2)
     try {
-      steps.push(await Importer.getStep("read-potential-cases-i2b2", "Read potential cases from i2b2", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from i2b2.", OUTPUT_EXTENSION, "read-potential-cases-i2b2.js", language, "templates/read-potential-cases-i2b2.js", {"PHENOTYPE":ImporterUtils.clean(NAME.toLowerCase())}));
+      steps.push(await Importer.getStep("read-potential-cases-i2b2", "Read potential cases from i2b2", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from i2b2.", OUTPUT_EXTENSION, [{"fileName":"read-potential-cases-i2b2.js", "language":language, "implementationTemplatePath":"templates/read-potential-cases-i2b2.js", "substitutions":{"PHENOTYPE":ImporterUtils.clean(NAME.toLowerCase())}}]));
     } catch(error) {
       logger.debug("Error creating first step from import: " + error);
       return false;
@@ -215,7 +216,7 @@ class Importer {
 
     // Add data read (omop)
     try {
-      steps.push(await Importer.getStep("read-potential-cases-omop", "Read potential cases from an OMOP db.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from an OMOP DB.", OUTPUT_EXTENSION, "read-potential-cases-omop.js", language, "templates/read-potential-cases-omop.js", {"PHENOTYPE":ImporterUtils.clean(NAME.toLowerCase())}));
+      steps.push(await Importer.getStep("read-potential-cases-omop", "Read potential cases from an OMOP db.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from an OMOP DB.", OUTPUT_EXTENSION, [{"fileName":"read-potential-cases-omop.js", "language":language, "implementationTemplatePath":"templates/read-potential-cases-omop.js", "substitutions":{"PHENOTYPE":ImporterUtils.clean(NAME.toLowerCase())}}]));
     } catch(error) {
       logger.debug("Error creating first step from import: " + error);
       return false;
@@ -251,7 +252,7 @@ class Importer {
 
     // Add data read (fhir)
     try {
-      steps.push(await Importer.getStep("read-potential-cases-fhir", "Read potential cases from a FHIR server.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from a FHIR server.", OUTPUT_EXTENSION, "read-potential-cases-fhir.js", language, "templates/read-potential-cases-fhir.js", {"PHENOTYPE":ImporterUtils.clean(NAME.toLowerCase())}));
+      steps.push(await Importer.getStep("read-potential-cases-fhir", "Read potential cases from a FHIR server.", "external", 1, "Potential cases of " + NAME, "Initial potential cases, read from a FHIR server.", OUTPUT_EXTENSION, [{"fileName":"read-potential-cases-fhir.js", "language":language, "implementationTemplatePath":"templates/read-potential-cases-fhir.js", "substitutions":{"PHENOTYPE":ImporterUtils.clean(NAME.toLowerCase())}}]));
     } catch(error) {
       logger.debug("Error creating first step from import: " + error);
       return false;
@@ -294,12 +295,14 @@ class Importer {
       let existingImplementation = await models.implementation.findOne({where:{stepId:existingSteps[step].id}});
       if(steps[step].inputDoc!=existingInput.doc) return true;
       if(steps[step].outputDoc!=existingOutput.doc) return true;
-      if(steps[step].outputExtension!=existingOutput.extension) return true;
-      if(steps[step].fileName!=existingImplementation.fileName) return true;
-      if(steps[step].language!=existingImplementation.language) return true;
-      const destination = "uploads/" + workflowId + "/" + existingImplementation.language;
-      let storedImplementation = await fs.readFile(destination+"/"+existingImplementation.fileName, "utf8");
-      if(steps[step].implementationTemplate!=storedImplementation) return true;
+      for(let implementation of steps[step].implementations) {
+        if(implementation.outputExtension!=existingOutput.extension) return true;
+        if(implementation.fileName!=existingImplementation.fileName) return true;
+        if(implementation.language!=existingImplementation.language) return true;
+        const destination = "uploads/" + workflowId + "/" + existingImplementation.language;
+        let storedImplementation = await fs.readFile(destination+"/"+existingImplementation.fileName, "utf8");
+        if(implementation.implementationTemplate!=storedImplementation) return true;
+      }
     }
     return false;
   }
@@ -354,7 +357,7 @@ class Importer {
         let fileName = ImporterUtils.clean(stepShort) + ".py";
 
         try {
-          let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/age.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "AGE_LOWER":item.ageLower, "AGE_UPPER":item.ageUpper, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+          let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":fileName, "language":item.language, "implementationTemplatePath":"templates/age.py", "substitutions":{"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "AGE_LOWER":item.ageLower, "AGE_UPPER":item.ageUpper, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]);
           steps.push([step]);
         } catch(error) {
           error = "Error creating imported step (" + stepName + "): " + error;
@@ -375,7 +378,7 @@ class Importer {
         let fileName = ImporterUtils.clean(stepShort) + ".py";
 
         try {
-          let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/last-encounter.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "MAX_YEARS":item.maxYears, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+          let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":fileName, "language":item.language, "implementationTemplatePath":"templates/last-encounter.py", "substitutions":{"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "MAX_YEARS":item.maxYears, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]);
           steps.push([step]);
         } catch(error) {
           error = "Error creating imported step (" + stepName + "): " + error;
@@ -396,7 +399,7 @@ class Importer {
           let fileName = ImporterUtils.clean(stepShort) + ".py";
 
           try {
-            let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, item.language, "templates/codelists-temporal.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "LIST_BEFORE":item.codesBefore, "LIST_AFTER":"\""+item.categoriesAfter[categoryAfter].join('","')+"\"", "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":stepName, "AUTHOR":userName, "YEAR":new Date().getFullYear()});
+            let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":fileName, "language":item.language, "implementationTemplatePath":"templates/codelists-temporal.py", "substitutions":{"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "LIST_BEFORE":item.codesBefore, "LIST_AFTER":"\""+item.categoriesAfter[categoryAfter].join('","')+"\"", "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":stepName, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]);
             temporalSteps.push(step);
           } catch(error) {
             error = "Error creating imported step (" + stepName + "): " + error;
@@ -416,7 +419,7 @@ class Importer {
         let outputDoc = "Patients with logic indicating "+name+" related events in electronic health record.";
 
         try {
-          let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, item.nestedWorkflowId, "", "", {});
+          let step = await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":item.nestedWorkflowId, "language":"", "implementationTempaltePath":"", "substitutions":{}}]);
           steps.push([step]);
         } catch(error) {
           error = "Error creating imported step (" + stepName + "): " + error;
@@ -444,7 +447,7 @@ class Importer {
 
   static async getFileWrite(position, name, outputExtension, language) {
     try {
-      return await Importer.getStep("output-cases", "Output cases", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, "output-cases.py", language, "templates/output-cases.py", {"PHENOTYPE":ImporterUtils.clean(name.toLowerCase())});
+      return await Importer.getStep("output-cases", "Output cases", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, [{"fileName":"output-cases.py", "language":language, "implementationTemplatePath":"templates/output-cases.py", "substitutions":{"PHENOTYPE":ImporterUtils.clean(name.toLowerCase())}}]);
     } catch(error) {
       error = "Error creating last step from import: " + error;
       throw error;
@@ -473,7 +476,7 @@ class Importer {
       let fileName = ImporterUtils.clean(category.toLowerCase())+".py";
 
       try {
-        steps.push(await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, template, {"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":ImporterUtils.clean(category.toLowerCase()), "LIST":'"'+categories[category].join('","')+'"', "REQUIRED_CODES":requiredCodes, "AUTHOR":userName, "YEAR":new Date().getFullYear()}));
+        steps.push(await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":fileName, "language":language, "implementationTemplatePath":template, "substitutions":{"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":ImporterUtils.clean(category.toLowerCase()), "LIST":'"'+categories[category].join('","')+'"', "REQUIRED_CODES":requiredCodes, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]));
       } catch(error) {
         error = "Error creating imported step (" + stepName + "): " + error;
         throw error;
@@ -486,11 +489,14 @@ class Importer {
 
   }
 
-  static async getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, fileName, language, implementationTemplatePath, substitutions) {
+  static async getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, implementations) {
     
-    let implementationTemplate = implementationTemplatePath?await fs.readFile(implementationTemplatePath, "utf8"):"";
-    implementationTemplate = ImporterUtils.templateReplace(implementationTemplate, substitutions);
-    return {stepName:stepName, stepDoc:stepDoc, stepType:stepType, position:position, inputDoc:inputDoc, outputDoc:outputDoc, outputExtension:outputExtension, fileName:fileName, language:language, implementationTemplatePath:implementationTemplatePath, implementationTemplate:implementationTemplate, substitutions:substitutions};
+    for(let implementation in implementations) {
+      let implementationTemplate = implementations[implementation].implementationTemplatePath?await fs.readFile(implementations[implementation].implementationTemplatePath, "utf8"):"";
+      implementationTemplate = ImporterUtils.templateReplace(implementationTemplate, implementations[implementation].substitutions);
+      implementations[implementation].implementationTemplate = implementationTemplate;
+    }
+    return {stepName:stepName, stepDoc:stepDoc, stepType:stepType, position:position, inputDoc:inputDoc, outputDoc:outputDoc, outputExtension:outputExtension, implementations:implementations};
 
   }
 
@@ -523,25 +529,26 @@ class Importer {
         logger.debug(error);
         throw error;
       }
-    
-      try {
-        await models.implementation.upsert({fileName:stepData.fileName, language:stepData.language, stepId:step.id});
-      } catch(error) {
-        error = "Error creating step implementation: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
-        logger.debug(error);
-        throw error;
-      }
       
-      if(stepData.language&&stepData.implementationTemplate) {
-        const destination = "uploads/" + workflowId + "/" + stepData.language;
-      
+      for(let implementation of stepData.implementations) {
         try {
-          await fs.stat(destination);
+          await models.implementation.upsert({fileName:implementation.fileName, language:implementation.language, stepId:step.id});
         } catch(error) {
-          await fs.mkdir(destination, {recursive:true});
+          error = "Error creating step implementation: " + (error&&error.errors&&error.errors[0]&&error.errors[0].message?error.errors[0].message:error);
+          logger.debug(error);
+          throw error;
         }
-      
-        fs.writeFile(destination + "/" + stepData.fileName.replace(/\//g, ""), stepData.implementationTemplate);
+        
+        if(implementation.language&&implementation.implementationTemplate) {
+          const destination = "uploads/" + workflowId + "/" + implementation.language;
+        
+          try {
+            await fs.stat(destination);
+          } catch(error) {
+            await fs.mkdir(destination, {recursive:true});
+          }
+          fs.writeFile(destination + "/" + implementation.fileName.replace(/\//g, ""), implementation.implementationTemplate);
+        }
       }
     }
 

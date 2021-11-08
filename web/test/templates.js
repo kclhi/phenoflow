@@ -10,6 +10,17 @@ const parse = require('neat-csv');
 
 const ImporterUtils = require("../util/importer");
 
+async function runJSCode(source, input="") {
+  try {
+    const shell = await spawn('node', ['-e', source, "programme", input]);
+    return shell.toString();
+  } catch (exception) {
+    let issue = exception.stderr.toString();
+    console.error(exception.stderr.toString());
+    expect(issue).to.be.null;
+  }
+}
+
 async function testReadData(format, port) {
 
   // If problem with source (e.g. not up), skip test.
@@ -21,14 +32,7 @@ async function testReadData(format, port) {
   source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
   source = source.replaceAll("\n", ";");
 
-  try {
-    const shell = await spawn('node', ['-e', source])
-    console.log(shell.toString());
-  } catch (exception) {
-    let issue = exception.stderr.toString();
-    console.error(exception.stderr.toString());
-    expect(issue).to.be.null;
-  }
+  console.log(await runJSCode(source));
 
   csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv", "utf-8"), {quote: "'"});
   csv[0].should.have.property('patient-id');
@@ -137,30 +141,49 @@ describe("templates", () => {
 
   describe("execute templates", () => {
 
-    it("[TE1] Should be able to read from disc.", async() => {
+    it("[TE01] Should be able to read from disc.", async() => {
+      const TIMESTAMP = Date.now();
       let source = await fs.readFile("templates/read-potential-cases-disc.py", "utf-8");
-      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-");
-      let results = await runPythonCode(source, "test/fixtures/templates/sample-data.csv");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
+      
+      const SAMPLE_DATA_FILE = "sample-data-codes-"+TIMESTAMP;
+      await writeGenericSampleData(SAMPLE_DATA_FILE);
+      let results = await runPythonCode(source, "/tmp/"+SAMPLE_DATA_FILE);
       if(results) console.log(results);
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
+      expect(csv.length).to.equal(2);
     });
 
-    it("[TE2] Should be able to read from i2b2 server.", async() => {
+    it("[TE02] Should be able to read from disc (js).", async() => {
+      const TIMESTAMP = Date.now();
+      let source = await fs.readFile("templates/read-potential-cases-disc.js", "utf-8");
+      source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
+      
+      const SAMPLE_DATA_FILE = "sample-data-codes-"+TIMESTAMP;
+      await writeGenericSampleData(SAMPLE_DATA_FILE);
+      let results = await runJSCode(source, "/tmp/"+SAMPLE_DATA_FILE);
+      if(results) console.log(results);
+      csv = await parse(await fs.readFile("/tmp/phenotype-"+TIMESTAMP+"-potential-cases.csv"));
+      expect(csv.length).to.equal(2);
+    });
+
+    it("[TE03] Should be able to read from i2b2 server.", async() => {
       await testReadData("i2b2", 8081);
     }).timeout(0);
 
-    it("[TE3] Should be able to read from OMOP server.", async() => {
+    it("[TE04] Should be able to read from OMOP server.", async() => {
       await testReadData("omop", 8081);
     }).timeout(0);
 
-    it("[TE4] Should be able to read from FHIR server.", async() => {
+    it("[TE05] Should be able to read from FHIR server.", async() => {
       await testReadData("fhir", 8081);
     }).timeout(0);
 
-		it("[TE5] Should be able to execute codelist.", async() => {
+		it("[TE06] Should be able to execute codelist.", async() => {
       await testCodelist();
     });
 
-    it("[TE6] Should be able to execute a keyword list.", async() => {
+    it("[TE07] Should be able to execute a keyword list.", async() => {
       let source = await fs.readFile("templates/keywords.py", "utf-8");
       source = source.replaceAll("[AUTHOR]", "martinchapman");
       source = source.replaceAll("[YEAR]", "2021");
@@ -171,15 +194,15 @@ describe("templates", () => {
       if(results) console.log(results);
     });
 
-    it("[TE7] Should be able to execute an age check.", async() => {
+    it("[TE08] Should be able to execute an age check.", async() => {
       await testAgeCheck();
     });
 
-    it("[TE8] Should be able to execute a last encounter check.", async() => {
+    it("[TE09] Should be able to execute a last encounter check.", async() => {
       await testLastEncounterCheck();
     });
 
-    it("[TE9] Should be able to execute output cases.", async() => {
+    it("[TE10] Should be able to execute output cases.", async() => {
       const TIMESTAMP = Date.now();
       let source = await fs.readFile("templates/output-cases.py", "utf-8");
       source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
@@ -200,52 +223,52 @@ describe("templates", () => {
       expect(csv[1]['last-encounter']).to.equal('2020-01-01');
     });
 
-    it("[TE10] i2b2 output to codelist.", async() => {
+    it("[TE11] i2b2 output to codelist.", async() => {
       let timestamp = await testReadData("i2b2", 8081);
       if(timestamp) await testCodelist(timestamp, "466.11"); // Known code for first patient (and not second) in test i2b2 DB
     }).timeout(0);
 
-    it("[TE11] i2b2 output to age check.", async() => {
+    it("[TE12] i2b2 output to age check.", async() => {
       let timestamp = await testReadData("i2b2", 8081);
       if(timestamp) await testAgeCheck(timestamp, ['TRUE', 'TRUE']); // Known whether excluded by age for first two patients in test i2b2 DB
     }).timeout(0);
 
-    it("[TE12] i2b2 output to encounter check.", async() => {
+    it("[TE13] i2b2 output to encounter check.", async() => {
       let timestamp = await testReadData("i2b2", 8081);
       if(timestamp) await testLastEncounterCheck(timestamp, ['TRUE', 'TRUE']); // Known whether excluded by last encounter for first two patients in test i2b2 DB
     }).timeout(0);
 
-    it("[TE13] OMOP output to codelist.", async() => {
+    it("[TE14] OMOP output to codelist.", async() => {
       let timestamp = await testReadData("omop", 8081);
       if(timestamp) await testCodelist(timestamp, "80502");
     }).timeout(0);
 
-    it("[TE14] OMOP output to age check.", async() => {
+    it("[TE15] OMOP output to age check.", async() => {
       let timestamp = await testReadData("omop", 8081);
       if(timestamp) await testAgeCheck(timestamp, ['TRUE', 'FALSE']);
     }).timeout(0);
 
-    it("[TE15] OMOP output to encounter check.", async() => {
+    it("[TE16] OMOP output to encounter check.", async() => {
       let timestamp = await testReadData("omop", 8081);
       if(timestamp) await testLastEncounterCheck(timestamp, ['TRUE', 'TRUE']);
     }).timeout(0);
 
-    it("[TE16] FHIR output to codelist.", async() => {
+    it("[TE17] FHIR output to codelist.", async() => {
       let timestamp = await testReadData("fhir", 8081);
       if(timestamp) await testCodelist(timestamp, "19169002");
     }).timeout(0);
 
-    it("[TE17] FHIR output to age check.", async() => {
+    it("[TE18] FHIR output to age check.", async() => {
       let timestamp = await testReadData("fhir", 8081);
       if(timestamp) await testAgeCheck(timestamp, ['TRUE', 'TRUE']);
     }).timeout(0);
 
-    it("[TE18] FHIR output to encounter check.", async() => {
+    it("[TE19] FHIR output to encounter check.", async() => {
       let timestamp = await testReadData("fhir", 8081);
       if(timestamp) await testLastEncounterCheck(timestamp, ['FALSE', 'FALSE']);
     }).timeout(0);
 
-    it("[TE19] Should be able to execute codelist temporal relationship.", async() => {
+    it("[TE20] Should be able to execute codelist temporal relationship.", async() => {
       
       const TIMESTAMP = Date.now();
       let source = await fs.readFile("templates/codelists-temporal.py", "utf-8");
@@ -269,7 +292,7 @@ describe("templates", () => {
 
     }).timeout(0);
 
-    it("[TE20] Should be able to execute output cases conditional.", async() => {
+    it("[TE21] Should be able to execute output cases conditional.", async() => {
       const TIMESTAMP = Date.now();
       let source = await fs.readFile("templates/output-cases-conditional.py", "utf-8");
       source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
