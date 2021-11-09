@@ -90,19 +90,18 @@ class Importer {
         let branchList = await Importer.getSteplist(nestedSteplist, csvs, name, userName);
         let nestedWorkflowName = ImporterUtils.summariseSteplist(nestedSteplist);
         let id = ImporterUtils.steplistHash(nestedSteplist, csvs);
-        let workflowId = await Importer.importNestedPhenotype(name, nestedWorkflowName, id+" - "+nestedWorkflowName, userName, branchList, nestedSteplist.content.map(item=>item.param.split(":")[item.param.split(":").length-1]));
+        let workflowId = await Importer.importNestedPhenotype(name, nestedWorkflowName, id+" - "+nestedWorkflowName.charAt(0).toUpperCase()+nestedWorkflowName.substring(1), userName, branchList);
         list.push({"logicType":"branch", "nestedWorkflowName":nestedWorkflowName, "nestedWorkflowId":workflowId});
       }
     }
     return list;
   }
 
-  static async importNestedPhenotype(name, parentStepName, about, userName, list, truthValues) {
+  static async importNestedPhenotype(name, parentStepName, about, userName, list) {
     const OUTPUT_EXTENSION = "csv";
     let steps = await Importer.getGroupedWorkflowStepsFromList(name, OUTPUT_EXTENSION, list, userName, 1);
     steps.pop();
-    if(truthValues.length!=steps.length) throw "Not enough truth values to constructed nested workflow.";
-    steps.push(await this.getOutputCasesConditional(steps.flat().length+1, name, OUTPUT_EXTENSION, "python", parentStepName, steps, truthValues));
+    steps.push(await this.getOutputCasesConditional(steps.flat().length+1, name, OUTPUT_EXTENSION, "python", parentStepName, steps));
     steps = steps.flat();
     let existingWorkflowId = await Importer.existingWorkflow(name, about, userName);
     let workflowId = existingWorkflowId||await Importer.createWorkflow(name, about, userName);
@@ -114,10 +113,11 @@ class Importer {
     return workflowId;
   }
 
-  static async getOutputCasesConditional(position, name, outputExtension, language, parentStepName, steps, truthValues) {
-    let conditionGroups = truthValues.reduce((acc, truth, index)=>({...acc, [truth]:[...(acc[truth]||[]), steps[index].map(step=>step.stepName+"-identified")]}), {});
+  static async getOutputCasesConditional(position, name, outputExtension, language, parentStepName, steps) { 
+    let stepName = "output-"+ImporterUtils.clean(parentStepName).toLowerCase()+"-cases";
+    let fileName = stepName+".py";
     try {
-      return await Importer.getStep("output-cases-conditional", "Output cases subject to conditions", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, [{"fileName":"output-cases-conditional.py", "language":language, "implementationTemplatePath":"templates/output-cases-conditional.py", "substitutions":{"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "NESTED":ImporterUtils.clean(parentStepName.toLowerCase()), "CASES":JSON.stringify(conditionGroups.T), "UNKS":JSON.stringify(conditionGroups.F)}}]);
+      return await Importer.getStep(stepName, "Output cases", "output", position, "Potential cases of " + name, "Output containing patients flagged as having this type of " + name, outputExtension, [{"fileName":fileName, "language":language, "implementationTemplatePath":"templates/output-codelist-multiple.py", "substitutions":{"PHENOTYPE":ImporterUtils.clean(name.toLowerCase()), "NESTED":ImporterUtils.clean(parentStepName.toLowerCase()), "CASES":JSON.stringify(steps.filter(steps=>steps.filter(step=>!step.stepDoc.startsWith("Exclude")).length==steps.length).map(steps=>steps.map(step=>step.stepName+"-identified")))}}]);
     } catch(error) {
       error = "Error creating output conditional for nested step from import: " + error;
       throw error;
@@ -459,7 +459,7 @@ class Importer {
   }
 
   static async getCodeWorkflowSteps(name, language, outputExtension, userName, categories, position=2, requiredCodes=1, exclude=false) {
-    return await Importer.getCategoryWorkflowSteps(name, language, outputExtension, userName, categories, "clinical codes", "templates/codelist.py", position, requiredCodes, exclude);
+    return await Importer.getCategoryWorkflowSteps(name, language, outputExtension, userName, categories, "clinical codes", exclude?"templates/codelist-exclude.py":"templates/codelist.py", position, requiredCodes, exclude);
   }
 
   static async getCategoryWorkflowSteps(name, language, outputExtension, userName, categories, categoryType, template, position=2, requiredCodes=1, exclude=false) {
@@ -476,7 +476,7 @@ class Importer {
       let fileName = ImporterUtils.clean(category.toLowerCase())+".py";
 
       try {
-        steps.push(await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":fileName, "language":language, "implementationTemplatePath":template, "substitutions":{"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":ImporterUtils.clean(category.toLowerCase()), "LIST":'"'+categories[category].join('","')+'"', "REQUIRED_CODES":requiredCodes, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]));
+        steps.push(await Importer.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":(exclude?"exclude-":"")+fileName, "language":language, "implementationTemplatePath":template, "substitutions":{"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":ImporterUtils.clean(category.toLowerCase()), "LIST":'"'+categories[category].join('","')+'"', "REQUIRED_CODES":requiredCodes, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]));
       } catch(error) {
         error = "Error creating imported step (" + stepName + "): " + error;
         throw error;

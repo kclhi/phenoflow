@@ -296,12 +296,16 @@ class Importer {
       if(step.logicType=="codelistsTemporal") {
         if(usedCodelists.includes(splitParams[0])||usedCodelists.includes(splitParams[1])) continue;
         let phrase = "Diagnosis of "+this.conditionFromFilename(splitParams[1])+" "+splitParams[2]+" days to "+splitParams[3]+" days after "+this.conditionFromFilename(splitParams[0]);
-        splitParams[4]=="T"?includes.push(phrase):without.push(phrase);
+        includes.push(phrase);
         usedCodelists = usedCodelists.concat([splitParams[0], splitParams[1]]);
-      } else if(step.logicType="codelist") {
+      } else if(step.logicType=="codelist") {
         if(usedCodelists.includes(splitParams[0])) continue;
         let phrase = this.conditionFromFilename(splitParams[0]);
-        splitParams[2]=="T"?includes.push(phrase):without.push(phrase);
+        includes.push(phrase);
+      } else if(step.logicType=="codelistExclude") {
+        if(usedCodelists.includes(splitParams[0])) continue;
+        let phrase = this.conditionFromFilename(splitParams[0]);
+        without.push(phrase);
       }
     }
     steplist = steplist.reverse();
