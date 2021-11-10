@@ -66,7 +66,7 @@ class Importer {
       if(row["logicType"]=="codelist") {
         let file = row["param"].split(":")[0];
         let requiredCodes = row["param"].split(":")[1];
-        let categories = ImporterUtils.getCategories([csvs.filter((csv)=>csv.filename==file)[0]], ImporterUtils.clean(name.toLowerCase())==file.substring(0, file.lastIndexOf("_"))?name:file.substring(0, file.lastIndexOf("_")).split("_").join(" "));
+        let categories = ImporterUtils.getCategories([csvs.filter((csv)=>csv.filename==file)[0]], ImporterUtils.clean(name.toLowerCase())==ImporterUtils.clean(ImporterUtils.getName(file).toLowerCase())?name:ImporterUtils.getName(file));
         // Prepare additional terms to differentiate categories, if as a part of a steplist the same categories are identified for different lists
         let fileCategory = ImporterUtils.getFileCategory(csvs.filter((csv)=>csv.filename==file)[0].content, name);
         list.push({"logicType":"codelist", "language":"python", "categories":categories, "requiredCodes":requiredCodes, "fileCategory":fileCategory});
