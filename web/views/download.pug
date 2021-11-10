@@ -63,10 +63,12 @@ block pageJS
         localStorage.removeItem(getImplementationUnitsStorageId());
       }
     });
-    function getDownloadLink() {
+    function getLink(action) {
       let params = getParams();
-      return (params&&params.parent?"/phenoflow/phenotype/generate/"+params.parent:"/phenoflow/phenotype/generate/#{workflow.id}");
+      return (params&&params.parent?"/phenoflow/phenotype/"+action+"/"+params.parent:"/phenoflow/phenotype/"+action+"/#{workflow.id}");
     }
+    function getDownloadLink() { return getLink("generate"); }
+    function getCiteLink() { return getLink("cite"); }
     function getParams() {
       const urlSearchParams = new URLSearchParams(window.location.search);
       return Object.fromEntries(urlSearchParams.entries());
@@ -83,16 +85,13 @@ block pageJS
       let implementationUnitsStorageId = getImplementationUnitsStorageId();
       localStorage.setItem(implementationUnitsStorageId, JSON.stringify(Object.assign({}, localStorage.getItem(implementationUnitsStorageId)?JSON.parse(localStorage.getItem(implementationUnitsStorageId)):{}, implementationUnits)));
     }
-    function downloadWorkflow() {
-      document.getElementById("download").style.display = "none";
-      document.getElementById("downloadSpinner").removeAttribute("style")
+    function sendImplementation(link, callback=function(response){}, responseType="blob") {
       updateImplementationUnits();
       let implementationUnits = JSON.parse(localStorage.getItem(getImplementationUnitsStorageId()));
-      console.log(localStorage.getItem(getImplementationUnitsStorageId()));
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", getDownloadLink(), true);
+      xhr.open("POST", link, true);
       xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.responseType = "blob";
+      xhr.responseType = responseType;
       xhr.onload = function(event) {
         var blob = this.response;
         var contentDispo = this.getResponseHeader("Content-Disposition");
@@ -102,11 +101,28 @@ block pageJS
           a.href = window.URL.createObjectURL(blob);
           a.download = fileName;
           a.dispatchEvent(new MouseEvent("click"));
-          document.getElementById("download").removeAttribute("style")
-          document.getElementById("downloadSpinner").style.display = "none";
         }
+        callback(this.response);
       }
       xhr.send(JSON.stringify({"implementationUnits":implementationUnits, "userName":"!{userName}"}));
+    }
+    function downloadWorkflow() {
+      document.getElementById("download").style.display = "none";
+      document.getElementById("downloadSpinner").removeAttribute("style")
+      sendImplementation(getDownloadLink(), function(response) { 
+        document.getElementById("download").removeAttribute("style");
+        document.getElementById("downloadSpinner").style.display = "none";
+      });
+    }
+    function getReference() {
+      document.getElementById("cite").style.display = "none";
+      document.getElementById("downloadSpinnerDOI").removeAttribute("style")
+      sendImplementation(getCiteLink(), function(response) {
+        document.getElementById("downloadSpinnerDOI").style.display = "none";
+        document.getElementById("doi").removeAttribute("style");
+        document.querySelector("span[id='doi'] a").href="https://doi.org/"+response;
+        document.querySelector("span[id='doi'] span").innerHTML="DOI "+response;
+      }, "text");
     }
     function showImplementation(workflowId, position) {
       const language = document.getElementById("step" + position).getElementsByClassName("implementation")[0].value;
@@ -124,6 +140,22 @@ block header
       | #{download}
     span(id="downloadSpinner" class="spinner-border text-info" role="status" style="display:none;")
       span(class="sr-only") Loading...
+    if doi
+      span
+        | | 
+      span(id="doi" style="display:none;")
+      a(href="https://doi.org/"+doi)
+        span() DOI #{doi}
+    else if !doi && !restricted
+      span
+        | | 
+      a(id="cite" class="a-button" onclick="getReference(); return false;")
+        | Get DOI
+      span(id="downloadSpinnerDOI" class="spinner-border text-info" role="status" style="display:none;")
+        span(class="sr-only") Loading...
+      span(id="doi" style="display:none;")
+        a(href="")
+          span()
 
 block content
 

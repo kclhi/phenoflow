@@ -176,7 +176,7 @@ class Importer {
 
       for(let row of csvFile) {
         let category, description=descriptionFunction(row);
-        const OTHER_CODING_SYSTEMS = ["UK Biobank", "TADDS"];
+        const OTHER_CODING_SYSTEMS = ["UK Biobank", "TADDS", "HES"];
         if(description&&(isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)||isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)||(codingSystemGroup="--"+OTHER_CODING_SYSTEMS.filter((system)=>Importer.fullClean(system)==Importer.fullClean(filename.split("_")[filename.split("_").length-1]))[0]))) {
           let code=valueFunction(row);
           // Remaining work to categorise descriptions

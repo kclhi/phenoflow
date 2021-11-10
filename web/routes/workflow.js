@@ -7,8 +7,10 @@ const got = require("got");
 const bcrypt = require("bcrypt");
 const sanitizeHtml = require('sanitize-html');
 const jwt = require('express-jwt');
+
 const Workflow = require("../util/workflow");
 const Download = require("../util/download");
+const ImporterUtils = require("../util/importer");
 
 function processOffset(offsetParam) {
 
@@ -108,15 +110,17 @@ router.get("/download", async function(req, res, next) {
 
 });
 
-router.get("/download/:workflowId", async function(req, res, next) {
+router.get("/download/:workflowId/:zenodo?", async function(req, res, next) {
 
   try {
-    let workflow = await Workflow.getWorkflow(req.params.workflowId);
+    let workflowId = req.params.workflowId;
+    if(req.params.zenodo) workflowId = (await models.doi.findOne({where:{doi:req.params.workflowId+"/"+req.params.zenodo}})).workflowId;
+    let workflow = await Workflow.getWorkflow(workflowId);
     workflow = await Workflow.addChildrenToStep(workflow);
     if(!workflow) res.sendStatus(500);
     let user = await models.user.findOne({where:{name: workflow.userName}});
     if(!credentialsCheck(user, req, res)) return;
-    res.render("download", {title:"'" + workflow.name + "' phenotype"+(req.query.parent?" branch":""), workflow:workflow, userName:user.name, verified:user.verified, homepage:user.homepage, download:"DOWNLOAD "+(req.query.parent?"FULL DEFINITION":"")});
+    res.render("download", {title:"'" + workflow.name + "' phenotype"+(req.query.parent?" branch":""), workflow:workflow, userName:user.name, verified:user.verified, homepage:user.homepage, download:"DOWNLOAD "+(req.query.parent?"FULL DEFINITION":""), doi:((user&&!user.restricted)&&req.params.zenodo?req.params.workflowId+"/"+req.params.zenodo:""), restricted:user?user.restricted:""});
   } catch(error) {
     logger.error("Get workflow error: " + error);
     res.sendStatus(500);
@@ -156,7 +160,6 @@ router.post("/update/:id", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algori
 });
 
 async function generateWorkflow(workflowId, language=null, implementationUnits=null, res) {
-
   let workflow;
   try {
     workflow = await Workflow.getFullWorkflow(workflowId, language, implementationUnits);
@@ -167,43 +170,83 @@ async function generateWorkflow(workflowId, language=null, implementationUnits=n
   try {
     var generate = await got.post(config.get("generator.URL") + "/generate", {json:workflow.steps, responseType:"json"});
   } catch(error) {
-    logger.debug("Error contacting generator: " + error + " " + JSON.stringify(workflow.steps));
+    logger.debug("Error contacting generator: "+error+" "+JSON.stringify(workflow.steps));
     return false;
   }
   implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().filter(step=>!Object.keys(implementationUnits).includes(step.name)).map((step)=>({[step.name]: step.implementation.language})));
   generate.body.steps = generate.body.steps.concat(generate.body.steps.map(step=>step.steps).filter(step=>step!=undefined)).flat();
-  let stepNames = generate.body.steps.map(step=>step.name);
-  generate.body.steps = generate.body.steps.filter(({name}, index)=>!stepNames.includes(name, index+1))
+  generate.body.steps = generate.body.steps.filter(({name}, index)=>!generate.body.steps.map(step=>step.name).includes(name, index+1));
   if(generate.statusCode==200&&generate.body&&generate.body.workflow&&generate.body.workflowInputs&&generate.body.steps) {
+    return {"workflow":workflow, "generate":generate, "implementationUnits":implementationUnits};
+  } else {
+    logger.debug("Error generating workflow.");
+    return false;
+  }
+}
+
+async function createZip(workflowId, language=null, implementationUnits=null, res) {
+  let generatedWorkflow;
+  if(generatedWorkflow=await generateWorkflow(workflowId, language, implementationUnits, res)) {
     try {
-      if(!await Download.createPFZipResponse(res, workflowId, workflow.name, generate.body.workflow, generate.body.workflowInputs, language?language:implementationUnits, generate.body.steps, workflow.about)) {
+      if(!await Download.createPFZipResponse(res, workflowId, generatedWorkflow.workflow.name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, language?language:generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, generatedWorkflow.workflow.about)) {
         logger.debug("Error generating workflow.");
         return false;
       }
     } catch(createPFZipResponseError) {
       logger.error("Error creating ZIP: " + createPFZipResponseError);
     }
+    return true;
   } else {
-    logger.debug("Error generating workflow.");
     return false;
   }
-  return true;
-
 }
 
 router.post("/generate/:workflowId", async function(req, res, next) {
-
   if(!req.body.implementationUnits) return res.sendStatus(404);
   if(!req.body.userName) return res.sendStatus(500);
   let user = await models.user.findOne({where:{name: req.body.userName}});
   if(!credentialsCheck(user, req, res)) return;
   try {
-    if (!await generateWorkflow(req.params.workflowId, null, req.body.implementationUnits, res)) return res.sendStatus(500);
+    if (!await createZip(req.params.workflowId, null, req.body.implementationUnits, res)) return res.sendStatus(500);
   } catch(error) {
     logger.debug("Error generating worflow: " + error);
     return res.sendStatus(500);
   }
+});
 
+async function createZenodoEntry(workflowId, language=null, implementationUnits=null, res) {
+  let generatedWorkflow;
+  if(generatedWorkflow=await generateWorkflow(workflowId, language, implementationUnits, res)) {
+    let doi;
+    try {
+      if(!(doi=await Download.createPFZenodoEntry(workflowId, generatedWorkflow.workflow.name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, language?language:generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, generatedWorkflow.workflow.about, generatedWorkflow.workflow.userName))) {
+        logger.debug("Error generating workflow.");
+        return false;
+      }
+    } catch(createPFZenodoEntry) {
+      logger.error("Error uploading to Zenodo: "+createPFZenodoEntry);
+    }
+    return doi;
+  } else {
+    return false;
+  }
+}
+
+router.post("/cite/:workflowId", async function(req, res, next) {
+  if(!req.body.implementationUnits) return res.sendStatus(404);
+  if(!req.body.userName) return res.sendStatus(500);
+  let user = await models.user.findOne({where:{name: req.body.userName}});
+  if(user&&user.restricted) return res.sendStatus(405);
+  let doi = await models.doi.findOne({where:{workflowId:req.params.workflowId, implementationHash:ImporterUtils.hash(req.body.implementationUnits)}});
+  if(doi) return res.send(doi.doi).status(200);
+  try {
+    let doi;
+    if (!(doi=await createZenodoEntry(req.params.workflowId, null, req.body.implementationUnits, res))) return res.sendStatus(500);
+    return res.send(doi).status(200);
+  } catch(error) {
+    logger.debug("Error citing worflow: " + error);
+    return res.sendStatus(500);
+  }
 });
 
 module.exports = router;
