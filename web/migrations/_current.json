@@ -50,6 +50,45 @@
             },
             "indexes": []
         },
+        "dois": {
+            "tableName": "dois",
+            "schema": {
+                "doi": {
+                    "primaryKey": true,
+                    "allowNull": false,
+                    "field": "doi",
+                    "seqType": "Sequelize.STRING"
+                },
+                "implementationHash": {
+                    "primaryKey": true,
+                    "allowNull": false,
+                    "field": "implementationHash",
+                    "seqType": "Sequelize.STRING"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "workflowId": {
+                    "allowNull": true,
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "onDelete": "SET NULL",
+                    "onUpdate": "CASCADE",
+                    "field": "workflowId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": []
+        },
         "implementations": {
             "tableName": "implementations",
             "schema": {
@@ -403,5 +442,5 @@
             "indexes": []
         }
     },
-    "revision": 2
+    "revision": 3
 }
