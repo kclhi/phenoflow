@@ -207,8 +207,9 @@ class Workflow {
         mergedStep.outputs = JSON.parse(JSON.stringify(await models.output.findAll({where:{stepId:step.id}})));
         if(!mergedStep.outputs) throw "Error finding outputs";
         let implementationCriteria = { stepId: step.id };
-        if(language) { implementationCriteria.language = language; } else if (implementationUnits) { implementationCriteria.language = implementationUnits[step.name]; }
+        if(language) { implementationCriteria.language = language; } else if (implementationUnits&&implementationUnits[step.name]) { implementationCriteria.language = implementationUnits[step.name]; }
         mergedStep.implementation = JSON.parse(JSON.stringify(await models.implementation.findOne({where: implementationCriteria})));
+        if(!implementationUnits[step.name]) implementationUnits[step.name] = mergedStep.implementation.language;
         if(!mergedStep.implementation) throw "Error finding implementation: " + JSON.stringify(implementationCriteria);
         mergedSteps.push(mergedStep);
       }

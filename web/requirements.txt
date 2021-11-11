@@ -31,5 +31,7 @@ sequelize
 sequelize-cli
 string-similarity
 sqlite3
+swagger-jsdoc
+swagger-ui-express
 winston
 yaml
