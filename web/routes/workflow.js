@@ -40,6 +40,22 @@ router.get("/all/:filter/:offset?", async function(req, res, next) {
 
 });
 
+router.post("/all", async function(req, res, next) {
+
+  if(req.body.name) { 
+    var workflowsByName = await Workflow.completeWorkflows(req.body.name, 0, limit=Number.MAX_VALUE);
+  } else {
+    var workflowsByName = await Workflow.completeWorkflows("", 0, limit=Number.MAX_VALUE);
+  }
+  if(req.body.importedId) var workflowsByImportedId = await Workflow.completeWorkflows(req.body.importedId, 0, limit=Number.MAX_VALUE);
+  if(req.body.name&&workflowsByName&&req.body.importedId&&workflowsByImportedId) workflowsByName = workflowsByName.filter(workflowByName=>workflowsByImportedId.map(workflowByImportedId=>workflowByImportedId.id).includes(workflowByName.id));
+  res.send(await Promise.all(workflowsByName.map(async (workflow) => {
+    let user = await models.user.findOne({where:{name: workflow.userName}});
+    return {"id":workflow.id, "name":workflow.name, "about":workflow.about, "url":"https://kclhi.org/phenoflow/phenotype/download/"+workflow.id, "user": user.name};
+  })));
+
+});
+
 router.get("/mine/:offset?", async function(req, res, next) {
 
   let offset = processOffset(req.params.offset);

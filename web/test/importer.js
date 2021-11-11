@@ -239,7 +239,17 @@ describe("importer", () => {
       }
     }).timeout(0);
 
-    it("[TI4] Should be able to annotate CALIBER MD files with a phenoflow URL.", async() => {
+    it("[TI4] Should be able to import multiple phenotype CSVs with the same name.", async() => {
+      const phenotypeFiles = ["kuan_asthma_eFTHigQ2RjygaBhHUco4pW.md", "carr_asthma_XmYuru73YF4EeRppjSAwsP.md", "axson_asthma_cdd2NMH5QDWVdEfTQNNfpK.md"];
+      const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/";
+      // Can't perform test if file doesn't exist.
+      try { await fs.stat(PATH) } catch(error) { return true; }
+      for(let phenotypeFile of phenotypeFiles) {
+        expect(await importPhenotypeCSVs([phenotypeFile])).to.be.true;
+      }
+    }).timeout(0);
+
+    it("[TI5] Should be able to annotate CALIBER MD files with a phenoflow URL.", async() => {
       const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/";
       try { await fs.stat(PATH) } catch(error) { return true; }
       let ids=[];
@@ -269,7 +279,7 @@ describe("importer", () => {
       }
     }).timeout(0);
 
-    it("[TI5] Create children for imported phenotypes.", async() => {
+    it("[TI6] Create children for imported phenotypes.", async() => {
       for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await workflowUtils.workflowChild(workflow.id);
     }).timeout(0);
 
