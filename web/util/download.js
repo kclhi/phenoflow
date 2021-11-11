@@ -28,7 +28,7 @@ class Download {
 
     for(const step in steps) {
       await Zip.add(archive, steps[step].content, steps[step].name + ".cwl");
-      await Zip.addFile(archive, "uploads/" + id + "/", (implementationUnits[steps[step].name]?implementationUnits[steps[step].name]:implementationUnits) + "/" + steps[step].fileName);
+      await Zip.addFile(archive, "uploads/" + id + "/", (implementationUnits&&implementationUnits[steps[step].name]?implementationUnits[steps[step].name]:implementationUnits) + "/" + steps[step].fileName);
     }
 
     if(visualise) {
