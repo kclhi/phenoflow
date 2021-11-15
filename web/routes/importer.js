@@ -11,6 +11,7 @@ const sanitizeHtml = require('sanitize-html');
 const config = require("config");
 const WorkflowUtils = require("../util/workflow");
 const ImporterUtils = require("../util/importer");
+const Workflow = require('../util/workflow');
 
 router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
@@ -54,6 +55,70 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
     logger.error(importPhenotypeError);
     return res.sendStatus(500);
   }
+});
+
+/**
+ * @swagger
+ * /phenoflow/importer/addConnector:
+ *   post:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Add a new connector.
+ *     description: Add a new connector to an existing phenotype definition.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               implementationTemplate:
+ *                 type: string
+ *                 format: binary
+ *               existingWorkflowIds:
+ *                 type: array
+ *                 description: The IDs of the workflows to which to add the new connector (single values also accepted for individual workflows)
+ *                 example: [1, 2]
+ *               dataSource:
+ *                 type: string
+ *                 description: A description of the data source targeted by the connector
+ *                 example: FHIR
+ *               language:
+ *                 type: string
+ *                 description: The language in which the connector has been developed.
+ *                 example: python, js or KNIME
+ *     responses:
+ *       200:
+ *         description: An executable workflow.
+ */
+router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
+  req.setTimeout(0);
+  if(!req.files.implementationTemplate||!req.body.existingWorkflowIds||!req.body.dataSource||!req.body.language) res.status(500).send("Missing params.");
+  if(req.body.language&&!config.get("workflow.LANGUAGES").includes(req.body.language)) res.send("Supported language are: "+config.get("workflow.LANGUAGES").join(" ")).status(500);
+  const OUTPUT_EXTENSION = "csv";
+  for(let existingWorkflowId of req.body.existingWorkflowIds) {
+    let existingWorkflow = await Workflow.workflow(await Workflow.getWorkflow(existingWorkflowId));
+    for(let step of existingWorkflow.steps) {
+      step.stepName = step.name;
+      step.stepDoc = step.doc;
+      step.stepType = step.type;
+      step.inputDoc = step.inputs[0].doc;
+      step.outputDoc = step.outputs[0].doc;
+      step.outputExtension = step.outputs[0].extension;
+      for(let implementation in step.implementations) {
+        const source = "uploads/"+existingWorkflow.id+"/"+step.implementations[implementation].language;
+        let sourceFile = await fs.readFile(source+"/"+step.implementations[implementation].fileName.replace(/\//g, ""), "utf8");
+        step.implementations[implementation].implementationTemplate = sourceFile;
+      }
+    }
+    let implementationTemplate = req.files.implementationTemplate;
+    existingWorkflow.steps[0] = await Importer.getStep("read-potential-cases-"+ImporterUtils.clean(req.body.dataSource), "Read potential cases from "+req.body.dataSource, "external", 1, existingWorkflow.steps[0].inputDoc, "Initial potential cases, read from "+req.body.dataSource, OUTPUT_EXTENSION, [{"fileName":implementationTemplate.name, "language":req.body.language, "implementationTemplate":implementationTemplate.data.toString(), "substitutions":{"PHENOTYPE":ImporterUtils.clean(existingWorkflow.name.toLowerCase())}}]);
+    let duplicatedWorkflowId = await Importer.createWorkflow(existingWorkflow.name, existingWorkflow.about, existingWorkflow.userName);
+    await Importer.createSteps(duplicatedWorkflowId, existingWorkflow.steps);
+    await WorkflowUtils.workflowComplete(duplicatedWorkflowId);
+    await WorkflowUtils.workflowChild(duplicatedWorkflowId);
+  }
+  res.sendStatus(200);
 });
 
 //
@@ -492,7 +557,7 @@ class Importer {
   static async getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, implementations) {
     
     for(let implementation in implementations) {
-      let implementationTemplate = implementations[implementation].implementationTemplatePath?await fs.readFile(implementations[implementation].implementationTemplatePath, "utf8"):"";
+      let implementationTemplate = implementations[implementation].implementationTemplatePath?await fs.readFile(implementations[implementation].implementationTemplatePath, "utf8"):implementations[implementation].implementationTemplate;
       implementationTemplate = ImporterUtils.templateReplace(implementationTemplate, implementations[implementation].substitutions);
       implementations[implementation].implementationTemplate = implementationTemplate;
     }

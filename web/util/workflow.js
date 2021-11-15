@@ -214,6 +214,7 @@ class Workflow {
         if(language) { implementationCriteria.language = language; } else if (implementationUnits&&implementationUnits[step.name]) { implementationCriteria.language = implementationUnits[step.name]; }
         let allImplementations = await models.implementation.findAll({where: implementationCriteria, order:[["language", "DESC"]]});
         mergedStep.implementation = JSON.parse(JSON.stringify(allImplementations[0]));
+        if(!implementationUnits[step.name]) implementationUnits[step.name] = mergedStep.implementation.language;
         if(!mergedStep.implementation) throw "Error finding implementation: " + JSON.stringify(implementationCriteria);
         mergedSteps.push(mergedStep);
       }

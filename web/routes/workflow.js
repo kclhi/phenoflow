@@ -58,6 +58,31 @@ router.get("/all/:filter/:offset?", async function(req, res, next) {
 
 });
 
+/**
+ * @swagger
+ * /phenoflow/phenotype/all:
+ *   post:
+ *     summary: List phenotypes.
+ *     description: Retrieve a list of all phenotypes, or phenotypes matching the given criteria.
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               importedId:
+ *                 type: string
+ *                 description: The ID grabbed from the import source. Often listed as a part of a definition's description.
+ *                 example: XNIlg0YihF3u3iuI6IitMu0CNfQ
+ *               name:
+ *                 type: string
+ *                 description: Phenotype name
+ *                 example: Rheumatoid arthritis
+ *     responses:
+ *       200:
+ *         description: Connector successfully added
+ */
 router.post("/all", async function(req, res, next) {
 
   if(req.body.name) { 
@@ -201,13 +226,29 @@ async function createZip(workflowId, language=null, implementationUnits=null, re
   }
 }
 
+/**
+ * @swagger
+ * /phenoflow/phenotype/generate/{phenotypeId}:
+ *   post:
+ *     summary: Generate a computable phenotype.
+ *     description: Generate a CWL workflow based on a phenotype definition.
+ *     parameters:
+ *       - in: path
+ *         name: phenotypeId
+ *         required: true
+ *         description: ID of the phenotype to generate
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: An executable workflow.
+ */
 router.post("/generate/:workflowId", async function(req, res, next) {
-  if(!req.body.implementationUnits) return res.sendStatus(404);
   if(!req.body.userName) return res.sendStatus(500);
   let user = await models.user.findOne({where:{name: req.body.userName}});
   if(!credentialsCheck(user, req, res)) return;
   try {
-    if (!await createZip(req.params.workflowId, null, req.body.implementationUnits, res)) return res.sendStatus(500);
+    if (!await createZip(req.params.workflowId, null, req.body.implementationUnits?req.body.implementationUnits:{}, res)) return res.sendStatus(500);
   } catch(error) {
     logger.debug("Error generating worflow: " + error);
     return res.sendStatus(500);

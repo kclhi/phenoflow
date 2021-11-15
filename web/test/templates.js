@@ -8,8 +8,6 @@ const { PythonShell: shell } = require("python-shell");
 const spawn = require("await-spawn");
 const parse = require('neat-csv');
 
-const ImporterUtils = require("../util/importer");
-
 async function runJSCode(source, input="") {
   try {
     const shell = await spawn('node', ['-e', source, "programme", input]);

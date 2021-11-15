@@ -7,6 +7,42 @@ const morgan = require("morgan");
 const logger = require("./config/winston");
 const fileUpload = require("express-fileupload");
 const cron = require("node-cron");
+const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerDefinition = {
+  openapi: '3.0.1',
+  info: {
+    title: 'Phenoflow API',
+    version: '1.0.0',
+    description:
+      'Test the endpoints offered by Phenoflow.'
+  },
+  servers: [
+    {
+      url: 'http://localhost:3003',
+      description: 'Development server',
+    },
+    {
+      url: 'https://kclhi.org',
+      description: 'Live server',
+    }
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      }
+    }
+  }
+};
+const options = {
+  swaggerDefinition,
+  apis: ['./routes/*.js'],
+};
+const swaggerSpec = swaggerJSDoc(options);
+const swaggerUi = require('swagger-ui-express');
+
 require('dotenv').config()
 
 const models = require("./models");
@@ -44,6 +80,7 @@ router.use("/output", output);
 router.use(fileUpload({createParentPath:true}));
 router.use("/implementation", implementation);
 router.use("/importer", importer);
+router.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use("/phenoflow", router);
 

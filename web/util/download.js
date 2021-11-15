@@ -58,7 +58,7 @@ class Download {
     for(let step of steps) {
       Zip.add(archive, step.content, step.name+".cwl");
       try {
-        if(step.fileName) await Zip.addFile(archive, "uploads/"+step.workflowId+"/", (implementationUnits[step.name]?implementationUnits[step.name]:implementationUnits)+"/"+step.fileName);
+        if(step.fileName) await Zip.addFile(archive, "uploads/"+step.workflowId+"/", (implementationUnits&&implementationUnits[step.name]?implementationUnits[step.name]:implementationUnits)+"/"+step.fileName);
       } catch(addFileError) {
         logger.error("Failed to add file to archive: "+addFileError);
         return false;
