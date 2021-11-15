@@ -118,7 +118,8 @@ describe("importer", () => {
     }).timeout(0);
     
     it("[IM2] Should be able to import a codelist.", async() => {
-      await Importer.importCodelists(Importer.getCSVs(), "Imported codelist", "Imported codelist", "martinchapman");
+      let res = await Importer.importCodelists(Importer.getCSVs(), "Imported codelist", "Imported codelist", "martinchapman");
+      res.should.have.status(200);
     }).timeout(0);
 
     it("[IM3] Should be able to import a steplist that references a branch.", async() => {
@@ -131,7 +132,8 @@ describe("importer", () => {
           ]
         };
       let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
-      await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      let res = await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      res.should.have.status(200);
     }).timeout(0);
 
     it("[IM4] Should be able to import a branch only steplist.", async() => {
@@ -143,7 +145,8 @@ describe("importer", () => {
           ]
         };
         let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
-      await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      let res = await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      res.should.have.status(200);
     }).timeout(0);
 
     it("[IM5] Should be able to import a keyword list.", async() => {
@@ -155,10 +158,16 @@ describe("importer", () => {
           {"keyword": "keywordC", "case_incl": "Y"},
         ]
       };
-      await Importer.importKeywordList(keywords, "Imported keywords", "Imported keywords", "martinchapman");
+      let res = await Importer.importKeywordList(keywords, "Imported keywords", "Imported keywords", "martinchapman");
+      res.should.have.status(200);
     }).timeout(0);
 
-    it("[IM6] Create children for imported phenotypes.", async() => {
+    it("[IM6] Should be able to add a connector.", async() => {
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/addConnector").attach("implementationTemplate", "templates/read-potential-cases.template.py", "read-potential-cases.template.py").field({"existingWorkflowIds":[1], "dataSource":"template", "language":"python"});
+      res.should.have.status(200);
+    }).timeout(0);
+
+    it("[IM7] Create children for imported phenotypes.", async() => {
       for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
     }).timeout(0);
   

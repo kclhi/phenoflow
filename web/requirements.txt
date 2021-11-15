@@ -14,6 +14,7 @@ express-fileupload
 express-jwt
 fs
 got
+he
 http-errors
 isomorphic-git
 jsonwebtoken
@@ -32,5 +33,7 @@ sequelize
 sequelize-cli
 string-similarity
 sqlite3
+swagger-jsdoc
+swagger-ui-express
 winston
 yaml

@@ -6,6 +6,30 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 
+/**
+ * @swagger
+ * /phenoflow/login:
+ *   post:
+ *     summary: Authenticate
+ *     description: Retrieve a token to use against restricted Phenoflow API endpoints.
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               user:
+ *                 type: string
+ *                 description: user
+ *               password:
+ *                 type: string
+ *                 description: password
+ *                 example: password
+ *     responses:
+ *       200:
+ *         description: Authentication token to send with subsequent requests
+ */
 router.post("/", async function(req, res, next) {
 
   try {
