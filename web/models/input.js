@@ -8,16 +8,12 @@ module.exports = function(sequelize, DataTypes) {
 	});
 
 	input.associate = function(models) {
-
 		input.belongsTo(models.step, {
-
 			onDelete: "CASCADE",
 			foreignKey: {
 				allowNull: false
 			}
-
 		});
-
 	};
 
 	return input;

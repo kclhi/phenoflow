@@ -1,4 +1,5 @@
 archiver
+await-spawn
 bcrypt
 body-parser
 chai
@@ -13,6 +14,7 @@ express-fileupload
 express-jwt
 fs
 got
+he
 http-errors
 isomorphic-git
 jsonwebtoken
@@ -25,7 +27,7 @@ neat-csv
 node-cron
 proxyquire
 pug
-request
+python-shell
 sanitize-html
 sequelize
 sequelize-cli
