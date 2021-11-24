@@ -4,51 +4,30 @@ chai.use(require("chai-http"));
 const fs = require("fs").promises;
 const config = require("config");
 const models = require('../models');
-const importerUtils = require("../util/importer");
+const ImporterUtils = require("../util/importer");
 
 async function importPhekbCodelists(path, files) {
-  
   let csvs=[];
-  for(let file of files) csvs.push({"filename":file, "content":await importerUtils.openCSV(path, file)});
-  let id = await importerUtils.hashFiles(path, files);
-  return await Importer.importCodelists(csvs, importerUtils.getName(files[0]), id+" - "+importerUtils.getName(files[0]), "phekb");
-
-}
-
-async function importPhekbSteplist(path, file) {
-  
-  let stepList = {"filename":file, "content":await importerUtils.openCSV(path, file)};
-  let csvs = [];
-  for(let row of stepList.content) {
-    if(row["logicType"]=="codelist") {
-      let file = row["param"].split(":")[0];
-      csvs.push({"filename":file, "content": await importerUtils.openCSV(path, file)});
-    }
-  }
-  let id = await importerUtils.hashFiles(path, csvs.map((csv)=>csv.filename));
-  return await Importer.importSteplist(stepList, csvs, importerUtils.getName(stepList.filename), id+" - "+importerUtils.getName(stepList.filename), "phekb");
-
+  for(let file of files) csvs.push({"filename":file, "content":await ImporterUtils.openCSV(path, file)});
+  let id = await ImporterUtils.hash(csvs.map(csv=>csv.content));
+  return await Importer.importCodelists(csvs, ImporterUtils.getName(files[0]), id+" - "+ImporterUtils.getName(files[0]), "phekb");
 }
 
 async function testPhekbCodelist(file) {
-
   const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
   // Can't perform test if file doesn't exist.
   try { await fs.stat(PATH) } catch(error) { return true; }
   let res = await importPhekbCodelists(PATH, [file]);
   res.body.should.be.a("object");
   res.should.have.status(200);
-
 }
 
-async function testPhekbSteplist(list) {
-
+async function testPhekbSteplist(file) {
   const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
   try { await fs.stat(PATH) } catch(error) { return true; }
-  let res = await importPhekbSteplist(PATH, list);
+  let res = await Importer.processAndImportSteplist(PATH, file, "phekb");
   res.body.should.be.a("object");
   res.should.have.status(200);
-
 }
 
 describe("phekb importer", () => {
@@ -64,7 +43,7 @@ describe("phekb importer", () => {
 		});
 
     it("[PI2] Should be able to import a codelist.", async() => { 
-      await testPhekbCodelist("rheumatoid-arthritis-3_icd.csv");
+      await testPhekbCodelist("abdominal-aortic-aneurysm-2_cpt.csv");
     }).timeout(0);
 
     it("[PI3] Should be able to import all codelists.", async() => { 
@@ -96,6 +75,16 @@ describe("phekb importer", () => {
       await testPhekbSteplist("abdominal-aortic-aneurysm-2.csv");
     }).timeout(0);
 
+    it("[PI6] Phekb validation set.", async() => { 
+      await testPhekbSteplist("abdominal-aortic-aneurysm-2.csv");
+      await testPhekbCodelist("rheumatoid-arthritis_icd.csv");
+      await testPhekbCodelist("rheumatoid-arthritis-2_icd.csv");
+      await testPhekbCodelist("rheumatoid-arthritis-3_icd.csv");
+      await testPhekbCodelist("type-2-diabetes_icd.csv");
+      await testPhekbCodelist("type-2-diabetes-2_icd.csv");
+      await testPhekbCodelist("type-2-diabetes-3_icd.csv");
+    }).timeout(0);
+    
   });
 
 });

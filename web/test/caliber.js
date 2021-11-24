@@ -154,24 +154,36 @@ describe("caliber importer", () => {
         }
         expect(yaml).to.include("phenoflow");
         ids.push(id);
-        await fs.writeFile("test/output/importer/" + file, yaml);
+        await fs.writeFile("test/fixtures/caliber/output/" + file, yaml);
       }
     }).timeout(0);
 
     it("[CI6] Importing the same (CALIBER) phenotype should result in no changes.", async() => {
+      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
+      try { await fs.stat(PATH) } catch(error) { return true; }
       await testCaliberPhenotype("blood-pressure.md");
       await testCaliberPhenotype("blood-pressure.md");
       let workflows = await models.workflow.findAndCountAll();
-      expect(workflows.count).to.equal(3);
+      expect(workflows.count).to.equal(4);
     }).timeout(0);
 
     it("[CI7] Importing an update to the same (CALIBER) phenotype should edit the existing definition.", async() => {
+      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
+      try { await fs.stat(PATH) } catch(error) { return true; }
       await testCaliberPhenotype("blood-pressure.md");
       await testCaliberPhenotype("blood-pressure-alt.md");
       let workflows = await models.workflow.findAndCountAll();
-      expect(workflows.count).to.equal(3);
+      expect(workflows.count).to.equal(4);
     }).timeout(0);
 
+    it("[CI8] Import CALIBER validation set.", async() => {
+      await testCaliberPhenotype("kuan_AAA_NJ2gf6ZTTxjayMcK5ksHXf.md");
+      await testCaliberPhenotype("kuan_diabetes_bYMFsBEu7tVB6YkrQ8aBvk.md");
+      await testCaliberPhenotype("sapey_diabetes_ZmgyhwLqB2QmAtxENwkL8X.md");
+      await testCaliberPhenotype("carr_diabetes_jQLxtg2Z3zPcXWge5Nv9tU.md");
+      await testCaliberPhenotype("kuan_RhA_EWvRLa7DNMCiGs2XvC2zKT.md");
+    }).timeout(0);
+    
   });
 
 });

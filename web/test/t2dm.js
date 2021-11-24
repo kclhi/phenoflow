@@ -36,7 +36,7 @@ describe('t2dm', () => {
 			});
 
 			it('Add abnormal lab implementation.', async() => {
-				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "abnormal-lab.knwf", USERNAME);
+				await Workflow.implementation(stepId, "knime", "test/fixtures/t2dm/knime/", "abnormal-lab.knwf", USERNAME);
 			});
 
 			// 3. rx_t2dm_med-abnormal-lab
@@ -54,11 +54,11 @@ describe('t2dm', () => {
 			});
 
 			it('Add rx_t2dm_med-abnormal-lab implementation.', async() => {
-				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "rx_t2dm_med-abnormal-lab.knwf", USERNAME);
+				await Workflow.implementation(stepId, "knime", "test/fixtures/t2dm/knime/", "rx_t2dm_med-abnormal-lab.knwf", USERNAME);
 			});
 
 			it('Add rx_t2dm_med-abnormal-lab alternative implementation.', async() => {
-				await Workflow.implementation(stepId, "python", "test/implementation/python/t2dm/", "rx_t2dm_med-abnormal-lab.py", USERNAME);
+				await Workflow.implementation(stepId, "python", "test/fixtures/t2dm/python/", "rx_t2dm_med-abnormal-lab.py", USERNAME);
 			});
 
 			// 4. dx_t2dm-abnormal-lab
@@ -76,7 +76,7 @@ describe('t2dm', () => {
 			});
 
 			it('Add dx_t2dm-abnormal-lab implementation.', async() => {
-				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-abnormal-lab.knwf", USERNAME);
+				await Workflow.implementation(stepId, "knime", "test/fixtures/t2dm/knime/", "dx_t2dm-abnormal-lab.knwf", USERNAME);
 			});
 
 			// 5. dx_t2dm-rx_t2dm_med
@@ -94,7 +94,7 @@ describe('t2dm', () => {
 			});
 
 			it('Add dx_t2dm-rx_t2dm_med implementation.', async() => {
-				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-rx_t2dm_med.knwf", USERNAME);
+				await Workflow.implementation(stepId, "knime", "test/fixtures/t2dm/knime/", "dx_t2dm-rx_t2dm_med.knwf", USERNAME);
 			});
 
 			// 6. dx_t2dm-rx_tdm_med-prec
@@ -112,7 +112,7 @@ describe('t2dm', () => {
 			});
 
 			it('Add dx_t2dm-rx_tdm_med-prec implementation.', async() => {
-				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-rx_tdm_med-prec.knwf", USERNAME);
+				await Workflow.implementation(stepId, "knime", "test/fixtures/t2dm/knime/", "dx_t2dm-rx_tdm_med-prec.knwf", USERNAME);
 			});
 
 			// 7. dx_t2dm-rx_t1dm_med-dx2
@@ -130,7 +130,7 @@ describe('t2dm', () => {
 			});
 
 			it('Add dx_t2dm-rx_t1dm_med-dx2 implementation.', async() => {
-				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "dx_t2dm-rx_t1dm_med-dx2.knwf", USERNAME);
+				await Workflow.implementation(stepId, "knime", "test/fixtures/t2dm/knime/", "dx_t2dm-rx_t1dm_med-dx2.knwf", USERNAME);
 			});
 
 			// 8. output-cases
@@ -148,7 +148,7 @@ describe('t2dm', () => {
 			});
 
 			it('Add output-cases implementation.', async() => {
-				await Workflow.implementation(stepId, "knime", "test/implementation/knime/t2dm/", "output-cases.knwf", USERNAME);
+				await Workflow.implementation(stepId, "knime", "test/fixtures/t2dm/knime/", "output-cases.knwf", USERNAME);
 			});
 
 		}
@@ -170,7 +170,7 @@ describe('t2dm', () => {
 			});
 
 			it("Add read potential cases implementation (" + targetDatasource + ").", async() => {
-				await Workflow.implementation(stepId, implementationLangauge, "test/implementation/" + implementationLangauge + "/t2dm/" + targetDatasource + "/", "read-potential-cases-" + targetDatasource + "." + implementationLangaugeExtension, USERNAME);
+				await Workflow.implementation(stepId, implementationLangauge, "test/fixtures/t2dm/" + implementationLangauge + "/", "read-potential-cases-" + targetDatasource + "." + implementationLangaugeExtension, USERNAME);
 			});
 
 		}

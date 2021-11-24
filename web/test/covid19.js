@@ -33,7 +33,7 @@ describe("covid19", () => {
 			}).timeout(0);
 
 			it("Add " + code + " implementation.", async() => {
-				await Workflow.implementation(stepId, "python", "test/implementation/python/covid19/", code.toLowerCase() + ".py", USERNAME);
+				await Workflow.implementation(stepId, "python", "test/fixtures/covid19/python/", code.toLowerCase() + ".py", USERNAME);
 			}).timeout(0);
 
 		}
@@ -65,7 +65,7 @@ describe("covid19", () => {
 			}).timeout(0);
 
 			it('Add output-cases implementation.', async() => {
-				await Workflow.implementation(stepId, "python", "test/implementation/python/covid19/", "output-cases.py", USERNAME);
+				await Workflow.implementation(stepId, "python", "test/fixtures/covid19/python/", "output-cases.py", USERNAME);
 			}).timeout(0);
 
 		}
@@ -87,7 +87,7 @@ describe("covid19", () => {
 			}).timeout(0);
 
 			it("Add read potential cases implementation (" + targetDatasource + ").", async() => {
-				await Workflow.implementation(stepId, implementationLangauge, "test/implementation/" + implementationLangauge + "/covid19/" + targetDatasource + "/", "read-potential-cases-" + targetDatasource + "." + implementationLangaugeExtension, USERNAME);
+				await Workflow.implementation(stepId, implementationLangauge, "test/fixtures/covid19/" + implementationLangauge + "/", "read-potential-cases-" + targetDatasource + "." + implementationLangaugeExtension, USERNAME);
 			}).timeout(0);
 
 		}

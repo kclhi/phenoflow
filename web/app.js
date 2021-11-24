@@ -9,7 +9,7 @@ const fileUpload = require("express-fileupload");
 const cron = require("node-cron");
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerDefinition = {
-  openapi: '3.0.0',
+  openapi: '3.0.1',
   info: {
     title: 'Phenoflow API',
     version: '1.0.0',
@@ -26,6 +26,15 @@ const swaggerDefinition = {
       description: 'Live server',
     }
   ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      }
+    }
+  }
 };
 const options = {
   swaggerDefinition,

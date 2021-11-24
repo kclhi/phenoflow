@@ -26,5 +26,9 @@ module.exports = {
   },
   validation: {
     SNOWSTORM_URL: "localhost:8080"
+  },
+  zenodo: {
+    URL: "sandbox.zenodo.org",
+    ACCESS_TOKEN: process.env.ZENODO_ACCESS_TOKEN
   }
 };
