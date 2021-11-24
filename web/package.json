@@ -39,6 +39,7 @@
     "sanitize-html": "^2.5.3",
     "sequelize": "^6.9.0",
     "sequelize-cli": "^6.3.0",
+    "sequelize-pool": "^7.1.0",
     "string-similarity": "^4.0.4",
     "swagger-jsdoc": "^6.1.0",
     "swagger-ui-express": "^4.1.6",
