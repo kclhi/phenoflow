@@ -64,13 +64,6 @@ Local development RSA private key full path, to be generated, or reused from abo
 
 `RSA_PRIVATE_KEY_FULL_PATH=`
 
-(Optional) If using [SAIL databank](https://saildatabank.com/) import, specify API credentials:
-
-```
-SAIL_USERNAME=
-SAIL_PASSWORD=
-```
-
 ### DB encryption
 
 1. Run [web/db/encrypt/keys/db-encryption.sh](web/db/encrypt/keys/db-encryption.sh).
@@ -174,9 +167,9 @@ Inside [web](web), run all tests:
 
 `npm test`
 
-Run specific test(s):
+Run specific test(s), e.g.:
 
-`NODE_ENV=test npx mocha -g "TB1|TI1|TI3|covid|t2dm|TI5" --exit`
+`NODE_ENV=test npx mocha -g "basic" --exit`
 
 Inside [generator](generator), run all tests:
 
@@ -191,7 +184,7 @@ docker-compose -f docker-compose.test.yml build;
 docker-compose -f docker-compose.test.yml up;
 ```
 
-Can also be used to deploy sample phenotypes.
+[Tests can also be used to import phenotypes from different data sources](web/test).
 
 ## Usage
 
