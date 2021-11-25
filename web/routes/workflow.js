@@ -62,8 +62,8 @@ router.get("/all/:filter/:offset?", async function(req, res, next) {
  * @swagger
  * /phenoflow/phenotype/all:
  *   post:
- *     summary: List phenotypes.
- *     description: Retrieve a list of all phenotypes, or phenotypes matching the given criteria.
+ *     summary: List phenotypes
+ *     description: Retrieve a list of all phenotypes, or phenotypes matching the given criteria
  *     requestBody:
  *       required: false
  *       content:
@@ -81,7 +81,7 @@ router.get("/all/:filter/:offset?", async function(req, res, next) {
  *                 example: Rheumatoid arthritis
  *     responses:
  *       200:
- *         description: A list of phenotypes.
+ *         description: A list of phenotypes
  */
 router.post("/all", async function(req, res, next) {
 
@@ -230,8 +230,8 @@ async function createZip(workflowId, language=null, implementationUnits=null, re
  * @swagger
  * /phenoflow/phenotype/generate/{phenotypeId}:
  *   post:
- *     summary: Generate a computable phenotype.
- *     description: Generate a CWL workflow based on a phenotype definition.
+ *     summary: Generate a computable phenotype
+ *     description: Generate a CWL workflow based on a phenotype definition
  *     parameters:
  *       - in: path
  *         name: phenotypeId
@@ -241,7 +241,7 @@ async function createZip(workflowId, language=null, implementationUnits=null, re
  *           type: integer
  *     responses:
  *       200:
- *         description: An executable workflow.
+ *         description: An executable workflow
  */
 router.post("/generate/:workflowId", async function(req, res, next) {
   if(!req.body.userName) return res.sendStatus(500);
