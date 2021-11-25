@@ -84,13 +84,13 @@ class Importer {
     return [
       {"filename":"branch-a.csv",
       "content": [
-        {"logicType": "codelist", "param": "listA_system.csv:1:T"},
-        {"logicType": "codelist", "param": "listB_system.csv:1:T"},
+        {"logicType": "codelist", "param": "listA_system.csv:1"},
+        {"logicType": "codelist", "param": "listB_system.csv:1"},
       ]},
       {"filename":"branch-b.csv",
       "content": [
-        {"logicType": "codelist", "param": "listC_system.csv:1:F"},
-        {"logicType": "codelist", "param": "listD_system.csv:1:T"},
+        {"logicType": "codelistExclude", "param": "listC_system.csv:1"},
+        {"logicType": "codelist", "param": "listD_system.csv:1"},
       ]}
     ];
   }
@@ -144,7 +144,7 @@ describe("importer", () => {
             {"logicType": "branch", "param": "branch-b.csv"}
           ]
         };
-        let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
+      let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
       let res = await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
       res.should.have.status(200);
     }).timeout(0);
@@ -153,9 +153,9 @@ describe("importer", () => {
       let keywords = {
         filename: "keywords.csv",
         content: [
-          {"keyword": "keywordA", "case_incl": "Y"},
-          {"keyword": "keywordB", "case_incl": "Y"},
-          {"keyword": "keywordC", "case_incl": "Y"},
+          {"keyword": "TermA TermB"},
+          {"keyword": "TermA TermC"},
+          {"keyword": "TermD TermE"},
         ]
       };
       let res = await Importer.importKeywordList(keywords, "Imported keywords", "Imported keywords", "martinchapman");
