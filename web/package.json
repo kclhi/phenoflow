@@ -8,6 +8,7 @@
     "migrate": "sequelize db:migrate"
   },
   "dependencies": {
+    "adm-zip": "^0.5.9",
     "archiver": "^5.3.0",
     "await-spawn": "^4.0.2",
     "bcrypt": "^5.0.1",

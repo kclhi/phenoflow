@@ -22,6 +22,7 @@ const config = require("config");
  *               user:
  *                 type: string
  *                 description: user
+ *                 example: martinchapman
  *               password:
  *                 type: string
  *                 description: password

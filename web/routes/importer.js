@@ -7,21 +7,115 @@ const op = sequelize.Op;
 const jwt = require('express-jwt');
 const fs = require('fs').promises;
 const sanitizeHtml = require('sanitize-html');
+const AdmZip = require('adm-zip');
+const parse = require('neat-csv');
 
 const config = require("config");
 const WorkflowUtils = require("../util/workflow");
 const ImporterUtils = require("../util/importer");
 const Workflow = require('../util/workflow');
 
+/**
+ * @swagger
+ * /phenoflow/importer/importCodelists:
+ *   post:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Import a set of codelists
+ *     description: Create a phenotype definitions based upon a collection of codelists
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               csvs:
+ *                 type: string
+ *                 description: A zipped folder containing a collection of codelists as CSVs
+ *                 format: binary
+ *               name:
+ *                 type: string
+ *                 description: The name of the new definition
+ *                 example: Diabetes
+ *               about:
+ *                 type: string
+ *                 description: A description of the new definition
+ *                 example: Diabetes phenotype developed at KCL
+ *               userName:
+ *                 type: string
+ *                 description: the name of a pre-registered author to whom the definition should be attributed
+ *                 example: martinchapman
+ *     responses:
+ *       200:
+ *         description: Definition added.
+ */
 router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
+  if(req.files&&req.files.csvs) {
+    let zip;
+    try { 
+      zip = new AdmZip(req.files.csvs.data);
+    } catch(zipError) { 
+      logger.error(zipError);
+      return res.status(500).send(zipError.message);
+    }
+    req.body.csvs = [];
+    for(let entry of zip.getEntries()) req.body.csvs.push({"filename":entry.entryName, "content":await parse(entry.getData().toString())});
+    let uniqueCSVs = req.body.csvs.filter(({filename}, index)=>!req.body.csvs.map(csv=>csv.filename).includes(filename, index+1));
+    req.body.about = req.body.about+" - "+ImporterUtils.hash(uniqueCSVs.map(csv=>csv.content));
+  }
   if(!req.body.csvs||!req.body.name||!req.body.about||!req.body.userName) res.status(500).send("Missing params.");
-  if(await Importer.importLists(req.body.csvs, req.body.name, req.body.about, req.body.userName, ImporterUtils.getValue, ImporterUtils.getDescription, "code")) return res.sendStatus(200);
-  else return res.sendStatus(500);
+  try {
+    if(await Importer.importLists(req.body.csvs, req.body.name, req.body.about, req.body.userName, ImporterUtils.getValue, ImporterUtils.getDescription, "code")) return res.sendStatus(200);
+    else return res.sendStatus(500);
+  } catch(importListsError) {
+    logger.error(importListsError);
+    return res.sendStatus(500);
+  }
 });
 
+/**
+ * @swagger
+ * /phenoflow/importer/importKeywordList:
+ *   post:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Import a list of keywords
+ *     description: Create a phenotype definitions based upon a list of keywords
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               keywords:
+ *                 type: string
+ *                 description: A CSV file listing keywords
+ *                 format: binary
+ *               name:
+ *                 type: string
+ *                 description: The name of the new definition
+ *                 example: Diabetes
+ *               about:
+ *                 type: string
+ *                 description: A description of the new definition
+ *                 example: Diabetes phenotype developed at KCL
+ *               userName:
+ *                 type: string
+ *                 description: the name of a pre-registered author to whom the definition should be attributed
+ *                 example: martinchapman
+ *     responses:
+ *       200:
+ *         description: Definition added
+ */
 router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
+  if(req.files&&req.files.keywords) {
+    req.body.keywords = {"filename":req.files.keywords.name, "content":await parse(req.files.keywords.data.toString())};
+    req.body.about = req.body.about+" - "+ImporterUtils.hash(req.body.keywords.content);
+  }
   if(!req.body.keywords||!req.body.name||!req.body.about||!req.body.userName) res.status(500).send("Missing params.");
   function getValue(row) {
     if(row["keyword"]) return row["keyword"].replace(/\\\\b/g, "");
@@ -37,8 +131,61 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
   else return res.sendStatus(500);
 });
 
+/**
+ * @swagger
+ * /phenoflow/importer/importSteplist:
+ *   post:
+ *     security:
+ *       - bearerAuth: []
+ *     summary: Import a steplist
+ *     description: Create a phenotype definitions based upon a list of steps
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               steplist:
+ *                 type: string
+ *                 description: The list of steps, as a file formatted according to the Phenoflow import standard
+ *                 format: binary
+ *               csvs:
+ *                 type: string
+ *                 description: A zipped folder containing a collection of the CSVs referenced in the steplist, including branches (and their CSVs)
+ *                 format: binary
+ *               name:
+ *                 type: string
+ *                 description: The name of the new definition
+ *                 example: Diabetes
+ *               about:
+ *                 type: string
+ *                 description: A description of the new definition
+ *                 example: Diabetes phenotype developed at KCL
+ *               userName:
+ *                 type: string
+ *                 description: the name of a pre-registered author to whom the definition should be attributed
+ *                 example: martinchapman
+ *     responses:
+ *       200:
+ *         description: Definition added
+ */
 router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
+  if(req.files&&req.files.steplist&&req.files.csvs) {
+    req.body.steplist = {"filename":req.files.steplist.name, "content":await parse(req.files.steplist.data.toString())};
+    let zip;
+    try { 
+      zip = new AdmZip(req.files.csvs.data);
+    } catch(zipError) { 
+      logger.error(zipError);
+      return res.status(500).send(zipError.message);
+    }
+    req.body.csvs = [];
+    for(let entry of zip.getEntries()) req.body.csvs.push({"filename":entry.entryName, "content":await parse(entry.getData().toString())});
+    let id = await ImporterUtils.steplistHash(req.body.steplist, req.body.csvs);
+    req.body.about = req.body.about+" - "+id;
+  }
   if(!req.body.steplist||!req.body.name||!req.body.about||!req.body.userName||!req.body.csvs) res.status(500).send("Missing params.");
   let list;
   let uniqueCSVs = req.body.csvs.filter(({filename}, index)=>!req.body.csvs.map(csv=>csv.filename).includes(filename, index+1));
@@ -63,8 +210,8 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
  *   post:
  *     security:
  *       - bearerAuth: []
- *     summary: Add a new connector.
- *     description: Add a new connector to an existing phenotype definition.
+ *     summary: Add a new connector
+ *     description: Add a new connector to an existing phenotype definition
  *     requestBody:
  *       required: true
  *       content:
@@ -85,11 +232,11 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
  *                 example: FHIR
  *               language:
  *                 type: string
- *                 description: The language in which the connector has been developed.
+ *                 description: The language in which the connector has been developed
  *                 example: python, js or KNIME
  *     responses:
  *       200:
- *         description: An executable workflow.
+ *         description: Connector added
  */
 router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
   req.setTimeout(0);
