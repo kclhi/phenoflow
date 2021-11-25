@@ -136,7 +136,8 @@ class Importer {
         let fileCategory = ImporterUtils.getFileCategory(csvs.filter((csv)=>csv.filename==file)[0].content, name);
         list.push({"logicType":"codelist", "language":"python", "categories":categories, "requiredCodes":requiredCodes, "fileCategory":fileCategory});
       } else if(row["logicType"]=="codelistExclude") {
-        let categoriesExclude = ImporterUtils.getCategories([csvs.filter((csv)=>csv.filename==row["param"])[0]], ImporterUtils.getName(row["param"]));
+        let file = row["param"].split(":")[0];
+        let categoriesExclude = ImporterUtils.getCategories([csvs.filter((csv)=>csv.filename==file)[0]], ImporterUtils.getName(row["param"]));
         list.push({"logicType":"codelistExclude", "language":"python", "categoriesExclude":categoriesExclude});
       } else if(row["logicType"]=="age") {
         list.push({"logicType":"age", "language":"python", "ageLower":row["param"].split(":")[0], "ageUpper":row["param"].split(":")[1]});

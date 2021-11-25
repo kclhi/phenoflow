@@ -99,7 +99,7 @@ describe("caliber importer", () => {
     });
     
     it("[CI2] Should be able to import a phenotype CSV.", async() => {
-      await testCaliberPhenotype("blood-pressure.md");
+      await testCaliberPhenotype("lewer_HUPIO_mZXE2uZxDzVYBsAbTjbhrK.md");
     }).timeout(0);
 
     it("[CI3] Should be able to import all phenotype CSVs.", async() => {

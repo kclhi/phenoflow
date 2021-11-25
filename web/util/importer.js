@@ -11,7 +11,7 @@ const WorkflowUtils = require("./workflow");
 class Importer {
 
   static primaryCodeKeys() {
-    return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid"];
+    return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid", "readorsnomedterm"];
   }
 
   static secondaryCodeKeys() {
@@ -36,6 +36,11 @@ class Importer {
   static clean(input, spaces=false) {
     input = input.replace(/\//g, "").replace(/(\s)?\(.*\)/g, "").replace(/\,/g, "").replace(/&amp;/g, "and");
     if(!spaces) input = input.replace(/ /g, "-");
+    return input;
+  }
+
+  static lightClean(input) {
+    input = input.replace("(", "").replace(")", "");
     return input;
   }
 
@@ -64,8 +69,8 @@ class Importer {
   }
 
   static getDescription(row) {
-    const descriptions = ["description", "conceptname", "proceduredescr", "icd10term", "icd11term", "snomedterm", "icd10codedescr", "icdterm", "readterm", "readcodedescr", "term", "snomedctterm"];
-    let description = row[Object.keys(row).filter(key=>descriptions.includes(Importer.clean(key)))[0]];
+    const descriptions = ["description", "conceptname", "proceduredescr", "icd10term", "icd11term", "snomedterm", "icd10codedescr", "icdterm", "readterm", "readcodedescr", "term", "snomedctterm", "name"];
+    let description = row[descriptions.filter(description=>Object.keys(row).map(key=>Importer.clean(key)).includes(description))[0]];
     let splitDescription = [];
     if(description) {
       description = description.replace("[X]", "").replace("[D]", "");
@@ -119,7 +124,8 @@ class Importer {
     let categories = {};
     const primaryCodingSystems = ["read", "snomed", "snomedct"];
     const secondaryCodingSystems = ["icd9", "icd10", "cpt", "icd10cm", "icd9cm", "icd9diagnosis", "icd10diagnosis"];
-    
+    name = this.lightClean(name);
+
     function getKeyTerm(phrase, name) {
       if(phrase.split(Importer.splitExpression()).length==1) return phrase;
       if(phrase.split(Importer.splitExpression()).filter(term=>!Importer.termAndName(term, name.toLowerCase())).length) return name;
