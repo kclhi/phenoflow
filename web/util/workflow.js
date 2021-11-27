@@ -1,13 +1,15 @@
-const models = require("../models");
+const nlp = require('compromise');
+nlp.extend(require('compromise-adjectives'));
+const models = require('../models');
 const logger = require('../config/winston');
 const config = require('config');
 const sequelize = require('sequelize');
 const op = sequelize.Op;
+const fs = require('fs').promises;
 
 class Workflow {
 
   static async workflow(workflow) {
-
     try {
       let steps = await models.step.findAll({where:{workflowId:workflow.id}, order:[['position', 'ASC']]});
       let mergedSteps = [];
@@ -15,7 +17,7 @@ class Workflow {
         let mergedStep = JSON.parse(JSON.stringify(step));
         mergedStep.inputs = JSON.parse(JSON.stringify(await models.input.findAll({where:{stepId:step.id}})));
         mergedStep.outputs = JSON.parse(JSON.stringify(await models.output.findAll({where:{stepId:step.id}})));
-        mergedStep.implementations = JSON.parse(JSON.stringify(await models.implementation.findAll({where: {stepId: step.id}})));
+        mergedStep.implementations = JSON.parse(JSON.stringify(await models.implementation.findAll({where: {stepId: step.id}, order:[['language', 'DESC']] })));
         mergedSteps.push(mergedStep);
       }
       workflow.steps = mergedSteps;
@@ -25,11 +27,9 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
   static async getWorkflow(workflowId) {
-
     try {
       var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
       if(!workflow) throw "Error finding workflow";
@@ -40,43 +40,80 @@ class Workflow {
       throw error;
     }
     return workflow;
-
   }
 
-  static async getRandomWorkflow() {
-
+  static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT"), getRestricted=false) {
     try {
-      let workflows = await models.workflow.findAll();
-      if(!workflows) throw "Error finding workflows";
-      var workflow = Workflow.workflow(JSON.parse(JSON.stringify(workflows[Math.floor(Math.random() * workflows.length)])));
-    } catch(error) {
-      error = "Error getting workflow: " + error;
-      logger.debug(error);
-      throw error;
-    }
-    return workflow;
-
-  }
-
-  static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
-
-    try {
-      let workflows = await models.workflow.findAll({where:{complete:true, [op.or]:[{name:{[op.like]:"%"+category+"%"}},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false}], order:[['name', 'ASC']]});
+      let workflows = await models.workflow.findAll({where:{complete:true, '$user.restricted$':getRestricted, [op.or]:[{name:{[op.like]:"%"+category+"%"}},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false},{model:models.user}], order:[['name', 'ASC']]});
       return workflows.slice(offset, offset+limit);
     } catch(error) {
       error = "Error getting complete workflows: " + error;
       logger.debug(error);
       throw error;
     }
+  }
 
+  static async restrictedWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
+    return await this.completeWorkflows(category, offset, limit, true);
+  }
+
+  static async getRandomWorkflow() {
+    try {
+      let workflows = await this.completeWorkflows()
+      workflows = workflows.map(workflow=>this.workflow(workflow));
+      if(!workflows||!workflows.length) return false;
+      return workflows[Math.floor(Math.random() * workflows.length)];
+    } catch(error) {
+      error = "Error getting workflow: " + error;
+      logger.debug(error);
+      throw error;
+    }
+  }
+
+  static async deleteStepsFromWorkflow(workflowId) {
+    try {
+      let steps = await models.step.findAll({where:{workflowId:workflowId}});
+      for(let step of steps) {
+        try {
+          let implementations = await models.implementation.findAll({where:{stepId:step.id}});
+          for(let implementation of implementations) {
+            if(implementation.fileName.includes(".")) await fs.unlink("uploads/"+workflowId+"/"+implementation.language+"/"+implementation.fileName);
+          } 
+        } catch(exception) {
+          console.error("Error deleting implementation:"+error);
+        }
+        try {
+          await models.implementation.destroy({where:{stepId:step.id}});
+        } catch(exception) {
+          console.error("Error deleting implementation:"+error);
+        }
+        try {
+          await models.input.destroy({where:{stepId:step.id}});
+        } catch(exception) {
+          console.error("Error deleting input:"+error);
+        }
+        try {
+          await models.output.destroy({where:{stepId:step.id}});
+        } catch(exception) {
+          console.error("Error deleting output:"+error);
+        }
+      }
+      try {
+        await models.step.destroy({where:{workflowId:workflowId}});
+      } catch(exception) {
+        console.error("Error deleting steps:"+error);
+      }
+    } catch(exception) {
+      console.error("Error getting steps to delete:"+error);
+    }
   }
 
   static async addChildrenToStep(workflow) {
-
     try {
       let children = await models.child.findAll({where:{parentId:workflow.id}});
       for(let child of children) {
         if(child.distinctStepPosition&&child.distinctStepName) {
+          if(!workflow.steps[child.distinctStepPosition-1]) continue;
           if(!workflow.steps[child.distinctStepPosition-1].children) workflow.steps[child.distinctStepPosition-1].children = [];
           workflow.steps[child.distinctStepPosition-1].children.push({workflowId:child.workflowId, stepName:child.distinctStepName});
         }
@@ -87,11 +124,9 @@ class Workflow {
       logger.debug(error);
       throw error;
     }
-
   }
 
   static async workflowComplete(workflowId) {
-
     try {
       let candidateWorkflow = await Workflow.getWorkflow(workflowId);
       let completeWorkflow = true;
@@ -111,12 +146,10 @@ class Workflow {
       logger.debug(error);
       throw error;
     }
-
   }
 
-  // A workflow is defined as being a child of another if all but one of their steps overlap OR if all of their steps overlap.
+  // A workflow is defined as being a child of another if all but one of their steps overlap
   static async workflowChild(workflowId, exhaustive=false) {
-
     let workflows = await models.workflow.findAll();
     if(!workflows.filter(workflow=>workflow.id==workflowId).length) return;
     const children = await models.child.findAll({where:{parentId:workflowId}});
@@ -132,6 +165,7 @@ class Workflow {
         const ERROR_PREFIX = "Unable to identify workflow intersection: ";
         const workflowSteps = await models.step.findAll({where:{workflowId:workflow.id}});
         if(!workflowSteps) throw new Error(ERROR_PREFIX + "Error getting other workflow steps.");
+        if(workflowSteps.length!=candidateChildSteps.length) continue;
         let distinctStepName, distinctStepPosition;
         for(let candidateChildStep of candidateChildSteps) {
           let workflowStep = null;
@@ -161,11 +195,9 @@ class Workflow {
           ) await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
       }
     }
-
   }
 
   static async getFullWorkflow(workflowId, language=null, implementationUnits=null) {
-
     try {
       var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
       if(!workflow) throw "Error finding workflow";
@@ -179,8 +211,10 @@ class Workflow {
         mergedStep.outputs = JSON.parse(JSON.stringify(await models.output.findAll({where:{stepId:step.id}})));
         if(!mergedStep.outputs) throw "Error finding outputs";
         let implementationCriteria = { stepId: step.id };
-        if(language) { implementationCriteria.language = language; } else if (implementationUnits) { implementationCriteria.language = implementationUnits[step.name]; }
-        mergedStep.implementation = JSON.parse(JSON.stringify(await models.implementation.findOne({where: implementationCriteria})));
+        if(language) { implementationCriteria.language = language; } else if (implementationUnits&&implementationUnits[step.name]) { implementationCriteria.language = implementationUnits[step.name]; }
+        let allImplementations = await models.implementation.findAll({where: implementationCriteria, order:[["language", "DESC"]]});
+        mergedStep.implementation = JSON.parse(JSON.stringify(allImplementations[0]));
+        if(!implementationUnits[step.name]) implementationUnits[step.name] = mergedStep.implementation.language;
         if(!mergedStep.implementation) throw "Error finding implementation: " + JSON.stringify(implementationCriteria);
         mergedSteps.push(mergedStep);
       }
@@ -191,7 +225,22 @@ class Workflow {
       throw error;
     }
     return workflow;
+  }
 
+  static ignoreInStepName(word) {
+    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction", "accident", "difficulty", "symptom", "symptoms"];
+    let ignoreWords = ["not", "use", "type", "using", "anything", "enjoying"];
+    let nlpd = nlp(word);
+    return word.length <= 2
+      || conditionSynonyms.concat(ignoreWords).includes(word.toLowerCase()) 
+      || nlpd.conjunctions().length>0
+      || nlpd.prepositions().length>0 
+      || nlpd.adverbs().length>0;
+  }
+  
+  static isNegative(phrase) {
+    phrase = phrase.toLowerCase();
+    return nlp("is " + phrase).verbs().isNegative().length>0 || phrase.split(" ").filter(word=>word.startsWith("non")).length>0 || phrase.split(" ").filter(word=>word.startsWith("un")).length>0 || phrase.split(" ").includes("without");
   }
 
 }

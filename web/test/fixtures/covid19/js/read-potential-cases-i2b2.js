@@ -4,7 +4,7 @@ const got = require("got");
 const parser = require('fast-xml-parser');
 const fs = require('fs').promises;
 
-const I2B2_ENDPOINT="http://172.21.0.1:8081";
+const I2B2_ENDPOINT="http://localhost:8081";
 const USERNAME="demo";
 const PASSWORD="demouser";
 
@@ -30,21 +30,29 @@ function patientToCodes(patients, patient, code) {
   const PDO_REQUEST='<request_header><result_waittime_ms>180000</result_waittime_ms></request_header><message_body> <ns3:pdoheader> <patient_set_limit></patient_set_limit> <estimated_time>180000</estimated_time> <request_type>getPDO_fromInputList</request_type> </ns3:pdoheader> <ns3:request xsi:type="ns3:GetPDOFromInputList_requestType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"> <input_list> <patient_list min="1" max="7"> <patient_set_coll_id>'+QUERY_ID+'</patient_set_coll_id> </patient_list> </input_list> <filter_list> <panel name="\\\\ICD10_ICD9\\Principal Diagnosis\\"> <panel_number>0</panel_number> <panel_accuracy_scale>0</panel_accuracy_scale> <invert>0</invert> <item> <hlevel>1</hlevel> <item_key>\\\\ICD10_ICD9\\Principal Diagnosis\\</item_key> <dim_tablename>MODIFIER_DIMENSION</dim_tablename> <dim_dimcode>\\Principal Diagnosis\\</dim_dimcode> <item_is_synonym>N</item_is_synonym> </item> </panel> <panel name="\\\\ICD10_ICD9\\Secondary Diagnosis\\"> <panel_number>0</panel_number> <panel_accuracy_scale>0</panel_accuracy_scale> <invert>0</invert> <item> <hlevel>1</hlevel> <item_key>\\\\ICD10_ICD9\\Secondary Diagnosis\\</item_key> <dim_tablename>MODIFIER_DIMENSION</dim_tablename> <dim_dimcode>\\Secondary Diagnosis\\</dim_dimcode> <item_is_synonym>N</item_is_synonym> </item> </panel> </filter_list> <output_option> <patient_set select="using_input_list" onlykeys="false"/> <observation_set blob="true" onlykeys="false"/> </output_option> </ns3:request> </message_body> </ns6:request>';
   const FULL_PDO_REQUEST=PDO_REQUEST_HEADER+'<message_header>'+PDO_REQUEST_MESSAGE_HEADER+SECURITY+'</message_header>'+PDO_REQUEST;
   const PDO_QUERY_RESPONSE = await got.post(I2B2_ENDPOINT + '/i2b2/services/QueryToolService/pdorequest', {headers:{"Content-Type":"application/xml"}, body:FULL_PDO_REQUEST});
+  const PATIENT_DATA = parser.parse(PDO_QUERY_RESPONSE.body)['ns5:response'].message_body['ns3:response']['ns2:patient_data']['ns2:patient_set'];
+  // ~MDC reduce/spread slow but neat:
+  let dobs = PATIENT_DATA.patient.reduce((acc,item) => ({...acc, [item.patient_id]: item.param[5]}), {});
   const OBSERVATIONS = parser.parse(PDO_QUERY_RESPONSE.body)['ns5:response'].message_body['ns3:response']['ns2:patient_data']['ns2:observation_set'];
-  const PRIMARY_PATIENTS = OBSERVATIONS[0].observation;
-  const SECONDARY_PATIENTS = OBSERVATIONS[1].observation;
+  let primaryPatients = OBSERVATIONS[0].observation;
+  // Sort, so reduce picks up latest encounter as last value for dictionary.
+  primaryPatients.sort((a,b)=>new Date(a.end_date).getTime()-new Date(b.end_date).getTime());
+  let lastEncountersPrimary = primaryPatients.reduce((acc,item) => ({...acc, [item.patient_id]: item.end_date}), {});
+  let secondaryPatients = OBSERVATIONS[1].observation;
+  secondaryPatients.sort((a,b)=>new Date(a.end_date).getTime()-new Date(b.end_date).getTime());
+  let lastEncountersSecondary = primaryPatients.reduce((acc,item) => ({...acc, [item.patient_id]: item.end_date}), {});
+  let lastEncounter = {...lastEncountersPrimary, ...lastEncountersSecondary};
   let patients = {};
-  for(let patient of PRIMARY_PATIENTS) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
-  for(let patient of SECONDARY_PATIENTS) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
-  await fs.appendFile('covid-potential-cases.csv', "patient-id,codes\n");
-  for(let patient in patients) {
+  for(let patient of primaryPatients) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
+  for(let patient of secondaryPatients) patients=patientToCodes(patients, patient.patient_id, patient.concept_cd);
+  await fs.appendFile('covid-potential-cases.csv', "patient-id,dob,codes,last-encounter\n");
 
+  for(let patient in patients) {
     try {
-      await fs.appendFile('covid-potential-cases.csv', patient+",\""+Array.from(patients[patient]).join(",")+"\"\n");
+      await fs.appendFile('covid-potential-cases.csv', patient+","+dobs[patient]+",\""+Array.from(patients[patient]).join(",")+"\","+lastEncounter[patient].substring(0,lastEncounter[patient].length-1)+"\n");
     } catch(error) {
       console.log(error);
     }
-
   }
 
 })();

@@ -19,7 +19,13 @@ module.exports = {
     PORT: ":7005"
   },
   importer: {
-    CSV_FOLDER: "hdr-caliber-phenome-portal",
+    PHENOTYPE_FOLDER: "fixtures/importer/caliber",
+    CODELIST_FOLDER: "fixtures/importer/phekb",
+    KEYWORD_LIST_FOLDER: "fixtures/importer/kclhi",
     GROUP_SIMILAR_PHENOTYPES: false
+  },
+  zenodo: {
+    URL: "sandbox.zenodo.org",
+    ACCESS_TOKEN: process.env.ZENODO_ACCESS_TOKEN
   }
 };

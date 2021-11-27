@@ -50,11 +50,11 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add a new implementation, for a step.", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
 		it("Should be able to add an alternative implementation, for a step.", async() => {
-			await Workflow.implementation(stepId, "js", "test/implementation/js/", "hello-world.js");
+			await Workflow.implementation(stepId, "js", "test/fixtures/basic/js/", "hello-world.js");
 		});
 
 		// Update:
@@ -76,7 +76,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to update an implementation's details.", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-there.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-there.py");
 		});
 
 		// Add second (and completness checks):
@@ -112,11 +112,11 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add implementation to second step.", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
 		it("Should be able to add alternative implementation to second step.", async() => {
-			await Workflow.implementation(stepId, "js", "test/implementation/js/", "hello-world.js");
+			await Workflow.implementation(stepId, "js", "test/fixtures/basic/js/", "hello-world.js");
 		});
 
 		it("Complete workflow should be marked as such.", async() => {
@@ -147,7 +147,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add implementation to second step (of a second workflow).", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
 		let workflows;
@@ -171,12 +171,18 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add a new implementation, for a step (of a second workflow).", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
 		it("Second workflow should be marked as a child of the first (overlapping workflows should be marked as such).", async() => {
 			await WorkflowUtils.workflowChild(workflowId);
 			expect(await workflows.filter((workflow)=>{return workflow.id==2})[0].countParent()).equal(1);
+		});
+
+    // Delete:
+
+		it("Should be able to delete a step.", async() => {
+			await Workflow.deleteStep(workflowId-1, 1);
 		});
 
 		//
@@ -198,20 +204,40 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add implementation to second step (of a third workflow).", async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/", "hello-world.py");
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
 		});
 
-		it("Identical workflows should also be children.", async() => {
+		it("Identical workflows are not considered to be children.", async() => {
 			await WorkflowUtils.workflowChild(workflowId);
 			workflows = await models.workflow.findAll();
-			expect(await workflows.filter((workflow)=>{return workflow.id==3})[0].countParent()).equal(1);
+			expect(await workflows.filter((workflow)=>{return workflow.id==3})[0].countParent()).equal(0);
 		});
 
-		// Delete:
+    //
 
-		it("Should be able to delete second step.", async() => {
-			await Workflow.deleteStep(workflowId, 2);
-			workflowId=workflowId-2; // Reset to first workflow.
+    it("Should be able to add a user with restricted definitions.", async() => {
+			const result = await models.user.create({name: "restrictedUser", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "", restricted:true});
+			result.should.be.a("object");
+		});
+
+    it("Should be able to add a restricted workflow.", async() => {
+			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "restrictedUser");
+		});
+
+		it("Should be able to add first step (of a restricted workflow).", async() => {
+			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "firstStepDoc", "firstStepType", "restrictedUser");
+		});
+
+		it("Should be able to add input to first step (of a restricted workflow).", async() => {
+			await Workflow.input(stepId, "firstInputDoc", "restrictedUser");
+		});
+
+		it("Should be able to add output to first step (of a restricted workflow).", async() => {
+			await Workflow.output(stepId, "firstOutputDoc", "csv", "restrictedUser");
+		});
+
+		it("Should be able to add implementation to first step (of a restricted workflow).", async() => {
+			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py", "restrictedUser");
 		});
 
 		// Other service interaction:
@@ -230,6 +256,7 @@ describe("basic", () => {
 		let timestamp="" + Math.floor(new Date() / 1000);
 
 		it("Create repo for push to CWL viewer.", async() => {
+      workflowId=workflowId-2; // Reset to first workflow.
 			// If endpoint is unreachable test can't be performed.
 			const GIT_SERVER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.HOST") + config.get("gitserver.PORT");
 			try { await got(GIT_SERVER_URL, {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }

@@ -22,16 +22,12 @@ module.exports = function(sequelize, DataTypes) {
 	});
 
 	step.associate = function(models) {
-
 		step.belongsTo(models.workflow, {
-
 			onDelete: "CASCADE",
 			foreignKey: {
 				allowNull: false
 			}
-
 		});
-
 	};
 
 	return step;

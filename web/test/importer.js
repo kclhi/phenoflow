@@ -1,288 +1,178 @@
-const nlp = require('compromise')
 const chai = require("chai");
 chai.use(require("chai-http"));
 const server = require("../app");
 const should = chai.should();
 const expect = chai.expect;
-const fsfull = require("fs");
-const fs = require("fs").promises;
 const proxyquire = require('proxyquire');
-const m2js = require("markdown-to-json");
-const parse = require('neat-csv');
+const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
 const models = require("../models");
-const logger = require("../config/winston");
-const config = require("config");
-const stringSimilarity = require("string-similarity");
-const natural = require("natural");
-const stemmer = natural.PorterStemmer;
-const Download = require("../util/download");
-const Workflow = require("./workflow");
-const workflowUtils = require("../util/workflow");
-const { commitPushWorkflowRepo } = require('../util/visualise');
+const WorkflowUtils = require("../util/workflow")
+const ImporterUtils = require("../util/importer");
+
+class Importer {
+
+  static async importCodelists(csvs, name, about, userName) {
+    let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:csvs, name:name, about:about, userName:userName});
+    return res;
+  }
+  
+  static async getSteplistCSVs(stepList, path) {
+    let csvs = [];
+    for(let row of stepList) {
+      if(row["logicType"]=="codelist"||row["logicType"]=="codelistExclude") {
+        let file = row["param"].split(":")[0];
+        csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
+      } else if(row["logicType"]=="codelistsTemporal") {
+        for(let file of [row["param"].split(":")[0], row["param"].split(":")[1]]) csvs.push({"filename":file, "content": await ImporterUtils.openCSV(path, file)});
+      } else if(row["logicType"]=="branch") {
+        let nestedSteplist = await ImporterUtils.openCSV(path, row["param"]);
+        csvs.push({"filename":row["param"], "content":nestedSteplist});
+        csvs = csvs.concat(await this.getSteplistCSVs(nestedSteplist, path));
+      }
+    }
+    return csvs;
+  }
+  
+  static async processAndImportSteplist(path, file, author) {
+    let stepList = {"filename":file, "content":await ImporterUtils.openCSV(path, file)};
+    let csvs = await this.getSteplistCSVs(stepList.content, path);
+    let id = await ImporterUtils.steplistHash(stepList, csvs);
+    let name = ImporterUtils.getName(stepList.filename);
+    return await this.importSteplist(stepList, csvs, name, id+" - "+ImporterUtils.getName(stepList.filename), author);
+  }
+
+  static async importSteplist(steplist, csvs, name, about, userName) {
+    let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:name, about:about, userName:userName});
+    return res;
+  }
+
+  static async importKeywordList(keywords, name, about, userName) {
+    let res = await chai.request(testServerObject).post("/phenoflow/importer/importKeywordList").send({keywords:keywords, name:name, about:about, userName:userName});
+    return res;
+  }
+
+  static getCSVs() {
+    return [
+      {"filename":"listA_system.csv",
+      "content": [
+        {"ICD-10 code": "123", "description": "TermA TermB"},
+        {"ICD-10 code": "234", "description": "TermA TermC"},
+        {"ICD-10 code": "345", "description": "TermD TermE"}
+      ]},
+      {"filename":"listB_system.csv",
+      "content": [
+        {"SNOMED code": "456", "description": "TermF TermG"},
+        {"SNOMED code": "567", "description": "TermF TermH"},
+        {"SNOMED code": "678", "description": "TermI TermJ"}
+      ]},
+      {"filename":"listC_system.csv",
+      "content": [
+        {"SNOMED code": "456", "description": "TermK TermL"},
+        {"SNOMED code": "567", "description": "TermK TermL"},
+        {"SNOMED code": "678", "description": "TermK TermL"}
+      ]},
+      {"filename":"listD_system.csv",
+      "content": [
+        {"SNOMED code": "456", "description": "TermM TermN"},
+        {"SNOMED code": "567", "description": "TermM TermN"},
+        {"SNOMED code": "678", "description": "TermM TermN"}
+      ]}
+    ]
+  }
+
+  static getBranchCSVs() {
+    return [
+      {"filename":"branch-a.csv",
+      "content": [
+        {"logicType": "codelist", "param": "listA_system.csv:1"},
+        {"logicType": "codelist", "param": "listB_system.csv:1"},
+      ]},
+      {"filename":"branch-b.csv",
+      "content": [
+        {"logicType": "codelistExclude", "param": "listC_system.csv:1"},
+        {"logicType": "codelist", "param": "listD_system.csv:1"},
+      ]}
+    ];
+  }
+
+}
 
 describe("importer", () => {
 
-  describe("/POST import csv", () => {
+  describe("/POST import", () => {
 
-    it("[TI1] Should be able to add a new user (CSVs).", async() => {
-      const result = await models.user.create({name:"caliber", password: config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://portal.caliberresearch.org"});
-      result.should.be.a("object");
-    });
-
-    function categorise(code, description, codeCategories, name, primary=true) {
-      let placed=false;
-      let primarySecondary = primary?" - primary":" - secondary";
-      function orderKey(key) {
-        // Don't attempt reorder on more than two words
-        let keyTerms = key.split(" ");
-        if(keyTerms.length!=2) return key.charAt(0).toUpperCase() + key.slice(1);
-        let nlpKey = nlp(key);
-        let adjectives = nlpKey.adjectives()?nlpKey.adjectives().out("text").split(" "):null;
-        let nouns = nlpKey.nouns()?nlpKey.nouns().out("text").split(" "):null;
-        // Adjectives first; both nouns, condition first
-        if(adjectives&&adjectives.length==1&&adjectives[0]!=keyTerms[0]
-          ||nouns&&nouns.length==2&&name!=keyTerms[0]) {
-            key=keyTerms[1].toLowerCase();
-            key+=" "+keyTerms[0].toLowerCase();
-          }
-          key=key.charAt(0).toUpperCase() + key.slice(1);
-          return key;
-        }
-        function clean(input) {
-          return input.toLowerCase().replace(/[^a-zA-Z]/g, "");
-        }
-        for(let existingCategory of Object.keys(codeCategories)) {
-          // Don't mix primary and secondary category groups
-          if(primary&&!existingCategory.includes("primary")) continue;
-          let existingCategoryPrefix = existingCategory.toLowerCase();
-          existingCategoryPrefix = existingCategoryPrefix.replace(name.toLowerCase(), "").replace(primarySecondary, "").trim().toLowerCase();
-          for(let term of description.split(" ")) {
-            term = nlp(term).nouns().toSingular().text() || term;
-            // Don't consider terms that are the condition itself
-            if(stemmer.stem(term)==stemmer.stem(name)) continue;
-            if((existingCategoryPrefix.includes(term.toLowerCase())
-            || term.toLowerCase().includes(existingCategoryPrefix)
-            || stringSimilarity.compareTwoStrings(term.toLowerCase(), existingCategoryPrefix) >= 0.8
-          ) && term.length > 4) {
-            codeCategories[existingCategory].push(code);
-            if(term.toLowerCase()!=existingCategoryPrefix.toLowerCase()) {
-              let suffix = (!clean(term).includes(clean(name))&&!clean(name).includes(clean(term)))?" "+name:"";
-              codeCategories[orderKey(term + suffix) + primarySecondary] = codeCategories[existingCategory];
-              delete codeCategories[existingCategory];
-            }
-            placed=true;
-            break;
-          }
-        }
-        if(placed) break;
-      }
-      // Don't add condition suffix if key already contains form of condition
-      let suffix = (!clean(description).includes(clean(name))&&!clean(name).includes(clean(description))&&!description.split(" ").map(term=>{return stemmer.stem(term)}).includes(stemmer.stem(name)))?" "+name:"";
-      if(!placed) codeCategories[orderKey(description + suffix) + primarySecondary] = [code];
-      return codeCategories;
-    }
-
-    async function importPhenotypeCSVs(phenotypeFiles) {
-      let fullCSV;
-
-      for(let phenotypeFile of phenotypeFiles) {
-
-        const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/"+phenotypeFile;
-
-        try {
-          await fs.stat(PATH)
-        } catch(error) {
-          console.error(PATH+" does not exist.");
-          return false;
-        }
-
-        try {
-          var markdown = JSON.parse(m2js.parse([PATH], {width: 0, content: true}));
-          var markdownContent = markdown[phenotypeFile.replace(".md", "")];
-        } catch(error) {
-          console.error(phenotypeFile+": "+error);
-          return false;
-        }
-
-        if(!markdownContent.codelists) return true;
-
-        if(!Array.isArray(markdownContent.codelists)) markdownContent.codelists = [markdownContent.codelists];
-
-        for(let codelist of markdownContent.codelists) {
-          let currentCSVSource;
-          codelist = codelist.endsWith(".csv")?codelist:codelist+".csv"
-          codelist = codelist.replace(".csv.csv", ".csv")
-          try {
-            currentCSVSource = await fs.readFile("test/"+config.get("importer.CSV_FOLDER")+"/_data/codelists/"+codelist);
-          } catch(error) {
-            console.error("Could not read codelist for " + phenotypeFile + ": " + error);
-            return false;
-          }
-          let currentCSV;
-          try {
-            currentCSV = await parse(currentCSVSource);
-          } catch(error) {
-            console.error(error)
-          }
-          fullCSV = fullCSV?fullCSV.concat(currentCSV):currentCSV;
-        }
-
-      }
-
-      if(!fullCSV) return false;
-      let codeCategories = {};
-      let hasCategory = ["readcode", "snomedconceptid", "icdcode", "icd10code", "icd11code", "opcs4code"];
-      let toCategorise = ["readv2code", "snomedctconceptid"];
-      let codingSystems = ["Read", "ICD-9", "ICD-10"];
-      for(let row of fullCSV) {
-        // Remove special characters from keys that prevent indexing
-        for(const [key, value] of Object.entries(row)) {
-          if(key!=key.replace(/[^a-zA-Z0-9]/g, "")) {
-            row[key.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()] = row[key];
-            delete row[key];
-            continue;
-          }
-          if(key.toLowerCase()!=key) {
-            row[key.toLowerCase()] = row[key];
-            delete row[key];
-          }
-        }
-        let keys = Object.keys(row);
-        let value, hasCategoryKeys, toCategoriseKeys;
-        function getFirstUsableValue(keys, row) {
-          let value;
-          for(let key of keys) {
-            if (!row[key]||!row[key].length) continue;
-            value = row[key];
-            break;
-          }
-          if(!value) console.error("No usable value for "+JSON.stringify(row)+" of "+phenotypeFile);
-          return value;
-        }
-        if((hasCategoryKeys = keys.filter(value=>hasCategory.includes(value))) && hasCategoryKeys.length) {
-          let category = (row["category"]||row["calibercategory"]||markdownContent.name) + ((hasCategoryKeys[0].includes("read")||hasCategoryKeys[0].includes("snomed"))?" - primary":" - secondary");
-          if(!codeCategories[category]) codeCategories[category] = [];
-          value = getFirstUsableValue(hasCategoryKeys, row);
-          if(value) { codeCategories[category].push(value) } else { return false };
-        } else if(row["codingsystem"] && codingSystems.includes(row["codingsystem"])) {
-          let description = row["description"].replace("[X]", "").replace("[D]", "");
-          if(!row["code"]) return false;
-          codeCategories = categorise(row["code"], description, codeCategories, markdownContent.name);
-        } else if((toCategoriseKeys = keys.filter(value => toCategorise.includes(value))) && toCategoriseKeys.length) {
-          let description = row["description"].replace("[X]", "").replace("[D]", "");
-          value = getFirstUsableValue(toCategoriseKeys, row);
-          if(value) {codeCategories = categorise(value, description, codeCategories, markdownContent.name); } else { return false };
-        } else if(row["prodcode"]) {
-          let category = "Use of " + row["drugsubstance"];
-          if(!codeCategories[category]) codeCategories[category] = [];
-          if(!row["prodcode"]) return false;
-          codeCategories[category].push(row["prodcode"]);
-        } else if(row["code"]) {
-          let category = markdownContent.name + " - UK Biobank";
-          if (!codeCategories[category]) codeCategories[category] = [];
-          if(!row["code"]) return false;
-          codeCategories[category].push(row["code"]);
-        } else {
-          console.error("No handler for: " + JSON.stringify(row));
-          continue;
-        }
-      }
-
-      if(Object.keys(codeCategories).indexOf("undefined - primary")>-1 || Object.keys(codeCategories).indexOf("undefined - secondary")>-1) {
-        console.error("No category for " + markdownContent.name + ": " + JSON.stringify(codeCategories));
-        return false;
-      }
-
-      const server = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
-      let res = await chai.request(server).post("/phenoflow/importer").send({name:markdownContent.name, about:markdownContent.phenotype_id+" - "+markdownContent.title, codeCategories:codeCategories, userName:"caliber"});
+    it("[IM1] Common terms should be grouped by category.", async() => {
+      let categories = ImporterUtils.getCategories([{"filename":"file.csv", 
+        "content": [
+          {"ICD-10 code": "123", "description": "TermA TermB"},
+          {"ICD-10 code": "234", "description": "TermA TermC"},
+          {"ICD-10 code": "345", "description": "TermD TermE"}
+        ]
+      }], "Phenotype");
+      categories.should.have.property("Phenotype terma - secondary");
+      categories.should.have.property("Phenotype - secondary");
+      categories["Phenotype terma - secondary"].should.be.a("Array");
+      categories["Phenotype - secondary"].should.be.a("Array");
+      categories["Phenotype terma - secondary"].should.deep.equal(['123','234']);
+      categories["Phenotype - secondary"].should.deep.equal(['345']);
+    }).timeout(0);
+    
+    it("[IM2] Should be able to import a codelist.", async() => {
+      let res = await Importer.importCodelists(Importer.getCSVs(), "Imported codelist", "Imported codelist", "martinchapman");
       res.should.have.status(200);
-      res.body.should.be.a("object");
-      return true;
-    }
-
-    async function groupPhenotypeFiles(path) {
-      let phenotypeFiles = await fs.readdir(path);
-      let groups={};
-      for(let phenotypeFile of phenotypeFiles) {
-        let markdown = JSON.parse(m2js.parse([path+phenotypeFile], {width: 0, content: true}))[phenotypeFile.replace(".md", "")];
-        (groups[markdown.name+markdown.title]=groups[markdown.name+markdown.title]?groups[markdown.name+markdown.title]:[]).push(phenotypeFile);
-      }
-      return Object.values(groups);
-    }
-
-    it("[TI2] Should be able to import a phenotype CSV.", async() => {
-      const phenotypeFile = "axson_COPD_Y9JxuQRFPprJDMHSPowJYs.md";
-      const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/";
-      // Can't perform test if file doesn't exist.
-      try { await fs.stat(PATH) } catch(error) { return true; }
-      if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
-        for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
-          if(phenotypeFiles.includes(phenotypeFile)) expect(await importPhenotypeCSVs(phenotypeFiles)).to.be.true;
-        }
-      } else {
-        expect(await importPhenotypeCSVs([phenotypeFile]));
-      }
     }).timeout(0);
 
-    it("[TI3] Should be able to import all phenotype CSVs.", async() => {
-      const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/";
-      // Can't perform test if folder doesn't exist.
-      try { await fs.stat(PATH) } catch(error) { return true; }
-      for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
-        if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
-          expect(await importPhenotypeCSVs(phenotypeFiles)).to.be.true;
-        } else {
-          for(let phenotypeFile of phenotypeFiles) {
-            expect(await importPhenotypeCSVs([phenotypeFile])).to.be.true;
-          }
-        }
-      }
+    it("[IM3] Should be able to import a steplist that references a branch.", async() => {
+      let stepList = 
+        {"filename":"codelist-steplist-branch-A.csv",
+          "content": [
+            {"logicType": "codelist", "param": "listA_system.csv:1"},
+            {"logicType": "branch", "param": "branch-a.csv"},
+            {"logicType": "codelist", "param": "listB_system.csv:1"}
+          ]
+        };
+      let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
+      let res = await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      res.should.have.status(200);
     }).timeout(0);
 
-    it("[TI4] Should be able to import multiple phenotype CSVs with the same name.", async() => {
-      const phenotypeFiles = ["kuan_asthma_eFTHigQ2RjygaBhHUco4pW.md", "carr_asthma_XmYuru73YF4EeRppjSAwsP.md", "axson_asthma_cdd2NMH5QDWVdEfTQNNfpK.md"];
-      const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/";
-      // Can't perform test if file doesn't exist.
-      try { await fs.stat(PATH) } catch(error) { return true; }
-      for(let phenotypeFile of phenotypeFiles) {
-        expect(await importPhenotypeCSVs([phenotypeFile])).to.be.true;
-      }
+    it("[IM4] Should be able to import a branch only steplist.", async() => {
+      let stepList = 
+        {"filename":"codelist-steplist-branch-B.csv",
+          "content": [
+            {"logicType": "branch", "param": "branch-a.csv"},
+            {"logicType": "branch", "param": "branch-b.csv"}
+          ]
+        };
+      let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
+      let res = await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      res.should.have.status(200);
     }).timeout(0);
 
-    it("[TI5] Should be able to annotate CALIBER MD files with a phenoflow URL.", async() => {
-      const PATH = "test/"+config.get("importer.CSV_FOLDER")+"/_phenotypes/";
-      try { await fs.stat(PATH) } catch(error) { return true; }
-      let ids=[];
-      for(let file of await fs.readdir(PATH)) {
-        const markdown = JSON.parse(m2js.parse([PATH+file], {width: 0, content: true}))[file.replace(".md", "")];
-        if(!markdown.codelists) continue;
-        let yaml;
-        for(let term of markdown.name.split(" ")) {
-          var res = await chai.request(server).post("/phenoflow/importer/caliber/annotate").send({markdown:markdown, name:term, about:markdown.phenotype_id});
-          if(!res.body&&!res.body.markdowns) continue;
-          for(let markdownYAML of res.body.markdowns) {
-            var id = markdownYAML.match(/\/download\/[0-9]+"/g)[0];
-            if(ids.includes(id)) continue;
-            yaml = markdownYAML;
-          }
-        }
-        if(!yaml) {
-          console.error("No suitable phenotype found: " + markdown.name + " " + markdown.phenotype_id);
-        }
-        expect(yaml).to.not.be.undefined;
-        if(!yaml.includes("phenoflow")) {
-          console.error("Phenoflow link not added: " + yaml);
-        }
-        expect(yaml).to.include("phenoflow");
-        ids.push(id);
-        await fs.writeFile("test/output/importer/" + file, yaml);
-      }
+    it("[IM5] Should be able to import a keyword list.", async() => {
+      let keywords = {
+        filename: "keywords.csv",
+        content: [
+          {"keyword": "TermA TermB"},
+          {"keyword": "TermA TermC"},
+          {"keyword": "TermD TermE"},
+        ]
+      };
+      let res = await Importer.importKeywordList(keywords, "Imported keywords", "Imported keywords", "martinchapman");
+      res.should.have.status(200);
     }).timeout(0);
 
-    it("[TI6] Create children for imported phenotypes.", async() => {
-      for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await workflowUtils.workflowChild(workflow.id);
+    it("[IM6] Should be able to add a connector.", async() => {
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/addConnector").attach("implementationTemplate", "templates/read-potential-cases.template.py", "read-potential-cases.template.py").field({"existingWorkflowIds":[1], "dataSource":"template", "language":"python"});
+      res.should.have.status(200);
     }).timeout(0);
 
+    it("[IM7] Create children for imported phenotypes.", async() => {
+      for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
+    }).timeout(0);
+  
   });
 
 });
+
+module.exports = Importer;

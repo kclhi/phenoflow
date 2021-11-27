@@ -1,3 +1,5 @@
-phenotype-id.github.io/
-hdr-caliber-phenome-portal/
-output/
+fixtures/importer/phenotype-id.github.io/
+fixtures/importer/caliber/
+fixtures/importer/phekb/
+fixtures/importer/kclhi/
+fixtures/importer/oxford/

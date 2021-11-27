@@ -21,7 +21,7 @@ cache:
     - generator/venv/
 
 install_node_dependencies:
-  image: node:latest
+  image: nikolaik/python-nodejs:python3.7-nodejs16
   stage: build_web
   before_script:
     - cd web
@@ -32,9 +32,10 @@ install_node_dependencies:
       - web/node_modules/
 
 test_web:
-  image: node:latest
+  image: nikolaik/python-nodejs:python3.7-nodejs16
   stage: test_web
   before_script:
+    - pip install swifter
     - cd web
   script: npm test
 
@@ -53,7 +54,7 @@ install_python_dependencies:
     paths:
       - generator/.cache/pip
       - generator/venv/
-
+      
 test_generator:
   image: "python:3.7"
   stage: test_generator

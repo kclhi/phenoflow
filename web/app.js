@@ -7,6 +7,41 @@ const morgan = require("morgan");
 const logger = require("./config/winston");
 const fileUpload = require("express-fileupload");
 const cron = require("node-cron");
+const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerDefinition = {
+  openapi: '3.0.1',
+  info: {
+    title: 'Phenoflow API',
+    version: '1.0.0',
+    description:
+      'Test the endpoints offered by Phenoflow.'
+  },
+  servers: [
+    {
+      url: 'http://localhost:3003',
+      description: 'Development server',
+    },
+    {
+      url: 'https://kclhi.org',
+      description: 'Live server',
+    }
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      }
+    }
+  }
+};
+const options = {
+  swaggerDefinition,
+  apis: ['./routes/*.js'],
+};
+const swaggerSpec = swaggerJSDoc(options);
+const swaggerUi = require('swagger-ui-express');
 require('dotenv').config()
 
 const models = require("./models");
@@ -27,9 +62,9 @@ app.enable('strict routing');
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
 
-app.use(morgan("combined", { stream: logger.stream }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(morgan("combined", {stream:logger.stream}));
+app.use(bodyParser.json({extended:false, limit:'50mb'}));
+app.use(bodyParser.urlencoded({limit:'50mb', extended:false, parameterLimit:50000}));
 app.use(cookieParser());
 app.use("/phenoflow", express.static(path.join(__dirname, "public")));
 
@@ -44,6 +79,7 @@ router.use("/output", output);
 router.use(fileUpload({createParentPath:true}));
 router.use("/implementation", implementation);
 router.use("/importer", importer);
+router.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use("/phenoflow", router);
 
@@ -63,10 +99,6 @@ app.use(function(err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.render("error");
-});
-
-cron.schedule("0 * * * *", async function() {
-  for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await workflowUtils.workflowChild(workflow.id);
 });
 
 module.exports = app;

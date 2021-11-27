@@ -24,7 +24,7 @@ describe('otitis', () => {
 		});
 
 		// 1. read-potential-cases
-		it('Create T2DM workflow.', async() => {
+		it('Create Otitis workflow.', async() => {
 			workflowId = await Workflow.createWorkflow(NAME, "Otitis media (REST trial cohort)", "rest", USERNAME);
 		});
 
@@ -41,7 +41,7 @@ describe('otitis', () => {
 		});
 
 		it("Add read potential cases implementation (XML).", async() => {
-			await Workflow.implementation(stepId, "js", "test/implementation/js/otitis/XML/", "read-potential-cases-xml.js", USERNAME);
+			await Workflow.implementation(stepId, "js", "test/fixtures/otitis/js/", "read-potential-cases-xml.js", USERNAME);
 		});
 
 		// 2. Age check
@@ -58,7 +58,7 @@ describe('otitis', () => {
 		});
 
 		it('Add age implementation.', async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/otitis/", "age.py", USERNAME);
+			await Workflow.implementation(stepId, "python", "test/fixtures/otitis/python/", "age.py", USERNAME);
 		});
 
 		// 3. Code check
@@ -75,7 +75,7 @@ describe('otitis', () => {
 		});
 
 		it('Add code implementation.', async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/otitis/", "ctv3.py", USERNAME);
+			await Workflow.implementation(stepId, "python", "test/fixtures/otitis/python/", "ctv3.py", USERNAME);
 		});
 
 		// 4. Output
@@ -92,7 +92,7 @@ describe('otitis', () => {
 		});
 
 		it('Add output-cases implementation.', async() => {
-			await Workflow.implementation(stepId, "python", "test/implementation/python/otitis/", "output-cases.py", USERNAME);
+			await Workflow.implementation(stepId, "python", "test/fixtures/otitis/python/", "output-cases.py", USERNAME);
 		});
 
 	});
