@@ -146,7 +146,7 @@ block header
       span(id="doi" style="display:none;")
       a(href="https://doi.org/"+doi)
         span() DOI #{doi}
-    else if !doi && !restricted
+    else
       span
         | | 
       a(id="cite" class="a-button" onclick="getReference(); return false;")
