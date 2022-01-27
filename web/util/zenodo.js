@@ -33,13 +33,14 @@ class Zenodo {
     logger.debug(res.body);
   }
 
-  static async updateMetadata(depositId, title, description, creators) {
+  static async updateMetadata(depositId, title, description, creators, access_right='open') {
     let data = {
       'metadata': {
         'title': title,
         'upload_type': 'software',
         'description': description,
-        'creators': creators
+        'creators': creators,
+        'access_right': access_right
       }
     };
     let res;

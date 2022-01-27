@@ -20,7 +20,7 @@ class Download {
     return await Download.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, true);
   }
 
-  static async createPFZenodoEntry(id, name, workflow, workflowInputs, implementationUnits, steps, about, userName) {
+  static async createPFZenodoEntry(id, name, workflow, workflowInputs, implementationUnits, steps, about, userName, restricted=false) {
     const getDOI = () => new Promise(async(resolve) => {
       let archive = Zip.create();
       var buffers = [];
@@ -35,9 +35,10 @@ class Download {
         var buffer = Buffer.concat(buffers);
         let deposition = await Zenodo.deposit();
         await Zenodo.addToBucket(deposition.links.bucket, buffer, name+".zip");
-        await Zenodo.updateMetadata(deposition.id, name, about, [{'name':'Phenoflow', 'affiliation':'King\'s College London'}, {'name': userName, 'affiliation':userName}]);
+        await Zenodo.updateMetadata(deposition.id, name, about, [{'name':'Phenoflow', 'affiliation':'King\'s College London'}, {'name': userName, 'affiliation':userName}], restricted?'closed':'open');
         await Zenodo.publish(deposition.id);
         let storedObject = await Zenodo.get(deposition.id);
+        console.log(storedObject);
         try {
           await models.doi.create({doi:storedObject.conceptdoi, implementationHash:ImporterUtils.hash(implementationUnits), workflowId:id});
         } catch(error) {

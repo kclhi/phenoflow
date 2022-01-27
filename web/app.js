@@ -80,6 +80,7 @@ router.use(fileUpload({createParentPath:true}));
 router.use("/implementation", implementation);
 router.use("/importer", importer);
 router.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+router.get("/:doi/:zenodo", async(req, res) => res.redirect("/phenoflow/phenotype/download/"+req.params.doi+"/"+req.params.zenodo));
 
 app.use("/phenoflow", router);
 
