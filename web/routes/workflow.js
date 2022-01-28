@@ -276,8 +276,8 @@ async function createZenodoEntry(workflowId, user, language=null, implementation
         logger.debug("Error generating workflow.");
         return false;
       }
-    } catch(createPFZenodoEntry) {
-      logger.error("Error uploading to Zenodo: "+createPFZenodoEntry);
+    } catch(createPFZenodoEntryError) {
+      logger.error("Error uploading to Zenodo: "+createPFZenodoEntryError);
     }
     return doi;
   } else {
