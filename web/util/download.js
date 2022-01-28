@@ -23,7 +23,7 @@ class Download {
   static async createPFZenodoEntry(id, name, workflow, workflowInputs, implementationUnits, steps, about, userName, restricted=false) {
     const implementationUnitsHash = ImporterUtils.hash(Object.keys(implementationUnits).sort()+Object.values(implementationUnits).sort());
     let doi = await models.doi.findOne({where:{workflowId:id, implementationHash:implementationUnitsHash}});
-    if(doi) return res.send(doi.doi).status(200);
+    if(doi) return doi.doi;
     const getDOI = () => new Promise(async(resolve) => {
       let archive = Zip.create();
       var buffers = [];
