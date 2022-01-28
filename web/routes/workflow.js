@@ -289,8 +289,6 @@ router.post("/cite/:workflowId", async function(req, res, next) {
   if(!req.body.implementationUnits) return res.sendStatus(404);
   if(!req.body.userName) return res.sendStatus(401);
   let user = await models.user.findOne({where:{name: req.body.userName}});
-  let doi = await models.doi.findOne({where:{workflowId:req.params.workflowId, implementationHash:ImporterUtils.hash(req.body.implementationUnits)}});
-  if(doi) return res.send(doi.doi).status(200);
   try {
     let doi;
     if (!(doi=await createZenodoEntry(req.params.workflowId, user, null, req.body.implementationUnits, res))) return res.sendStatus(500);
