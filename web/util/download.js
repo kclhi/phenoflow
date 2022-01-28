@@ -21,6 +21,9 @@ class Download {
   }
 
   static async createPFZenodoEntry(id, name, workflow, workflowInputs, implementationUnits, steps, about, userName, restricted=false) {
+    const implementationUnitsHash = ImporterUtils.hash(Object.keys(implementationUnits).sort()+Object.values(implementationUnits).sort());
+    let doi = await models.doi.findOne({where:{workflowId:id, implementationHash:implementationUnitsHash}});
+    if(doi) return res.send(doi.doi).status(200);
     const getDOI = () => new Promise(async(resolve) => {
       let archive = Zip.create();
       var buffers = [];
@@ -38,9 +41,8 @@ class Download {
         await Zenodo.updateMetadata(deposition.id, name, about, [{'name':'Phenoflow', 'affiliation':'King\'s College London'}, {'name': userName, 'affiliation':userName}], restricted?'closed':'open');
         await Zenodo.publish(deposition.id);
         let storedObject = await Zenodo.get(deposition.id);
-        console.log(storedObject);
         try {
-          await models.doi.create({doi:storedObject.conceptdoi, implementationHash:ImporterUtils.hash(implementationUnits), workflowId:id});
+          await models.doi.create({doi:storedObject.conceptdoi, implementationHash:implementationUnitsHash, workflowId:id});
         } catch(error) {
           logger.error("Unable to store doi: "+error);
         }
