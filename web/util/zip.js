@@ -51,11 +51,12 @@ class Zip {
         res.status(500).send({error: err.message});
       },
       function() {
-        console.log('Archive wrote %d bytes', archive.pointer());
+        let size = archive.pointer();
+        res.set('Content-Length', size);
+        console.log('Archive wrote %d bytes', size);
       }
     );
     res.attachment(name + '.zip');
-    res.set('Content-Length', archive.pointer());
     archive.pipe(res);
     return archive;
   }
