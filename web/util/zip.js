@@ -55,6 +55,7 @@ class Zip {
       }
     );
     res.attachment(name + '.zip');
+    res.set('Content-Length', archive.pointer());
     archive.pipe(res);
     return archive;
   }
