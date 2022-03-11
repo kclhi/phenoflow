@@ -7,13 +7,19 @@ class Zip {
 
   // https://www.archiverjs.com/docs/quickstart
   
-  static create(warningFunction=function(warning){}, errorFunction=function(error){}, endFunction=function(){}) {
+  static create(warningFunction=function(warning){}, errorFunction=function(error){}, endFunction=function(archiveData){}) {
+    const chunks = [];
     var archive = archiver('zip', {
       zlib: { level: 9 }
     });
+    archive.on('data', function(data) { 
+      chunks.push(Buffer.from(data))
+    });
     archive.on('warning', warningFunction);
     archive.on('error', errorFunction);
-    archive.on('end', endFunction);
+    archive.on('end', function() {
+      endFunction(Buffer.concat(chunks))
+    });
     return archive;
   }
 
@@ -50,14 +56,15 @@ class Zip {
       function(err) {
         res.status(500).send({error: err.message});
       },
-      function() {
+      function(archiveData) {
         let size = archive.pointer();
-        res.set('Content-Length', size);
+        res.set("Content-Length", size);
         console.log('Archive wrote %d bytes', size);
+
+        res.send(archiveData);
       }
     );
     res.attachment(name + '.zip');
-    archive.pipe(res);
     return archive;
   }
 
