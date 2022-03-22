@@ -99,6 +99,36 @@ router.post("/all", async function(req, res, next) {
 
 });
 
+/**
+ * @swagger
+ * /phenoflow/phenotype/connectors:
+ *   post:
+ *     summary: Get connector IDs
+ *     description: Retrieve a list of those phenotypes that only differ from the definition associated with the supplied ID by connector type
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 description: The ID of the definition for which to find associated connectors (retrieved from a previous API call)
+ *                 example: 5
+ *     responses:
+ *       200:
+ *         description: A list of phenotypes
+ */
+router.post("/connectors", async function(req, res, next) {
+
+  let children = await models.child.findAll({where:{parentId:req.body.id}});
+  let connectors = children.map((child)=>({"id":child.workflowId, "connector":child.distinctStepName.replace("read-potential-cases-", ""), "url":"https://kclhi.org/phenoflow/phenotype/download/"+child.workflowId}));
+  connectors.push({"id":req.body.id, "connector":["fhir", "i2b2", "omop", "disc"].filter(connectorLabel=>!connectors.map(connector=>connector.connector).includes(connectorLabel))[0], "url":"https://kclhi.org/phenoflow/phenotype/download/"+req.body.id});
+  res.send(connectors);
+
+});
+
 router.get("/mine/:offset?", async function(req, res, next) {
 
   let offset = processOffset(req.params.offset);
