@@ -8,7 +8,6 @@ const op = sequelize.Op;
 const stringSimilarity = require('string-similarity');
 const got = require('got');
 const fs = require('fs').promises;
-const { exit } = require('process');
 
 class Workflow {
 
@@ -20,7 +19,7 @@ class Workflow {
         let mergedStep = JSON.parse(JSON.stringify(step));
         mergedStep.inputs = JSON.parse(JSON.stringify(await models.input.findAll({where:{stepId:step.id}})));
         mergedStep.outputs = JSON.parse(JSON.stringify(await models.output.findAll({where:{stepId:step.id}})));
-        mergedStep.implementations = JSON.parse(JSON.stringify(await models.implementation.findAll({where: {stepId: step.id}})));
+        mergedStep.implementations = JSON.parse(JSON.stringify(await models.implementation.findAll({where: {stepId: step.id}, order:[['language', 'DESC']] })));
         mergedSteps.push(mergedStep);
       }
       workflow.steps = mergedSteps;
@@ -80,10 +79,10 @@ class Workflow {
         try {
           let implementations = await models.implementation.findAll({where:{stepId:step.id}});
           for(let implementation of implementations) {
-            await fs.unlink("uploads/"+workflowId+"/"+implementation.language+"/"+implementation.fileName);
+            if(implementation.fileName.includes(".")) await fs.unlink("uploads/"+workflowId+"/"+implementation.language+"/"+implementation.fileName);
           } 
         } catch(exception) {
-          console.log("Error deleting implementation:"+error);
+          console.error("Error deleting implementation:"+error);
         }
         try {
           await models.implementation.destroy({where:{stepId:step.id}});
@@ -200,9 +199,10 @@ class Workflow {
     }
   }
 
-  static async getFullWorkflow(workflowId, language=null, implementationUnits=null) {
+  static async getFullWorkflow(workflowId, username, language=null, implementationUnits=null) {
     try {
       var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
+      if(workflow.userName!=username) throw "User does not own this workflow";
       if(!workflow) throw "Error finding workflow";
       let steps = await models.step.findAll({where:{workflowId:workflow.id}});
       if(!steps) throw "Error finding steps";
@@ -214,8 +214,10 @@ class Workflow {
         mergedStep.outputs = JSON.parse(JSON.stringify(await models.output.findAll({where:{stepId:step.id}})));
         if(!mergedStep.outputs) throw "Error finding outputs";
         let implementationCriteria = { stepId: step.id };
-        if(language) { implementationCriteria.language = language; } else if (implementationUnits) { implementationCriteria.language = implementationUnits[step.name]; }
-        mergedStep.implementation = JSON.parse(JSON.stringify(await models.implementation.findOne({where: implementationCriteria})));
+        if(language) { implementationCriteria.language = language; } else if (implementationUnits&&implementationUnits[step.name]) { implementationCriteria.language = implementationUnits[step.name]; }
+        let allImplementations = await models.implementation.findAll({where: implementationCriteria, order:[["language", "DESC"]]});
+        mergedStep.implementation = JSON.parse(JSON.stringify(allImplementations[0]));
+        if(!implementationUnits[step.name]) implementationUnits[step.name] = mergedStep.implementation.language;
         if(!mergedStep.implementation) throw "Error finding implementation: " + JSON.stringify(implementationCriteria);
         mergedSteps.push(mergedStep);
       }

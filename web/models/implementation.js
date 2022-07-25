@@ -8,9 +8,7 @@ module.exports = function(sequelize, DataTypes) {
 	});
 
 	implementation.associate = function(models) {
-
 		implementation.belongsTo(models.step, {onDelete: "CASCADE", foreignKey:{allowNull: false}});
-
 	};
 
 	return implementation;
