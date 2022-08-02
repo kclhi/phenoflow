@@ -6,9 +6,7 @@ const stringSimilarity = require("string-similarity");
 const natural = require("natural");
 const stemmer = natural.PorterStemmer;
 
-const WorkflowUtils = require("./workflow");
-
-class Importer {
+class Parser {
 
   static primaryCodeKeys() {
     return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid", "readorsnomedterm"];
@@ -26,6 +24,17 @@ class Importer {
     return name.split(" ").map(word=>this.clean(word)).filter(word=>word.includes(term)).length
         || name.split(" ").map(word=>this.clean(stemmer.stem(word))).filter(word=>word.includes(stemmer.stem(term))).length 
         || name.split(" ").filter(word=>term.includes(this.clean(word)||stemmer.stem(term).includes(this.clean(stemmer.stem(word))))).length;
+  }
+
+  static ignoreInStepName(word) {
+    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction", "accident", "difficulty", "symptom", "symptoms"];
+    let ignoreWords = ["not", "use", "type", "using", "anything", "enjoying"];
+    let nlpd = nlp(word);
+    return word.length <= 2
+      || conditionSynonyms.concat(ignoreWords).includes(word.toLowerCase()) 
+      || nlpd.conjunctions().length>0
+      || nlpd.prepositions().length>0 
+      || nlpd.adverbs().length>0;
   }
 
   static fullClean(input) {
@@ -63,22 +72,22 @@ class Importer {
   static getValue(row) {
     if(row["code"]) return row["code"];
     let otherKeyCodes;
-    const codeKeys = Importer.primaryCodeKeys().concat(Importer.secondaryCodeKeys());
+    const codeKeys = Parser.primaryCodeKeys().concat(Parser.secondaryCodeKeys());
     if((otherKeyCodes=Object.keys(row).filter(key=>codeKeys.includes(key.toLowerCase())))&&otherKeyCodes) for(let keyCode of otherKeyCodes) if(row[keyCode]) return row[keyCode];
     throw "No usable value for "+JSON.stringify(row)+" "+otherKeyCodes;
   }
 
   static getDescription(row) {
     const descriptions = ["description", "conceptname", "proceduredescr", "icd10term", "icd11term", "snomedterm", "icd10codedescr", "icdterm", "readterm", "readcodedescr", "term", "snomedctterm", "name"];
-    let description = row[descriptions.filter(description=>Object.keys(row).map(key=>Importer.clean(key)).includes(description))[0]];
+    let description = row[descriptions.filter(description=>Object.keys(row).map(key=>Parser.clean(key)).includes(description))[0]];
     let splitDescription = [];
     if(description) {
       description = description.replace("[X]", "").replace("[D]", "");
-      splitDescription = description.split(Importer.splitExpression());
+      splitDescription = description.split(Parser.splitExpression());
     }
     // 'Shortness of breath' becomes 'breath shortness', for example, so as not to lose meaning when removing ignored words.
     if(splitDescription.length==3&&splitDescription[1]=="of") splitDescription=[splitDescription[2],splitDescription[0]];
-    if(description&&splitDescription.length>1) description=splitDescription.filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word))).join(" ");    
+    if(description&&splitDescription.length>1) description=splitDescription.filter(word=>!Parser.ignoreInStepName(Parser.clean(word))).join(" ");    
     return description;
   }
 
@@ -88,13 +97,13 @@ class Importer {
     let termCount = {};
     // Initial cleaning and counting terms
     for(let row of csvFile) {
-      row = Importer.cleanCSVHeaders(row);
+      row = Parser.cleanCSVHeaders(row);
       let description=descriptionFunction(row);
       if(description) {
-        for(let term of description.split(Importer.splitExpression())) {
-          term = Importer.singular(Importer.fullClean(term));
+        for(let term of description.split(Parser.splitExpression())) {
+          term = Parser.singular(Parser.fullClean(term));
           // Term shouldn't be in phenotype name
-          if(Importer.termAndName(term, name)||term.length<=4) continue;
+          if(Parser.termAndName(term, name)||term.length<=4) continue;
           Object.keys(termCount).includes(term)?termCount[term]=termCount[term]+=1:termCount[term]=1;
         }
       }
@@ -114,8 +123,8 @@ class Importer {
   }
 
   static getFileCategory(csvFile, name, descriptionFunction=this.getDescription) {
-    let termCount = Importer.getTermCount(csvFile, name, descriptionFunction);
-    let terms = termCount.filter(term=>!Importer.getNotDifferentiatingSubset(termCount).includes(term));
+    let termCount = Parser.getTermCount(csvFile, name, descriptionFunction);
+    let terms = termCount.filter(term=>!Parser.getNotDifferentiatingSubset(termCount).includes(term));
     if(terms.length&&terms[0][1]>=csvFile.length) return terms[0][0]; else return ""; 
   }
 
@@ -127,18 +136,18 @@ class Importer {
     name = this.lightClean(name);
 
     function getKeyTerm(phrase, name) {
-      if(phrase.split(Importer.splitExpression()).length==1) return phrase;
-      if(phrase.split(Importer.splitExpression()).filter(term=>!Importer.termAndName(term, name.toLowerCase())).length) return name;
-      let nouns = nlp(phrase).nouns().text().split(Importer.splitExpression()).filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
-      let adjectives = nlp(phrase).adjectives().text().split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
-      return nouns.length?Importer.clean(nouns[0]):Importer.clean(adjectives[0]);
+      if(phrase.split(Parser.splitExpression()).length==1) return phrase;
+      if(phrase.split(Parser.splitExpression()).filter(term=>!Parser.termAndName(term, name.toLowerCase())).length) return name;
+      let nouns = nlp(phrase).nouns().text().split(Parser.splitExpression()).filter(word=>!Parser.ignoreInStepName(Parser.clean(word)));
+      let adjectives = nlp(phrase).adjectives().text().split(" ").filter(word=>!Parser.ignoreInStepName(Parser.clean(word)));
+      return nouns.length?Parser.clean(nouns[0]):Parser.clean(adjectives[0]);
     }
 
     function orderKey(key) {
       let nameReplacement;
       // For definitions with multiple words in their name, use the last word when ordering
       if(key!=name&&key.includes(name)&&name.split(" ").length>1) {
-        nameReplacement = name.split(" ").filter(word=>!WorkflowUtils.ignoreInStepName(Importer.clean(word)));
+        nameReplacement = name.split(" ").filter(word=>!Parser.ignoreInStepName(Parser.clean(word)));
         nameReplacement = nameReplacement[nameReplacement.length-1];
         key = key.replace(name, nameReplacement);
       }
@@ -174,7 +183,7 @@ class Importer {
       csvFile=csvFile.content.filter(row=>(row["case_incl"]&&row["case_incl"]!="N")||!row["case_incl"]);
       
       function isCodingSystemGroup(groupSystems, groupKeys) {
-        return ((codingSystem=csvFile[0]["codingsystem"]||csvFile[0]["codetype"]||csvFile[0]["vocabulary"])&&groupSystems.includes(Importer.fullClean(codingSystem)))||groupKeys().filter(codeKey=>Object.keys(csvFile[0]).map(key=>Importer.fullClean(key)).includes(Importer.fullClean(codeKey))).length;
+        return ((codingSystem=csvFile[0]["codingsystem"]||csvFile[0]["codetype"]||csvFile[0]["vocabulary"])&&groupSystems.includes(Parser.fullClean(codingSystem)))||groupKeys().filter(codeKey=>Object.keys(csvFile[0]).map(key=>Parser.fullClean(key)).includes(Parser.fullClean(codeKey))).length;
       }
       
       var codingSystemGroup = isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)?"--primary":(isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)?"--secondary":"");
@@ -183,15 +192,15 @@ class Importer {
       for(let row of csvFile) {
         let category, description=descriptionFunction(row);
         const OTHER_CODING_SYSTEMS = ["UK Biobank", "TADDS", "HES"];
-        if(description&&(isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)||isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)||(codingSystemGroup="--"+OTHER_CODING_SYSTEMS.filter((system)=>Importer.fullClean(system)==Importer.fullClean(filename.split("_")[filename.split("_").length-1]))[0]))) {
+        if(description&&(isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)||isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)||(codingSystemGroup="--"+OTHER_CODING_SYSTEMS.filter((system)=>Parser.fullClean(system)==Parser.fullClean(filename.split("_")[filename.split("_").length-1]))[0]))) {
           let code=valueFunction(row);
           // Remaining work to categorise descriptions
           if(termCount.length) {
             let matched=false;
             for(let term of termCount.filter(term=>!this.getNotDifferentiatingSubset(termCount).includes(term)).map(term=>term[0]).reverse()) {
-              if(description.split(" ").filter(word=>stringSimilarity.compareTwoStrings(Importer.singular(this.fullClean(word)), term) >= 0.8 
-              || term.includes(Importer.singular(this.fullClean(word))) 
-              || Importer.singular(this.fullClean(word)).includes(term)).length) {
+              if(description.split(" ").filter(word=>stringSimilarity.compareTwoStrings(Parser.singular(this.fullClean(word)), term) >= 0.8 
+              || term.includes(Parser.singular(this.fullClean(word))) 
+              || Parser.singular(this.fullClean(word)).includes(term)).length) {
                 categories[term+codingSystemGroup]?categories[term+codingSystemGroup].push(code):categories[term+codingSystemGroup]=[code];
                 matched=true;
                 break;
@@ -320,4 +329,4 @@ class Importer {
 
 }
 
-module.exports = Importer;
+module.exports = Parser;

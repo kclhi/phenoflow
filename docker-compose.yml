@@ -13,64 +13,12 @@ services:
   webapp:
     build: web
     environment:
-      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
       NODE_EXTRA_CA_CERTS: ${NODE_EXTRA_CA_CERTS}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
     restart: unless-stopped
     ports:
       - 3003:3003
-    volumes:
-      - pf_uploads:/home/node/app/uploads
-    secrets:
-      - rsa-private-key
-    depends_on:
-      - mariadb
-      - generator
-
-  mariadb:
-    build: web/db
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - pf_data:/var/lib/mysql
-    restart: unless-stopped
-
-  migration:
-    image: phenoflow_webapp:latest
-    environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
-    secrets:
-      - rsa-private-key
-    command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npm", "run", "migrate"]
-    depends_on:
-      - mariadb
-      - webapp
-
-  generator:
-    build:
-      context: generator/
-    restart: unless-stopped
-    environment:
-      PORT: 3004
-
-volumes:
-  pf_uploads:
-  pf_data:
 
 networks:
   default:
     external:
       name: hi_default # For proxy.
-
-secrets:
-  rsa-private-key:
-    file: ${HOST_RSA_PRIVATE_KEY_PATH}${RSA_PRIVATE_KEY}

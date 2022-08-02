@@ -1,4 +1,4 @@
-const Importer = require("./importer");
+const Parser = require("./parser");
 const chai = require("chai");
 chai.use(require("chai-http"));
 const server = require("../app");
@@ -6,16 +6,14 @@ const expect = chai.expect;
 const fs = require("fs").promises;
 const m2js = require("markdown-to-json");
 const parse = require('neat-csv');
-const models = require("../models");
 const config = require("config");
-const WorkflowUtils = require("../util/workflow");
 
 async function importCaliberPhenotypes(phenotypeFiles) {
   let allCSVs=[];
 
   for(let phenotypeFile of phenotypeFiles) {
 
-    const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/"+phenotypeFile;
+    const PATH = "test/"+config.get("parser.PHENOTYPE_FOLDER")+"/_phenotypes/"+phenotypeFile;
 
     try {
       await fs.stat(PATH)
@@ -41,7 +39,7 @@ async function importCaliberPhenotypes(phenotypeFiles) {
       codelist = codelist.endsWith(".csv")?codelist:codelist+".csv"
       codelist = codelist.replace(".csv.csv", ".csv")
       try {
-        currentCSVSource = await fs.readFile("test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_data/codelists/"+codelist);
+        currentCSVSource = await fs.readFile("test/"+config.get("parser.PHENOTYPE_FOLDER")+"/_data/codelists/"+codelist);
       } catch(error) {
         console.warn("Could not read codelist for " + phenotypeFile + ": " + error);
         continue;
@@ -58,8 +56,8 @@ async function importCaliberPhenotypes(phenotypeFiles) {
 
   }
   if(allCSVs.length==0) return;
-  let res = await Importer.importCodelists(allCSVs, markdownContent.name, markdownContent.phenotype_id+" - "+markdownContent.title, "caliber");
-  res.should.be.a("object");
+  let res = await Parser.parseCodelists(allCSVs, markdownContent.name, markdownContent.phenotype_id+" - "+markdownContent.title, "caliber");
+  res.body.should.be.an("array");
   res.should.have.status(200);
   
 }
@@ -75,10 +73,10 @@ async function groupPhenotypeFiles(path) {
 }
 
 async function testCaliberPhenotype(phenotypeFile) {
-  const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
+  const PATH = "test/"+config.get("parser.PHENOTYPE_FOLDER")+"/_phenotypes/";
   // Can't perform test if file doesn't exist.
   try { await fs.stat(PATH) } catch(error) { return true; }
-  if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
+  if(config.get("parser.GROUP_SIMILAR_PHENOTYPES")) {
     for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
       if(phenotypeFiles.includes(phenotypeFile)) {
         await importCaliberPhenotypes(phenotypeFiles);
@@ -89,26 +87,21 @@ async function testCaliberPhenotype(phenotypeFile) {
   }
 }
 
-describe("caliber importer", () => {
+describe("caliber parser", () => {
 
   describe("/POST import caliber csv", () => {
-
-    it("[CI1] Should be able to add a new user (CSVs).", async() => {
-      const result = await models.user.create({name:"caliber", password: config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://portal.caliberresearch.org"});
-      result.should.be.a("object");
-    });
-    
-    it("[CI2] Should be able to import a phenotype CSV.", async() => {
-      await testCaliberPhenotype("lewer_HUPIO_mZXE2uZxDzVYBsAbTjbhrK.md");
+   
+    it("[CI1] Should be able to parse a phenotype CSV.", async() => {
+      await testCaliberPhenotype("caliber_marital_status_cprd_R8V44bGGETqrvQHbhbWpYL.md");
     }).timeout(0);
 
-    it("[CI3] Should be able to import all phenotype CSVs.", async() => {
-      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
+    it("[CI2] Should be able to parse all phenotype CSVs.", async() => {
+      const PATH = "test/"+config.get("parser.PHENOTYPE_FOLDER")+"/_phenotypes/";
       // Can't perform test if folder doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
       for(let phenotypeFiles of await groupPhenotypeFiles(PATH)) {
-        console.log(phenotypeFiles);
-        if(config.get("importer.GROUP_SIMILAR_PHENOTYPES")) {
+        console.log("Importing: " + phenotypeFiles);
+        if(config.get("parser.GROUP_SIMILAR_PHENOTYPES")) {
           await importCaliberPhenotypes(phenotypeFiles);
         } else {
           for(let phenotypeFile of phenotypeFiles) {
@@ -118,9 +111,9 @@ describe("caliber importer", () => {
       }
     }).timeout(0);
 
-    it("[CI4] Should be able to import multiple phenotype CSVs with the same name.", async() => {
+    it("[CI3] Should be able to parse multiple phenotype CSVs with the same name.", async() => {
       const phenotypeFiles = ["kuan_diabetes_bYMFsBEu7tVB6YkrQ8aBvk.md", "sapey_diabetes_ZmgyhwLqB2QmAtxENwkL8X.md", "carr_diabetes_jQLxtg2Z3zPcXWge5Nv9tU.md"];
-      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
+      const PATH = "test/"+config.get("parser.PHENOTYPE_FOLDER")+"/_phenotypes/";
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
       for(let phenotypeFile of phenotypeFiles) {
@@ -128,8 +121,8 @@ describe("caliber importer", () => {
       }
     }).timeout(0);
 
-    it("[CI5] Should be able to annotate CALIBER MD files with a phenoflow URL.", async() => {
-      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
+    it("[CI4] Should be able to annotate CALIBER MD files with a phenoflow URL.", async() => {
+      const PATH = "test/"+config.get("parser.PHENOTYPE_FOLDER")+"/_phenotypes/";
       try { await fs.stat(PATH) } catch(error) { return true; }
       let ids=[];
       for(let file of await fs.readdir(PATH)) {
@@ -137,7 +130,7 @@ describe("caliber importer", () => {
         if(!markdown.codelists) continue;
         let yaml;
         for(let term of markdown.name.split(" ")) {
-          var res = await chai.request(server).post("/phenoflow/importer/caliber/annotate").send({markdown:markdown, name:term, about:markdown.phenotype_id});
+          var res = await chai.request(server).post("/phenoflow/parser/caliber/annotate").send({markdown:markdown, name:term, about:markdown.phenotype_id});
           if(!res.body&&!res.body.markdowns) continue;
           for(let markdownYAML of res.body.markdowns) {
             var id = markdownYAML.match(/\/download\/[0-9]+"/g)[0];
@@ -158,25 +151,7 @@ describe("caliber importer", () => {
       }
     }).timeout(0);
 
-    it("[CI6] Importing the same (CALIBER) phenotype should result in no changes.", async() => {
-      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
-      try { await fs.stat(PATH) } catch(error) { return true; }
-      await testCaliberPhenotype("blood-pressure.md");
-      await testCaliberPhenotype("blood-pressure.md");
-      let workflows = await models.workflow.findAndCountAll();
-      expect(workflows.count).to.equal(4);
-    }).timeout(0);
-
-    it("[CI7] Importing an update to the same (CALIBER) phenotype should edit the existing definition.", async() => {
-      const PATH = "test/"+config.get("importer.PHENOTYPE_FOLDER")+"/_phenotypes/";
-      try { await fs.stat(PATH) } catch(error) { return true; }
-      await testCaliberPhenotype("blood-pressure.md");
-      await testCaliberPhenotype("blood-pressure-alt.md");
-      let workflows = await models.workflow.findAndCountAll();
-      expect(workflows.count).to.equal(4);
-    }).timeout(0);
-
-    it("[CI8] Import CALIBER validation set.", async() => {
+    it("[CI5] Import CALIBER validation set.", async() => {
       await testCaliberPhenotype("kuan_AAA_NJ2gf6ZTTxjayMcK5ksHXf.md");
       await testCaliberPhenotype("kuan_diabetes_bYMFsBEu7tVB6YkrQ8aBvk.md");
       await testCaliberPhenotype("sapey_diabetes_ZmgyhwLqB2QmAtxENwkL8X.md");

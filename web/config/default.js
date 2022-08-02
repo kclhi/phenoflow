@@ -1,34 +1,8 @@
 module.exports = {
-  ui: {
-    PAGE_LIMIT: 100
-  },
-  workflow: {
-    LANGUAGES: ["knime", "python", "js"],
-    CONCEPTS: ["load", "external", "logic", "boolean", "output"]
-  },
-  generator: {
-    URL: "http://localhost:3004"
-  },
-  visualiser: {
-    URL: "http://localhost:8080"
-  },
-  gitserver: {
-    PREFIX: "https://",
-    HOST: "localhost",
-    CONTAINER_HOST: "git-server",
-    PORT: ":7005"
-  },
-  importer: {
-    PHENOTYPE_FOLDER: "fixtures/importer/caliber",
-    CODELIST_FOLDER: "fixtures/importer/phekb",
-    KEYWORD_LIST_FOLDER: "fixtures/importer/kclhi",
+  parser: {
+    PHENOTYPE_FOLDER: "fixtures/parser/caliber",
+    CODELIST_FOLDER: "fixtures/parser/phekb",
+    KEYWORD_LIST_FOLDER: "fixtures/parser/kclhi",
     GROUP_SIMILAR_PHENOTYPES: false
-  },
-  validation: {
-    SNOWSTORM_URL: "localhost:8080"
-  },
-  zenodo: {
-    URL: "sandbox.zenodo.org",
-    ACCESS_TOKEN: process.env.ZENODO_ACCESS_TOKEN
   }
 };
