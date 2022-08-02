@@ -7,6 +7,7 @@ const jwt = require("express-jwt");
 const fs = require("fs").promises;
 const config = require("config");
 const Workflow = require("../util/workflow");
+const Implementation = require("../util/implementation");
 
 router.post("/:stepId/:language", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:["RS256"]}), async function(req, res, next) {
 
@@ -40,6 +41,14 @@ router.post("/:stepId/:language", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
     }
 
   });
+
+});
+
+router.get("/:workflowId", async function(req, res, next) {
+
+  let codes = await Implementation.getCodes(req.params.workflowId);
+  if(codes) res.send(codes);
+  res.status(500);
 
 });
 
