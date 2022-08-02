@@ -15,6 +15,7 @@ const Visualise = require("../util/visualise");
 const Download = require("../util/download");
 const Workflow = require("./workflow");
 const WorkflowUtils = require("../util/workflow");
+const Implementation = require('../util/implementation');
 
 describe("basic", () => {
 
@@ -38,7 +39,7 @@ describe("basic", () => {
 		let stepId;
 
 		it("Should be able to add a new step, for a workflow.", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "doc", "type");
+			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "doc", "logic");
 		});
 
 		it("Should be able to add a new input, for a step.", async() => {
@@ -64,7 +65,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to update a steps's details.", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "updatedStepDoc", "updatedStepType");
+			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "updatedStepDoc", "logic");
 		});
 
 		it("Should be able to update an input's details.", async() => {
@@ -82,7 +83,7 @@ describe("basic", () => {
 		// Add second (and completness checks):
 
 		it("Should be able to add second step.", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2", "secondStepDoc", "secondStepType");
+			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2", "secondStepDoc", "logic");
 		});
 
 		it("Incomplete workflow (just step) should be marked as such.", async() => {
@@ -135,7 +136,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add second step (of a second workflow).", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2-second", "secondStepDoc", "secondStepType");
+			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2-second", "secondStepDoc", "logic");
 		});
 
 		it("Should be able to add input to second step (of a second workflow).", async() => {
@@ -159,7 +160,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add a new step, for a second workflow.", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "updatedStepDoc", "updatedStepType");
+			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "updatedStepDoc", "logic");
 		});
 
 		it("Should be able to add a new input, for a step (of a second workflow).", async() => {
@@ -192,7 +193,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add second step (of a third workflow).", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2", "secondStepDoc", "secondStepType");
+			stepId = await Workflow.upsertStep(workflowId, 2, "stepName2", "secondStepDoc", "logic");
 		});
 
 		it("Should be able to add input to second step (of a third workflow).", async() => {
@@ -225,7 +226,7 @@ describe("basic", () => {
 		});
 
 		it("Should be able to add first step (of a restricted workflow).", async() => {
-			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "firstStepDoc", "firstStepType", "restrictedUser");
+			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "firstStepDoc", "logic", "restrictedUser");
 		});
 
 		it("Should be able to add input to first step (of a restricted workflow).", async() => {
@@ -239,6 +240,13 @@ describe("basic", () => {
 		it("Should be able to add implementation to first step (of a restricted workflow).", async() => {
 			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py", "restrictedUser");
 		});
+
+    // 
+
+    it("Should be able to aggregate codes in an implementation.", async() => {
+			expect(JSON.stringify(await Implementation.getCodes(1))).to.equal(JSON.stringify([{"system":"read/snomed", "codes": ["abc", "def", "ghi"]}, {"system":"icd/opcs/cpt", "codes":[]}]));
+		});
+
 
 		// Other service interaction:
 
