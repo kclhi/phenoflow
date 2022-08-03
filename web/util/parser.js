@@ -257,21 +257,6 @@ class Parser {
     return source;
   }
 
-  static async openCSV(path, file) {
-    let csvFile, csv;
-    try {
-      csvFile = await fs.readFile(path+file);
-    } catch(error) {
-      console.error("Could not read codelist "+file+": "+error);
-    }
-    try {
-      csv = await parse(csvFile);
-    } catch(error) {
-      console.error(error);
-    }
-    return csv;
-  }
-
   static hash(filesContent) {
     return require('crypto').createHash('sha1').update(JSON.stringify(filesContent)).digest('base64').replace(/[^A-Za-z0-9]/g, "");
   }

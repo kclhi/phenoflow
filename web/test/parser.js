@@ -13,31 +13,6 @@ class Parser {
     let res = await chai.request(testServerObject).post("/phenoflow/parser/parseCodelists").send({csvs:csvs, name:name, about:about, userName:userName});
     return res;
   }
-  
-  static async getSteplistCSVs(stepList, path) {
-    let csvs = [];
-    for(let row of stepList) {
-      if(row["logicType"]=="codelist"||row["logicType"]=="codelistExclude") {
-        let file = row["param"].split(":")[0];
-        csvs.push({"filename":file, "content": await ParserUtils.openCSV(path, file)});
-      } else if(row["logicType"]=="codelistsTemporal") {
-        for(let file of [row["param"].split(":")[0], row["param"].split(":")[1]]) csvs.push({"filename":file, "content": await ParserUtils.openCSV(path, file)});
-      } else if(row["logicType"]=="branch") {
-        let nestedSteplist = await ParserUtils.openCSV(path, row["param"]);
-        csvs.push({"filename":row["param"], "content":nestedSteplist});
-        csvs = csvs.concat(await this.getSteplistCSVs(nestedSteplist, path));
-      }
-    }
-    return csvs;
-  }
-  
-  static async processAndParseSteplist(path, file, author) {
-    let stepList = {"filename":file, "content":await ParserUtils.openCSV(path, file)};
-    let csvs = await this.getSteplistCSVs(stepList.content, path);
-    let id = await ParserUtils.steplistHash(stepList, csvs);
-    let name = ParserUtils.getName(stepList.filename);
-    return await this.parseSteplist(stepList, csvs, name, id+" - "+ParserUtils.getName(stepList.filename), author);
-  }
 
   static async parseSteplist(steplist, csvs, name, about, userName) {
     let res = await chai.request(testServerObject).post("/phenoflow/parser/parseSteplist").send({steplist:steplist, csvs:csvs, name:name, about:about, userName:userName});
