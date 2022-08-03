@@ -255,7 +255,7 @@ class Parser {
     steps.push(await this.getOutputCasesConditional(steps.flat().length+1, name, OUTPUT_EXTENSION, "python", parentStepName, steps));
     steps = steps.flat();
     let workflow = Parser.createWorkflow(name, about, userName);
-    return {...workflow, ...Parser.createSteps(workflow.id, steps)};
+    return {...workflow, ...steps};
   }
 
   static async getOutputCasesConditional(position, name, outputExtension, language, parentStepName, steps) { 
@@ -297,7 +297,7 @@ class Parser {
       steps = steps.concat(await Parser.getWorkflowStepsFromList(NAME, OUTPUT_EXTENSION, list, userName));
     }
 
-    generatedWorkflows.push({...discWorkflow, ...Parser.createSteps(discWorkflow.id, steps)});
+    generatedWorkflows.push({...discWorkflow, steps});
 
     // i2b2
     steps = [];
@@ -316,7 +316,7 @@ class Parser {
       steps = steps.concat(await Parser.getWorkflowStepsFromList(NAME, OUTPUT_EXTENSION, list, userName));
     }
 
-    generatedWorkflows.push({...i2b2Workflow, ...Parser.createSteps(i2b2Workflow.id, steps)});
+    generatedWorkflows.push({...i2b2Workflow, steps});
 
     // omop
     steps = [];
@@ -335,7 +335,7 @@ class Parser {
       steps = steps.concat(await Parser.getWorkflowStepsFromList(NAME, OUTPUT_EXTENSION, list, userName));
     }
 
-    generatedWorkflows.push({...omopWorkflow, ...Parser.createSteps(omopWorkflow.id, steps)});
+    generatedWorkflows.push({...omopWorkflow, steps});
 
     // fhir
     steps = [];
@@ -355,7 +355,7 @@ class Parser {
       steps = steps.concat(await Parser.getWorkflowStepsFromList(NAME, OUTPUT_EXTENSION, list, userName));
     }
 
-    generatedWorkflows.push({...fhirWorkflow, ...Parser.createSteps(fhirWorkflow.id, steps)});
+    generatedWorkflows.push({...fhirWorkflow, steps});
     
     return generatedWorkflows;
   }
@@ -528,30 +528,6 @@ class Parser {
       implementations[implementation].implementationTemplate = implementationTemplate;
     }
     return {stepName:stepName, stepDoc:stepDoc, stepType:stepType, position:position, inputDoc:inputDoc, outputDoc:outputDoc, outputExtension:outputExtension, implementations:implementations};
-
-  }
-
-  static createSteps(workflowId, steps) {
-
-    let generatedSteps=[], generatedInputs=[], generatedOutputs=[], generatedImplementations=[];
-    if(steps.map(step=>step.stepName).length!=new Set(steps.map(step=>step.stepName)).size) throw "Duplicate steps found during import: " + JSON.stringify(steps.map(step=>step.stepName));
-
-    for(let stepData of steps) {
-
-      const stepId = uuidv1();
-      generatedSteps.push({id:stepId, name:stepData.stepName, doc:stepData.stepDoc, type:stepData.stepType, workflowId:workflowId, position:stepData.position});
-      generatedInputs.push({id:uuidv1(), doc:stepData.inputDoc, stepId:stepId});
-      generatedOutputs.push({id:uuidv1(), doc:stepData.outputDoc, extension:stepData.outputExtension, stepId:stepId});
-   
-      for(let implementation of stepData.implementations) {
-        let generatedImplementation = {id:uuidv1(), fileName:implementation.fileName, language:implementation.language, stepId:stepId};
-        if(implementation.language&&implementation.implementationTemplate) generatedImplementation["file"] = implementation.implementationTemplate;
-        generatedImplementations.push(generatedImplementation);
-      }
-
-    }
-
-    return {"steps":generatedSteps, "inputs":generatedInputs, "outputs":generatedOutputs, "implementations":generatedImplementations};
 
   }
 
