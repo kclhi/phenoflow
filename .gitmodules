@@ -1,3 +1,0 @@
-[submodule "web/test/implementation/js/omop/ohdsi"]
-	path = web/test/fixtures/templates/omop/ohdsi
-	url = git@github.com:kclhi/ohdsi.git

@@ -1,76 +1,60 @@
-version: "3.7"
+version: '3.2'
+
 services:
 
-  proxy:
-    build:
-      context: ./web/proxy
-    command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
-    depends_on:
-      - webapp
-    restart: "no"
-    entrypoint: ["echo", "Service proxy disabled"]
-
-  webapp:
-    build: web
-    environment:
-      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
-      NODE_EXTRA_CA_CERTS: ${NODE_EXTRA_CA_CERTS}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
+  git-server:
+    build: git-server
     restart: unless-stopped
-    ports:
-      - 3003:3003
+
+  spring:
+    build: spring
+    links:
+     - mongo
+     - sparql
     volumes:
-      - pf_uploads:/home/node/app/uploads
-    secrets:
-      - rsa-private-key
-    depends_on:
-      - mariadb
-      - generator
-
-  mariadb:
-    build: web/db
+     - type: volume
+       source: bundle
+       target: /data/bundle
+     - type: volume
+       source: git
+       target: /data/git
+     - type: volume
+       source: graphviz
+       target: /data/graphviz
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+     - SPARQL_ENDPOINT=http://sparql:3030/cwlviewer/
+     - SPRING_DATA_MONGODB_HOST=mongo
+     - SPRING_DATA_MONGODB_PORT=27017
+     - BUNDLESTORAGE=/data/bundle
+     - GITSTORAGE=/data/git
+     - GRAPHVIZSTORAGE=/data/graphviz
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:3.4
     volumes:
-      - pf_data:/var/lib/mysql
+      - type: volume
+        source: mongo
+        target: /data/db
     restart: unless-stopped
 
-  migration:
-    image: phenoflow_webapp:latest
-    environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
-    secrets:
-      - rsa-private-key
-    command: ["./bin/wait-for-it.sh", "--timeout=0", "phenoflow_mariadb_1:3306", "--", "npm", "run", "migrate"]
-    depends_on:
-      - mariadb
-      - webapp
-
-  generator:
-    build:
-      context: generator/
+  sparql:
+    image: stain/jena-fuseki:3.4.0
+    volumes:
+    - type: volume
+      source: sparql
+      target: /fuseki/databases/cwlviewer
+    command: "/jena-fuseki/fuseki-server --loc=/fuseki/databases/cwlviewer /cwlviewer"
     restart: unless-stopped
-    environment:
-      PORT: 3004
 
 volumes:
-  pf_uploads:
-  pf_data:
+  bundle:
+  git:
+  graphviz:
+  mongo:
+  sparql:
 
 networks:
   default:
     external:
       name: hi_default # For proxy.
-
-secrets:
-  rsa-private-key:
-    file: ${HOST_RSA_PRIVATE_KEY_PATH}${RSA_PRIVATE_KEY}

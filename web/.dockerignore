@@ -1,9 +1,0 @@
-node_modules
-uploads/*
-output/*
-dist
-test/phenotype-id.github.io
-test/hdr-caliber-phenome-portal/*
-!test/hdr-caliber-phenome-portal/_phenotypes/*
-!test/hdr-caliber-phenome-portal/_data/codelists/*
-test/output
