@@ -2,8 +2,6 @@ const chai = require("chai");
 const should = chai.should();
 const expect = chai.expect;
 const fs = require("fs");
-var server = require("../app");
-const models = require("../models");
 const logger = require("../config/winston");
 const proxyquire = require('proxyquire');
 
@@ -11,10 +9,10 @@ chai.use(require("chai-http"));
 
 class Workflow {
 
-	static async createWorkflow(name, about, userName) {
+	static async createWorkflow(name, about, userName, id=null) {
 
 		const server = proxyquire('../app', {'./routes/workflow':proxyquire('../routes/workflow', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
-		let res = await chai.request(server).post("/phenoflow/phenotype/new").send({name:name, about:about, userName: userName});
+		let res = await chai.request(server).post("/phenoflow/phenotype/new").send({id:id, name:name, about:about, userName: userName});
 		res.should.have.status(200);
 		res.body.should.be.a("object");
 		return res.body.id;

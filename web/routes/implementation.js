@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const logger = require("../config/winston");
 const models = require("../models");
-const sanitizeHtml = require("sanitize-html");
 const jwt = require("express-jwt");
 const fs = require("fs").promises;
 const config = require("config");
@@ -49,37 +48,6 @@ router.get("/:workflowId", async function(req, res, next) {
   let codes = await Implementation.getCodes(req.params.workflowId);
   if(codes) res.send(codes);
   res.status(500);
-
-});
-
-router.get("/:workflowId/:position/:language", async function(req, res, next) {
-
-  let step, implementation, file;
-  try {
-    step = await models.step.findOne({where:{workflowId: req.params.workflowId, position: req.params.position}});
-  } catch(error) {
-    error = "Error getting step for implementation: " + error;
-    logger.debug(error);
-    return res.status(500).send(error);
-  }
-  if (!step) return res.sendStatus(404);
-  try {
-    implementation = await models.implementation.findOne({where:{language:req.params.language,stepId:step.id}});
-  } catch(error) {
-    error = "Error getting implementation details: " + error;
-    logger.debug(error);
-    return res.status(500).send(error);
-  }
-  if (!implementation) return res.sendStatus(404);
-  try {
-    file = await fs.readFile("uploads/" + step.workflowId + "/" + req.params.language + "/" + implementation.fileName, "utf8");
-  } catch(error) {
-    error = "Error reading implementation: " + error;
-    logger.debug(error);
-    return res.status(500).send(error);
-  }
-  if (!file) return res.sendStatus(500);
-  res.render("code",{title:"Phenoflow", implementation:file, language:implementation.language})
 
 });
 

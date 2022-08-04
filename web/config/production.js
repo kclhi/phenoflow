@@ -13,6 +13,9 @@ module.exports = {
   user: {
     DEFAULT_PASSWORD: process.env.DEFAULT_PASSWORD
   },
+  parser: {
+    URL: "http://parser:3005"
+  },
   generator: {
     URL: "http://generator:3004"
   },

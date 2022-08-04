@@ -1,16 +1,14 @@
-// compromise doesn't play nicely with chai, so load it in the first test (TODO: properly reset module requires between tests)
-const nlp = require('compromise');
 const chai = require("chai");
 chai.use(require("chai-http"));
 const server = require("../app");
 const should = chai.should();
 const expect = chai.expect;
 const fs = require("fs");
-const request = require("request");
 const got = require("got");
 const models = require("../models");
 const logger = require("../config/winston");
 const config = require("config");
+
 const Visualise = require("../util/visualise");
 const Download = require("../util/download");
 const Workflow = require("./workflow");
@@ -22,7 +20,7 @@ describe("basic", () => {
 	describe("/POST create workflow", () => {
 
 		// Add:
-
+    
 		it("[TB1] Should be able to add a new user.", async() => {
 			await models.sequelize.sync({force:true});
 			const result = await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});
@@ -33,7 +31,7 @@ describe("basic", () => {
 		let name = "workflow";
 
 		it("Should be able to add a new workflow.", async() => {
-			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "martinchapman");
+			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "martinchapman", 1);
 		});
 
 		let stepId;
@@ -130,8 +128,10 @@ describe("basic", () => {
 		});
 
 		// Child workflows:
+    let firstWorkflowId;
 
 		it("Should be able to add a second workflow.", async() => {
+      firstWorkflowId = workflowId;
 			workflowId = await Workflow.createWorkflow(name, "this is a special phenotype", "martinchapman");
 		});
 
@@ -156,7 +156,7 @@ describe("basic", () => {
 		it("Second workflow should not be marked as a child of the first (non-overlapping workflows should not be marked as such).", async() => {
 			await WorkflowUtils.workflowChild(workflowId);
 			workflows = await models.workflow.findAll();
-			expect(await workflows.filter((workflow)=>{return workflow.id==2})[0].countParent()).equal(0);
+			expect(await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].countParent()).equal(0);
 		});
 
 		it("Should be able to add a new step, for a second workflow.", async() => {
@@ -177,13 +177,13 @@ describe("basic", () => {
 
 		it("Second workflow should be marked as a child of the first (overlapping workflows should be marked as such).", async() => {
 			await WorkflowUtils.workflowChild(workflowId);
-			expect(await workflows.filter((workflow)=>{return workflow.id==2})[0].countParent()).equal(1);
+			expect(await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].countParent()).equal(1);
 		});
 
     // Delete:
 
 		it("Should be able to delete a step.", async() => {
-			await Workflow.deleteStep(workflowId-1, 1);
+			await Workflow.deleteStep(firstWorkflowId, 1);
 		});
 
 		//
@@ -211,7 +211,7 @@ describe("basic", () => {
 		it("Identical workflows are not considered to be children.", async() => {
 			await WorkflowUtils.workflowChild(workflowId);
 			workflows = await models.workflow.findAll();
-			expect(await workflows.filter((workflow)=>{return workflow.id==3})[0].countParent()).equal(0);
+			expect(await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].countParent()).equal(0);
 		});
 
     //
@@ -244,7 +244,8 @@ describe("basic", () => {
     // 
 
     it("Should be able to aggregate codes in an implementation.", async() => {
-			expect(JSON.stringify(await Implementation.getCodes(1))).to.equal(JSON.stringify([{"system":"read/snomed", "codes": ["abc", "def", "ghi"]}, {"system":"icd/opcs/cpt", "codes":[]}]));
+      let codes = await Implementation.getCodes(firstWorkflowId);
+			expect(JSON.stringify(codes)).to.equal(JSON.stringify([{"system":"read/snomed", "codes": ["abc", "def", "ghi"]}, {"system":"icd/opcs/cpt", "codes":[]}]));
 		});
 
 
@@ -264,7 +265,7 @@ describe("basic", () => {
 		let timestamp="" + Math.floor(new Date() / 1000);
 
 		it("Create repo for push to CWL viewer.", async() => {
-      workflowId=workflowId-2; // Reset to first workflow.
+      workflowId=firstWorkflowId; // Reset to first workflow.
 			// If endpoint is unreachable test can't be performed.
 			const GIT_SERVER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.HOST") + config.get("gitserver.PORT");
 			try { await got(GIT_SERVER_URL, {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }

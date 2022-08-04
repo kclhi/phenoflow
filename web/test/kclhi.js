@@ -1,4 +1,3 @@
-const Importer = require("./importer");
 const chai = require("chai");
 chai.use(require("chai-http"));
 const server = require("../app");
@@ -7,12 +6,16 @@ const expect = chai.expect;
 const fs = require("fs").promises;
 const models = require("../models");
 const config = require("config");
-const importerUtils = require("../util/importer");
+const proxyquire = require('proxyquire');
+const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
+
+const ImporterUtils = require("../util/importer");
 
 async function importKCLHIKeywords(path, file) {
   
-  let id = await importerUtils.hashFiles(path, [file]);
-  return await Importer.importKeywordList({"filename":file, "content":await importerUtils.openCSV(path, file)}, importerUtils.getName(file), id+" - "+importerUtils.getName(file), "kclhi");
+  let csv=[{"filename":file, "content":await ImporterUtils.openCSV(path, file)}];
+  let id = await ImporterUtils.hash([csv.content]);
+  return await chai.request(testServerObject).post("/phenoflow/importer/importKeywordList").send({keywords:{"filename":file, "content":await ImporterUtils.openCSV(path, file)}, name:ImporterUtils.getName(file), about:id+" - "+ImporterUtils.getName(file), userName:"kclhi"});
 
 }
 

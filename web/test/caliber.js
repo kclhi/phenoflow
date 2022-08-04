@@ -1,4 +1,3 @@
-const Importer = require("./importer");
 const chai = require("chai");
 chai.use(require("chai-http"));
 const server = require("../app");
@@ -8,7 +7,8 @@ const m2js = require("markdown-to-json");
 const parse = require('neat-csv');
 const models = require("../models");
 const config = require("config");
-const WorkflowUtils = require("../util/workflow");
+const proxyquire = require('proxyquire');
+const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
 
 async function importCaliberPhenotypes(phenotypeFiles) {
   let allCSVs=[];
@@ -58,7 +58,7 @@ async function importCaliberPhenotypes(phenotypeFiles) {
 
   }
   if(allCSVs.length==0) return;
-  let res = await Importer.importCodelists(allCSVs, markdownContent.name, markdownContent.phenotype_id+" - "+markdownContent.title, "caliber");
+  let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:allCSVs, name:markdownContent.name, about:markdownContent.phenotype_id+" - "+markdownContent.title, userName:"caliber"});
   res.should.be.a("object");
   res.should.have.status(200);
   
@@ -99,7 +99,7 @@ describe("caliber importer", () => {
     });
     
     it("[CI2] Should be able to import a phenotype CSV.", async() => {
-      await testCaliberPhenotype("lewer_HUPIO_mZXE2uZxDzVYBsAbTjbhrK.md");
+      await testCaliberPhenotype("caliber_marital_status_cprd_R8V44bGGETqrvQHbhbWpYL.md");
     }).timeout(0);
 
     it("[CI3] Should be able to import all phenotype CSVs.", async() => {

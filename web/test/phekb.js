@@ -4,13 +4,16 @@ chai.use(require("chai-http"));
 const fs = require("fs").promises;
 const config = require("config");
 const models = require('../models');
+const proxyquire = require('proxyquire');
+const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
+
 const ImporterUtils = require("../util/importer");
 
 async function importPhekbCodelists(path, files) {
   let csvs=[];
   for(let file of files) csvs.push({"filename":file, "content":await ImporterUtils.openCSV(path, file)});
   let id = await ImporterUtils.hash(csvs.map(csv=>csv.content));
-  return await Importer.importCodelists(csvs, ImporterUtils.getName(files[0]), id+" - "+ImporterUtils.getName(files[0]), "phekb");
+  return await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:csvs, name:ImporterUtils.getName(files[0]), about:id+" - "+ImporterUtils.getName(files[0]), userName:"phekb"});
 }
 
 async function testPhekbCodelist(file) {

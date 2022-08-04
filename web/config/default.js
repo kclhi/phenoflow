@@ -1,7 +1,4 @@
 module.exports = {
-  ui: {
-    PAGE_LIMIT: 100
-  },
   workflow: {
     LANGUAGES: ["knime", "python", "js"],
     CONCEPTS: ["load", "external", "logic", "boolean", "output"]
@@ -11,6 +8,9 @@ module.exports = {
   },
   visualiser: {
     URL: "http://localhost:8080"
+  },
+  parser: {
+    URL: "http://localhost:3005"
   },
   gitserver: {
     PREFIX: "https://",
@@ -23,9 +23,6 @@ module.exports = {
     CODELIST_FOLDER: "fixtures/importer/phekb",
     KEYWORD_LIST_FOLDER: "fixtures/importer/kclhi",
     GROUP_SIMILAR_PHENOTYPES: false
-  },
-  validation: {
-    SNOWSTORM_URL: "localhost:8080"
   },
   zenodo: {
     URL: "sandbox.zenodo.org",

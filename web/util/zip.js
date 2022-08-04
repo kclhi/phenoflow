@@ -1,4 +1,3 @@
-// require modules
 const fs = require('fs');
 const archiver = require('archiver');
 const logger = require('../config/winston');

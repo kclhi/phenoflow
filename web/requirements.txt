@@ -1,3 +1,4 @@
+adm-zip
 archiver
 await-spawn
 bcrypt
@@ -5,13 +6,13 @@ body-parser
 chai
 chai-http
 config
-compromise
 cookie-parser
 debug
 dotenv
 express
 express-fileupload
 express-jwt
+form-data
 fs
 got
 he
@@ -26,14 +27,13 @@ natural
 neat-csv
 node-cron
 proxyquire
-pug
 python-shell
 sanitize-html
 sequelize
 sequelize-cli
-string-similarity
 sqlite3
 swagger-jsdoc
 swagger-ui-express
+uuid
 winston
 yaml

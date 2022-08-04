@@ -1,20 +1,17 @@
 const chai = require("chai");
 chai.use(require("chai-http"));
-const server = require("../app");
 const should = chai.should();
 const expect = chai.expect;
+const models = require("../models");
+const AdmZip = require('adm-zip');
+const logger = require("../config/winston");
+const config = require('config');
 const proxyquire = require('proxyquire');
 const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
-const models = require("../models");
-const WorkflowUtils = require("../util/workflow")
+
 const ImporterUtils = require("../util/importer");
 
 class Importer {
-
-  static async importCodelists(csvs, name, about, userName) {
-    let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:csvs, name:name, about:about, userName:userName});
-    return res;
-  }
   
   static async getSteplistCSVs(stepList, path) {
     let csvs = [];
@@ -34,24 +31,33 @@ class Importer {
   }
   
   static async processAndImportSteplist(path, file, author) {
-    let stepList = {"filename":file, "content":await ImporterUtils.openCSV(path, file)};
-    let csvs = await this.getSteplistCSVs(stepList.content, path);
-    let id = await ImporterUtils.steplistHash(stepList, csvs);
-    let name = ImporterUtils.getName(stepList.filename);
-    return await this.importSteplist(stepList, csvs, name, id+" - "+ImporterUtils.getName(stepList.filename), author);
-  }
-
-  static async importSteplist(steplist, csvs, name, about, userName) {
-    let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:name, about:about, userName:userName});
+    let steplist = {"filename":file, "content":await ImporterUtils.openCSV(path, file)};
+    let csvs = await this.getSteplistCSVs(steplist.content, path);
+    let id = await ImporterUtils.steplistHash(steplist, csvs);
+    let name = ImporterUtils.getName(steplist.filename);
+    let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:name, about:id+" - "+ImporterUtils.getName(steplist.filename), userName:author});
     return res;
   }
 
-  static async importKeywordList(keywords, name, about, userName) {
-    let res = await chai.request(testServerObject).post("/phenoflow/importer/importKeywordList").send({keywords:keywords, name:name, about:about, userName:userName});
-    return res;
-  }
+  static async addDefaultUser() {
+    await models.sequelize.sync({force:true});
+    await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});
+  };
 
   static getCSVs() {
+    return [
+      {"filename":"listA_system.csv",
+      "content": "ICD-10 code,description\n123,TermA TermB\n234,TermA TermC\n345,TermD TermE"},
+      {"filename":"listB_system.csv",
+      "content": "SNOMED code,description\n456,TermF TermG\n567,TermF TermH\n678,TermI TermJ"},
+      {"filename":"listC_system.csv",
+      "content": "SNOMED code,description\n456,TermK TermL\n567,TermK TermL\n678,TermK TermL"},
+      {"filename":"listD_system.csv",
+      "content": "SNOMED code,description\n456,TermM TermN\n567,TermM TermN\n678,TermM TermN"}
+    ]
+  }
+
+  static getParsedCSVs() {
     return [
       {"filename":"listA_system.csv",
       "content": [
@@ -100,30 +106,30 @@ class Importer {
 describe("importer", () => {
 
   describe("/POST import", () => {
-
-    it("[IM1] Common terms should be grouped by category.", async() => {
-      let categories = ImporterUtils.getCategories([{"filename":"file.csv", 
-        "content": [
-          {"ICD-10 code": "123", "description": "TermA TermB"},
-          {"ICD-10 code": "234", "description": "TermA TermC"},
-          {"ICD-10 code": "345", "description": "TermD TermE"}
-        ]
-      }], "Phenotype");
-      categories.should.have.property("Phenotype terma - secondary");
-      categories.should.have.property("Phenotype - secondary");
-      categories["Phenotype terma - secondary"].should.be.a("Array");
-      categories["Phenotype - secondary"].should.be.a("Array");
-      categories["Phenotype terma - secondary"].should.deep.equal(['123','234']);
-      categories["Phenotype - secondary"].should.deep.equal(['345']);
-    }).timeout(0);
     
-    it("[IM2] Should be able to import a codelist.", async() => {
-      let res = await Importer.importCodelists(Importer.getCSVs(), "Imported codelist", "Imported codelist", "martinchapman");
+    it("[IM1] Should be able to import a codelist.", async() => {
+      await Importer.addDefaultUser();
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:Importer.getParsedCSVs(), name:"Imported codelist", about:"Imported codelist", userName:"martinchapman"});
       res.should.have.status(200);
+      let workflows;
+			try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
+			expect(workflows).to.have.lengthOf(4);
+    }).timeout(0);
+
+    it("[IM2] Should be able to import a zipped codelist.", async() => {
+      await Importer.addDefaultUser();
+      var zip = new AdmZip();
+      for(let file of Importer.getCSVs()) zip.addFile(file.filename, Buffer.from(file.content, "utf8"));
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").attach('csvs', zip.toBuffer(), 'csvs.zip').field({name:"Imported codelist"}).field({about:"Imported codelist"}).field({userName:"martinchapman"});
+      res.should.have.status(200);
+      let workflows;
+			try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
+			expect(workflows).to.have.lengthOf(4);
     }).timeout(0);
 
     it("[IM3] Should be able to import a steplist that references a branch.", async() => {
-      let stepList = 
+      await Importer.addDefaultUser();
+      let steplist = 
         {"filename":"codelist-steplist-branch-A.csv",
           "content": [
             {"logicType": "codelist", "param": "listA_system.csv:1"},
@@ -131,25 +137,31 @@ describe("importer", () => {
             {"logicType": "codelist", "param": "listB_system.csv:1"}
           ]
         };
-      let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
-      let res = await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      let csvs = Importer.getParsedCSVs().concat(Importer.getBranchCSVs());
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.steplistHash(steplist, csvs)+" - "+ImporterUtils.getName(steplist.filename), userName:"martinchapman"});
+      res.should.have.status(200);
+      let workflows;
+			try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
+			expect(workflows).to.have.lengthOf(5);
       res.should.have.status(200);
     }).timeout(0);
 
     it("[IM4] Should be able to import a branch only steplist.", async() => {
-      let stepList = 
+      await Importer.addDefaultUser();
+      let steplist = 
         {"filename":"codelist-steplist-branch-B.csv",
           "content": [
             {"logicType": "branch", "param": "branch-a.csv"},
             {"logicType": "branch", "param": "branch-b.csv"}
           ]
         };
-      let csvs = Importer.getCSVs().concat(Importer.getBranchCSVs());
-      let res = await Importer.importSteplist(stepList, csvs, ImporterUtils.getName(stepList.filename), ImporterUtils.steplistHash(stepList, csvs)+" - "+ImporterUtils.getName(stepList.filename), "martinchapman");
+      let csvs = Importer.getParsedCSVs().concat(Importer.getBranchCSVs());
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.steplistHash(steplist, csvs)+" - "+ImporterUtils.getName(steplist.filename), userName:"martinchapman"});
       res.should.have.status(200);
     }).timeout(0);
 
     it("[IM5] Should be able to import a keyword list.", async() => {
+      await Importer.addDefaultUser();
       let keywords = {
         filename: "keywords.csv",
         content: [
@@ -158,11 +170,12 @@ describe("importer", () => {
           {"keyword": "TermD TermE"},
         ]
       };
-      let res = await Importer.importKeywordList(keywords, "Imported keywords", "Imported keywords", "martinchapman");
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/importKeywordList").send({keywords:keywords, name:"Imported keywords", about:"Imported keywords", userName:"martinchapman"});
       res.should.have.status(200);
     }).timeout(0);
 
     it("[IM6] Should be able to add a connector.", async() => {
+      // Assumes presence of a test workflow with id '1'.
       let res = await chai.request(testServerObject).post("/phenoflow/importer/addConnector").attach("implementationTemplate", "templates/read-potential-cases.template.py", "read-potential-cases.template.py").field({"existingWorkflowIds":[1], "dataSource":"template", "language":"python"});
       res.should.have.status(200);
     }).timeout(0);
@@ -174,5 +187,6 @@ describe("importer", () => {
   });
 
 });
+
 
 module.exports = Importer;
