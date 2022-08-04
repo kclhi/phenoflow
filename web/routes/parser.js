@@ -49,8 +49,8 @@ router.post('/parseCodelists', async function(req, res, next) {
     try { 
       zip = new AdmZip(req.files.csvs.data);
     } catch(zipError) { 
-      logger.error(zipError);
-      return res.status(500).send(zipError.message);
+      logger.error("ZIP error: "+zipError);
+      return res.send(zipError.message).status(500);
     }
     req.body.csvs = [];
     for(let entry of zip.getEntries()) req.body.csvs.push({"filename":entry.entryName, "content":await parse(entry.getData().toString())});
@@ -63,7 +63,7 @@ router.post('/parseCodelists', async function(req, res, next) {
     if(generatedWorkflows) return res.send(generatedWorkflows).status(200);
     else return res.sendStatus(500);
   } catch(importListsError) {
-    logger.error(importListsError);
+    logger.error("Import list error:" +importListsError);
     return res.sendStatus(500);
   }
 });
@@ -172,7 +172,7 @@ router.post('/parseSteplist', async function(req, res, next) {
     try { 
       zip = new AdmZip(req.files.csvs.data);
     } catch(zipError) { 
-      logger.error(zipError);
+      logger.error("ZIP error: "+zipError);
       return res.status(500).send(zipError.message);
     }
     req.body.csvs = [];
@@ -185,7 +185,7 @@ router.post('/parseSteplist', async function(req, res, next) {
   try {
     var [ list, nestedGeneratedWorkflows ] = await Parser.getSteplist(req.body.steplist, uniqueCSVs, req.body.name, req.body.userName);
   } catch(getStepListError) {
-    logger.error(getStepListError);
+    logger.error("Get steplist error: "+getStepListError);
     return res.sendStatus(500);
   }
   try {
@@ -198,7 +198,7 @@ router.post('/parseSteplist', async function(req, res, next) {
       return res.sendStatus(500); 
     }
   } catch(importPhenotypeError) {
-    logger.error(importPhenotypeError);
+    logger.error("Import phenotype error: "+importPhenotypeError);
     return res.sendStatus(500);
   }
 });
@@ -255,7 +255,7 @@ class Parser {
     steps.push(await this.getOutputCasesConditional(steps.flat().length+1, name, OUTPUT_EXTENSION, "python", parentStepName, steps));
     steps = steps.flat();
     let workflow = Parser.createWorkflow(name, about, userName);
-    return {...workflow, ...steps};
+    return {...workflow, steps};
   }
 
   static async getOutputCasesConditional(position, name, outputExtension, language, parentStepName, steps) { 
@@ -535,7 +535,7 @@ class Parser {
     try {
       return {id: uuidv1(), name:name, about:about, userName:sanitizeHtml(userName)};
     } catch(error) {
-      logger.debug(error);
+      logger.debug("Create workflow error: "+error);
       return false;
     }
   }

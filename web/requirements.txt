@@ -12,6 +12,7 @@ cookie-parser
 debug
 dotenv
 express
+express-fileupload
 fs
 got
 he

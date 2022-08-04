@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const logger = require("./config/winston");
+const fileUpload = require("express-fileupload");
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerDefinition = {
   openapi: '3.0.1',
@@ -52,6 +53,7 @@ app.use(bodyParser.urlencoded({limit:'50mb', extended:false, parameterLimit:5000
 app.use(cookieParser());
 
 const router = express.Router();
+router.use(fileUpload({createParentPath:true}));
 router.use("/parser", parser);
 router.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
