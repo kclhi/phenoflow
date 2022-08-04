@@ -7,5 +7,5 @@ COPY --chown=$user:$user package*.json ./
 ENV NODE_ENV production
 RUN npm ci --only=production --loglevel=silly
 COPY --chown=$user:$user . .
-EXPOSE 3003
+EXPOSE 3005
 CMD ["npm", "start"]
