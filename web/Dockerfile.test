@@ -1,5 +1,0 @@
-FROM phenoflow_webapp
-ENV NODE_ENV development
-RUN npm ci --loglevel=silly
-ENV NODE_ENV production
-CMD ["npx", "mocha", "-g", "t2dm", "--exit"]
