@@ -4,7 +4,6 @@ const config = require('config');
 const models = require('../models');
 
 const Zip = require("./zip");
-const Zenodo = require("./zenodo");
 const ImporterUtils = require("./importer");
 
 class Download {
@@ -17,39 +16,6 @@ class Download {
   static async createPFZipResponse(res, id, name, workflow, workflowInputs, implementationUnits, steps, about) {
     let archive = Zip.createResponse(name, res);
     return await Download.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, true);
-  }
-
-  static async createPFZenodoEntry(id, name, workflow, workflowInputs, implementationUnits, steps, about, userName, restricted=false) {
-    const implementationUnitsHash = ImporterUtils.hash([...Object.keys(implementationUnits)].sort()+[...Object.values(implementationUnits)].sort());
-    let doi = await models.doi.findOne({where:{workflowId:id, implementationHash:implementationUnitsHash}});
-    if(doi) return doi.doi;
-    const getDOI = () => new Promise(async(resolve) => {
-      let archive = Zip.create();
-      var buffers = [];
-      archive.on('readable', ()=> {
-        for (;;) {
-          let buffer = archive.read();
-          if (!buffer) { break; }
-          buffers.push(buffer);
-        }
-      });
-      archive.on('finish', async() => {
-        var buffer = Buffer.concat(buffers);
-        let deposition = await Zenodo.deposit();
-        await Zenodo.addToBucket(deposition.links.bucket, buffer, name+".zip");
-        await Zenodo.updateMetadata(deposition.id, name, about, [{'name':'Phenoflow', 'affiliation':'King\'s College London'}, {'name': userName, 'affiliation':userName}], restricted?'closed':'open');
-        await Zenodo.publish(deposition.id);
-        let storedObject = await Zenodo.get(deposition.id);
-        try {
-          await models.doi.create({doi:storedObject.conceptdoi, implementationHash:implementationUnitsHash, workflowId:id});
-        } catch(error) {
-          logger.error("Unable to store doi: "+error);
-        }
-        resolve(storedObject.conceptdoi);
-      });
-      if(!await Download.createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, false)) resolve(false);
-    });
-    return await getDOI();
   }
 
   static async createPFZip(archive, id, name, workflow, workflowInputs, implementationUnits, steps, about, visualise) {
