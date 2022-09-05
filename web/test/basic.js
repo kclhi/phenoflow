@@ -9,7 +9,6 @@ const models = require("../models");
 const logger = require("../config/winston");
 const config = require("config");
 
-const Visualise = require("../util/visualise");
 const Download = require("../util/download");
 const Workflow = require("./workflow");
 const WorkflowUtils = require("../util/workflow");
@@ -261,52 +260,6 @@ describe("basic", () => {
 			"stepName1": "python",
 			"stepName2": "python"
 		};
-
-		let timestamp="" + Math.floor(new Date() / 1000);
-
-		it("Create repo for push to CWL viewer.", async() => {
-      workflowId=firstWorkflowId; // Reset to first workflow.
-			// If endpoint is unreachable test can't be performed.
-			const GIT_SERVER_URL = config.get("gitserver.PREFIX") + config.get("gitserver.HOST") + config.get("gitserver.PORT");
-			try { await got(GIT_SERVER_URL, {method: "HEAD"}); } catch(error) { if ( error.code && error.code=="ECONNREFUSED" ) return; }
-			await Visualise.commitPushWorkflowRepo(workflowId, timestamp, name, workflow, steps);
-			expect(fs.existsSync('output/' + workflowId + "/.git")).to.be.true
-		}).timeout(0);
-
-		it("Create visualisation from generated CWL.", async() => {
-			// If endpoint is unreachable test can't be performed.
-			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if(error.code&&error.code=="ECONNREFUSED" ) return; }
-			let png = await Visualise.getWorkflowPNGFromViewer(workflowId + timestamp, name);
-			if (!png) {
-				let queueLocation = await Visualise.addWorkflowToViewer(workflowId + timestamp, name);
-				png = await Visualise.getWorkflowFromViewer(workflowId + timestamp, name, queueLocation);
-			}
-			expect(png).to.not.be.null;
-		}).timeout(0);
-
-		it("Construct ZIP from generated CWL.", async() => {
-			let visualise=true;
-			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if (error.code&&error.code=="ECONNREFUSED") visualise=false; }
-			await Download.createPFZipFile(
-				workflowId,
-				name,
-				workflow,
-				workflowInput,
-				implementationUnits,
-				steps,
-				"this is a really cool phenotype",
-				visualise
-			);
-			expect(fs.existsSync("dist/" + name + ".zip")).to.be.true
-		}).timeout(0);
-
-		it("Generate endpoint should be reachable.", async() => {
-			// If service is not running, endpoint cannot be tested.
-			try { await got(config.get("generator.URL"), {method: "HEAD"}); } catch(error) { if(error.code&&error.code=="ECONNREFUSED") return; }
-			let res = await chai.request(server).post("/phenoflow/phenotype/generate/" + workflowId).send({implementationUnits: implementationUnits});
-			res.should.have.status(200);
-			res.body.should.be.a("object");
-		}).timeout(0);
 
 	});
 

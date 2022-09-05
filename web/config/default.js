@@ -6,9 +6,6 @@ module.exports = {
   generator: {
     URL: "http://localhost:3004"
   },
-  visualiser: {
-    URL: "http://localhost:8080"
-  },
   parser: {
     URL: "http://localhost:3005"
   },

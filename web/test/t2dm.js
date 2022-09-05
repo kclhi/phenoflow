@@ -229,8 +229,7 @@ describe('t2dm', () => {
 		}
 
 		async function constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps) {
-			let visualise=true;
-			try { await got(config.get("visualiser.URL"), {method: "HEAD"}); } catch(error) { if (error.code && error.code=="ECONNREFUSED") visualise=false; }
+			let visualise=false;
 			await Download.createPFZipFile(workflowId, name, workflow, workflowInput, implementationUnits, steps, "Type 2 Diabetes Mellitus phenotype as a structured phenotype definition, as produced by the Phenoflow architecture.", visualise);
 			expect(fs.existsSync('dist/' + name + ".zip")).to.be.true
 		}
