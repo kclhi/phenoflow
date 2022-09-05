@@ -1,0 +1,18 @@
+{
+  "implementations": [
+    {
+      "fileName": "read-potential-cases.template.py",
+      "implementationTemplate": "import csv\n\nwith open('workflow-potential-cases.csv', 'w', newline='') as file_out:\n    csv_writer = csv.DictWriter(file_out, [\"patient-id\",\"dob\",\"codes\",\"last-encounter\"])\n    csv_writer.writeheader();\n",
+      "language": "python",
+      "substitutions": {
+        "PHENOTYPE": "workflow"
+      }
+    }
+  ],
+  "inputDoc": "firstInputDoc",
+  "outputDoc": "Initial potential cases, read from template",
+  "position": 1,
+  "stepDoc": "Read potential cases from template",
+  "stepName": "read-potential-cases-template",
+  "stepType": "external"
+}

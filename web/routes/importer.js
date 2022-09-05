@@ -276,6 +276,7 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
   if(!req.files.implementationTemplate||!req.body.existingWorkflowIds||!req.body.dataSource||!req.body.language) res.status(500).send("Missing params.");
   if(req.body.language&&!config.get("workflow.LANGUAGES").includes(req.body.language)) res.send("Supported language are: "+config.get("workflow.LANGUAGES").join(" ")).status(500);
   const OUTPUT_EXTENSION = "csv";
+  if(!Array.isArray(req.body.existingWorkflowIds)) req.body.existingWorkflowIds = [req.body.existingWorkflowIds];
   for(let existingWorkflowId of req.body.existingWorkflowIds) {
     let existingWorkflow = await Workflow.workflow(await Workflow.getWorkflow(existingWorkflowId));
     for(let step of existingWorkflow.steps) {

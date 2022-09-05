@@ -1,4 +1,4 @@
-FROM phenoflow_webapp
+FROM importer_webapp
 ENV NODE_ENV development
 RUN npm ci --loglevel=silly
 ENV NODE_ENV production

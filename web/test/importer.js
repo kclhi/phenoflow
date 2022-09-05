@@ -7,7 +7,11 @@ const AdmZip = require('adm-zip');
 const logger = require("../config/winston");
 const config = require('config');
 const proxyquire = require('proxyquire');
+const fs = require('fs').promises;
+const nock = require('nock')
 const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
+
+const WorkflowUtils = require("../util/workflow");
 
 const ImporterUtils = require("../util/importer");
 
@@ -109,6 +113,7 @@ describe("importer", () => {
     
     it("[IM1] Should be able to import a codelist.", async() => {
       await Importer.addDefaultUser();
+      nock(config.get("parser.URL")).post("/phenoflow/parser/parseCodelists").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseCodelists.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:Importer.getParsedCSVs(), name:"Imported codelist", about:"Imported codelist", userName:"martinchapman"});
       res.should.have.status(200);
       let workflows;
@@ -120,6 +125,7 @@ describe("importer", () => {
       await Importer.addDefaultUser();
       var zip = new AdmZip();
       for(let file of Importer.getCSVs()) zip.addFile(file.filename, Buffer.from(file.content, "utf8"));
+      nock(config.get("parser.URL")).post("/phenoflow/parser/parseCodelists").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseCodelists.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").attach('csvs', zip.toBuffer(), 'csvs.zip').field({name:"Imported codelist"}).field({about:"Imported codelist"}).field({userName:"martinchapman"});
       res.should.have.status(200);
       let workflows;
@@ -138,6 +144,7 @@ describe("importer", () => {
           ]
         };
       let csvs = Importer.getParsedCSVs().concat(Importer.getBranchCSVs());
+      nock(config.get("parser.URL")).post("/phenoflow/parser/parseSteplist").reply(200, JSON.parse(await fs.readFile('test/fixtures/importer/parser/parseSteplist.json', 'utf8')));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.steplistHash(steplist, csvs)+" - "+ImporterUtils.getName(steplist.filename), userName:"martinchapman"});
       res.should.have.status(200);
       let workflows;
@@ -156,6 +163,7 @@ describe("importer", () => {
           ]
         };
       let csvs = Importer.getParsedCSVs().concat(Importer.getBranchCSVs());
+      nock(config.get("parser.URL")).post("/phenoflow/parser/parseSteplist").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseSteplist_branch-only.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.steplistHash(steplist, csvs)+" - "+ImporterUtils.getName(steplist.filename), userName:"martinchapman"});
       res.should.have.status(200);
     }).timeout(0);
@@ -170,13 +178,15 @@ describe("importer", () => {
           {"keyword": "TermD TermE"},
         ]
       };
+      nock(config.get("parser.URL")).post("/phenoflow/parser/parseKeywordList").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseKeywordList.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importKeywordList").send({keywords:keywords, name:"Imported keywords", about:"Imported keywords", userName:"martinchapman"});
       res.should.have.status(200);
     }).timeout(0);
 
     it("[IM6] Should be able to add a connector.", async() => {
-      // Assumes presence of a test workflow with id '1'.
-      let res = await chai.request(testServerObject).post("/phenoflow/importer/addConnector").attach("implementationTemplate", "templates/read-potential-cases.template.py", "read-potential-cases.template.py").field({"existingWorkflowIds":[1], "dataSource":"template", "language":"python"});
+      let allPhenotypes = await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]});
+      nock(config.get("parser.URL")).post("/phenoflow/parser/parseStep").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseStep.json", "utf8")));
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/addConnector").attach("implementationTemplate", "templates/read-potential-cases.template.py", "read-potential-cases.template.py").field({"existingWorkflowIds":[allPhenotypes[0].id], "dataSource":"template", "language":"python"});
       res.should.have.status(200);
     }).timeout(0);
 
