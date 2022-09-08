@@ -10,7 +10,6 @@ const proxyquire = require('proxyquire');
 const models = require("../models");
 const logger = require("../config/winston");
 const config = require("config");
-const Download = require("../util/download");
 const Workflow = require("./workflow");
 
 describe("web", () => {

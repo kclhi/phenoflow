@@ -1,0 +1,62 @@
+{
+  "workflow": "cwlVersion: v1.0\nsteps:\n  '1':\n    run: read-potential-cases-i2b2.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule1\n  '2':\n    run: imported-codelist-terma---secondary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule2\n      potentialCases:\n        id: potentialCases\n        source: 1/output\n  '3':\n    run: imported-codelist---secondary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule3\n      potentialCases:\n        id: potentialCases\n        source: 2/output\n  '4':\n    run: imported-codelist-termf---primary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule4\n      potentialCases:\n        id: potentialCases\n        source: 3/output\n  '5':\n    run: imported-codelist---primary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule5\n      potentialCases:\n        id: potentialCases\n        source: 4/output\n  '6':\n    run: imported-codelist-terml---primary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule6\n      potentialCases:\n        id: potentialCases\n        source: 5/output\n  '7':\n    run: imported-codelist-termn---primary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule7\n      potentialCases:\n        id: potentialCases\n        source: 6/output\n  '8':\n    run: output-cases.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule8\n      potentialCases:\n        id: potentialCases\n        source: 7/output\nclass: Workflow\ninputs:\n  inputModule1:\n    id: inputModule1\n    doc: Js implementation unit\n    type: File\n  inputModule2:\n    id: inputModule2\n    doc: Python implementation unit\n    type: File\n  inputModule3:\n    id: inputModule3\n    doc: Python implementation unit\n    type: File\n  inputModule4:\n    id: inputModule4\n    doc: Python implementation unit\n    type: File\n  inputModule5:\n    id: inputModule5\n    doc: Python implementation unit\n    type: File\n  inputModule6:\n    id: inputModule6\n    doc: Python implementation unit\n    type: File\n  inputModule7:\n    id: inputModule7\n    doc: Python implementation unit\n    type: File\n  inputModule8:\n    id: inputModule8\n    doc: Python implementation unit\n    type: File\noutputs:\n  cases:\n    id: cases\n    type: File\n    outputSource: 8/output\n    outputBinding:\n      glob: '*.csv'\nrequirements:\n  SubworkflowFeatureRequirement: {}\n",
+  "steps": [
+    {
+      "name": "read-potential-cases-i2b2",
+      "type": "external",
+      "workflowId": "7c1c6800-2d0b-11ed-8796-bf0bd96b6ffa",
+      "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: node\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Read potential cases from i2b2\nid: read-potential-cases-i2b2\ninputs:\n- doc: Node implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\noutputs:\n- doc: Initial potential cases, read from i2b2.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/node:latest\ns:type: external\n",
+      "fileName": "read-potential-cases-i2b2.js"
+    },
+    {
+      "name": "imported-codelist-terma---secondary",
+      "type": "logic",
+      "workflowId": "7c1c6800-2d0b-11ed-8796-bf0bd96b6ffa",
+      "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify Imported codelist terma - secondary\nid: imported-codelist-terma---secondary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-codelist\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with clinical codes indicating Imported-codelist related events in\n    electronic health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+      "fileName": "imported-codelist-terma---secondary.py"
+    },
+    {
+      "name": "imported-codelist---secondary",
+      "type": "logic",
+      "workflowId": "7c1c6800-2d0b-11ed-8796-bf0bd96b6ffa",
+      "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify Imported codelist - secondary\nid: imported-codelist---secondary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-codelist\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with clinical codes indicating Imported-codelist related events in\n    electronic health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+      "fileName": "imported-codelist---secondary.py"
+    },
+    {
+      "name": "imported-codelist-termf---primary",
+      "type": "logic",
+      "workflowId": "7c1c6800-2d0b-11ed-8796-bf0bd96b6ffa",
+      "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify Imported codelist termf - primary\nid: imported-codelist-termf---primary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-codelist\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with clinical codes indicating Imported-codelist related events in\n    electronic health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+      "fileName": "imported-codelist-termf---primary.py"
+    },
+    {
+      "name": "imported-codelist---primary",
+      "type": "logic",
+      "workflowId": "7c1c6800-2d0b-11ed-8796-bf0bd96b6ffa",
+      "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify Imported codelist - primary\nid: imported-codelist---primary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-codelist\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with clinical codes indicating Imported-codelist related events in\n    electronic health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+      "fileName": "imported-codelist---primary.py"
+    },
+    {
+      "name": "imported-codelist-terml---primary",
+      "type": "logic",
+      "workflowId": "7c1c6800-2d0b-11ed-8796-bf0bd96b6ffa",
+      "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify Imported codelist terml - primary\nid: imported-codelist-terml---primary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-codelist\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with clinical codes indicating Imported-codelist related events in\n    electronic health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+      "fileName": "imported-codelist-terml---primary.py"
+    },
+    {
+      "name": "imported-codelist-termn---primary",
+      "type": "logic",
+      "workflowId": "7c1c6800-2d0b-11ed-8796-bf0bd96b6ffa",
+      "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify Imported codelist termn - primary\nid: imported-codelist-termn---primary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-codelist\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with clinical codes indicating Imported-codelist related events in\n    electronic health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+      "fileName": "imported-codelist-termn---primary.py"
+    },
+    {
+      "name": "output-cases",
+      "type": "output",
+      "workflowId": "7c1c6800-2d0b-11ed-8796-bf0bd96b6ffa",
+      "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Output cases\nid: output-cases\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-codelist\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this type of Imported-codelist\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: output\n",
+      "fileName": "output-cases.py"
+    }
+  ],
+  "workflowInputs": "inputModule1:\n  class: File\n  path: js/read-potential-cases-i2b2.js\ninputModule2:\n  class: File\n  path: python/imported-codelist-terma---secondary.py\ninputModule3:\n  class: File\n  path: python/imported-codelist---secondary.py\ninputModule4:\n  class: File\n  path: python/imported-codelist-termf---primary.py\ninputModule5:\n  class: File\n  path: python/imported-codelist---primary.py\ninputModule6:\n  class: File\n  path: python/imported-codelist-terml---primary.py\ninputModule7:\n  class: File\n  path: python/imported-codelist-termn---primary.py\ninputModule8:\n  class: File\n  path: python/output-cases.py\n"
+}

@@ -4,6 +4,7 @@ const config = require('config');
 const sequelize = require('sequelize');
 const op = sequelize.Op;
 const fs = require('fs').promises;
+const got = require('got');
 
 class Workflow {
 
@@ -195,7 +196,7 @@ class Workflow {
     }
   }
 
-  static async getFullWorkflow(workflowId, username, language=null, implementationUnits=null) {
+  static async getFullWorkflow(workflowId, username, language=null, implementationUnits={}) {
     try {
       var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
       if(workflow.userName!=username) throw "User does not own this workflow";
@@ -213,8 +214,8 @@ class Workflow {
         if(language) { implementationCriteria.language = language; } else if (implementationUnits&&implementationUnits[step.name]) { implementationCriteria.language = implementationUnits[step.name]; }
         let allImplementations = await models.implementation.findAll({where: implementationCriteria, order:[["language", "DESC"]]});
         mergedStep.implementation = JSON.parse(JSON.stringify(allImplementations[0]));
-        if(!implementationUnits[step.name]) implementationUnits[step.name] = mergedStep.implementation.language;
         if(!mergedStep.implementation) throw "Error finding implementation: " + JSON.stringify(implementationCriteria);
+        if(!implementationUnits[step.name]) implementationUnits[step.name] = mergedStep.implementation.language;
         mergedSteps.push(mergedStep);
       }
       workflow.steps = mergedSteps;
@@ -224,6 +225,36 @@ class Workflow {
       throw error;
     }
     return workflow;
+  }
+
+  static async generateWorkflow(workflowId, username, language=null, implementationUnits={}) {
+    let workflow, generate;
+    try {
+      workflow = await Workflow.getFullWorkflow(workflowId, username, language, implementationUnits);
+      // handle nested steps
+      workflow.steps = await Promise.all(workflow.steps.map(async (workflowStep)=>!workflowStep.implementation.fileName.includes(".")?Object.assign(workflowStep, {"implementation":await Workflow.getFullWorkflow(workflowStep.implementation.fileName, username, language, implementationUnits)}):workflowStep));
+    } catch(getFullWorkflowError) {
+      logger.error("Error getting full workflow: " + getFullWorkflowError);
+    }
+    try {
+      generate = await got.post(config.get("generator.URL") + "/generate", {json:workflow.steps, responseType:"json"});
+    } catch(error) {
+      logger.debug("Error contacting generator: "+error+" "+JSON.stringify(workflow.steps));
+      return false;
+    }
+    if(generate.statusCode!=200 || !generate.body || !generate.body.steps) {
+      logger.error("Content returned from generator not sufficient: " + JSON.stringify(generate.body||{}));
+      return false;
+    }
+    implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().filter(step=>!Object.keys(implementationUnits).includes(step.name)).map((step)=>({[step.name]: step.implementation.language})));
+    generate.body.steps = generate.body.steps.concat(generate.body.steps.map(step=>step.steps).filter(step=>step!=undefined)).flat();
+    generate.body.steps = generate.body.steps.filter(({name}, index)=>!generate.body.steps.map(step=>step.name).includes(name, index+1));
+    if(generate.body.workflow&&generate.body.workflowInputs) {
+      return {"workflow":workflow, "generate":generate, "implementationUnits":implementationUnits};
+    } else {
+      logger.debug("Error generating workflow.");
+      return false;
+    }
   }
 
 }

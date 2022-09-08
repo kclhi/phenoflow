@@ -9,7 +9,6 @@ const models = require("../models");
 const logger = require("../config/winston");
 const config = require("config");
 
-const Download = require("../util/download");
 const Workflow = require("./workflow");
 const WorkflowUtils = require("../util/workflow");
 const Implementation = require('../util/implementation');

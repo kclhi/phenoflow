@@ -8,7 +8,6 @@ const got = require('got');
 const models = require('../models');
 const logger = require('../config/winston');
 const config = require('config');
-const Download = require('../util/download');
 const Workflow = require('./workflow');
 
 describe('t2dm', () => {
@@ -225,21 +224,10 @@ describe('t2dm', () => {
 			let res = await chai.request(server).post('/phenoflow/phenotype/generate/' + workflowId).send({implementationUnits: implementationUnits});
 			res.should.have.status(200);
 			res.body.should.be.a('object');
-			// Handle received ZIP.
-		}
-
-		async function constructZIPFromGeneratedCWL(workflowId, name, workflow, workflowInput, implementationUnits, steps) {
-			let visualise=false;
-			await Download.createPFZipFile(workflowId, name, workflow, workflowInput, implementationUnits, steps, "Type 2 Diabetes Mellitus phenotype as a structured phenotype definition, as produced by the Phenoflow architecture.", visualise);
-			expect(fs.existsSync('dist/' + name + ".zip")).to.be.true
 		}
 
 		it("Generate endpoint should be reachable.", async() => {
 			await testGenerateEndpoint(workflowId, implementationUnits);
-		}).timeout(120000);
-
-		it("Construct ZIP from generated CWL.", async() => {
-			await constructZIPFromGeneratedCWL(workflowId, NAME, workflow, workflowInput, implementationUnits, steps);
 		}).timeout(120000);
 
 		workflowInput = workflowInput.replace("knime/rx_t2dm_med-abnormal-lab.knwf", "python/rx_t2dm_med-abnormal-lab.py");
@@ -248,10 +236,6 @@ describe('t2dm', () => {
 
 		it("Generate endpoint should be reachable (alternative implementation).", async() => {
 			await testGenerateEndpoint(workflowId, implementationUnits);
-		}).timeout(120000);
-
-		it("Construct ZIP from generated CWL (alternative implementation).", async() => {
-			await constructZIPFromGeneratedCWL(workflowId, NAME, workflow, workflowInput, implementationUnits, steps);
 		}).timeout(120000);
 
 	});

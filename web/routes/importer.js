@@ -15,6 +15,7 @@ const config = require("config");
 const WorkflowUtils = require("../util/workflow");
 const ImporterUtils = require("../util/importer");
 const Workflow = require('../util/workflow');
+const Github = require('../util/github');
 
 /**
  * @swagger
@@ -80,6 +81,7 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
   try {
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
+      await Github.commit(workflow.id, req.body.userName);
     }
     return res.sendStatus(200);
   } catch(importListsError) {

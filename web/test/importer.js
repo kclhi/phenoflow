@@ -113,7 +113,12 @@ describe("importer", () => {
     
     it("[IM1] Should be able to import a codelist.", async() => {
       await Importer.addDefaultUser();
+      // Set up mocks in the order in which they will be called
       nock(config.get("parser.URL")).post("/phenoflow/parser/parseCodelists").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseCodelists.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-disc.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-i2b2.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-omop.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-fhir.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:Importer.getParsedCSVs(), name:"Imported codelist", about:"Imported codelist", userName:"martinchapman"});
       res.should.have.status(200);
       let workflows;

@@ -10,20 +10,6 @@ const jwt = require('express-jwt');
 const { v1: uuidv1 } = require("uuid");
 
 const Workflow = require("../util/workflow");
-const Download = require("../util/download");
-
-function credentialsCheck(user, req, res) {
-  if(user&&user.restricted) {
-    const b64auth = (req.headers.authorization||'').split(' ')[1]||'';
-    const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':')
-    if(!login||!password||login!=user.name||!bcrypt.compare(password, user.password)) { 
-      res.set('WWW-Authenticate', 'Basic realm="restricted"');
-      res.status(401).send('Authentication required.');
-      return false;
-    }
-  }
-  return true;
-}
 
 /**
  * @swagger
@@ -126,89 +112,6 @@ router.post("/update/:id", jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algori
     res.status(500).send(error);
   }
 
-});
-
-async function generateWorkflow(workflowId, username, language=null, implementationUnits=null, res) {
-  let workflow;
-  try {
-    workflow = await Workflow.getFullWorkflow(workflowId, username, language, implementationUnits);
-    // handle nested steps
-    workflow.steps = await Promise.all(workflow.steps.map(async (workflowStep)=>!workflowStep.implementation.fileName.includes(".")?Object.assign(workflowStep, {"implementation":await Workflow.getFullWorkflow(workflowStep.implementation.fileName, username, language, implementationUnits)}):workflowStep));
-  } catch(getFullWorkflowError) {
-    logger.error("Error getting full workflow: " + getFullWorkflowError);
-  }
-  try {
-    var generate = await got.post(config.get("generator.URL") + "/generate", {json:workflow.steps, responseType:"json"});
-  } catch(error) {
-    logger.debug("Error contacting generator: "+error+" "+JSON.stringify(workflow.steps));
-    return false;
-  }
-  implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().filter(step=>!Object.keys(implementationUnits).includes(step.name)).map((step)=>({[step.name]: step.implementation.language})));
-  generate.body.steps = generate.body.steps.concat(generate.body.steps.map(step=>step.steps).filter(step=>step!=undefined)).flat();
-  generate.body.steps = generate.body.steps.filter(({name}, index)=>!generate.body.steps.map(step=>step.name).includes(name, index+1));
-  if(generate.statusCode==200&&generate.body&&generate.body.workflow&&generate.body.workflowInputs&&generate.body.steps) {
-    return {"workflow":workflow, "generate":generate, "implementationUnits":implementationUnits};
-  } else {
-    logger.debug("Error generating workflow.");
-    return false;
-  }
-}
-
-async function createZip(workflowId, username, language=null, implementationUnits=null, res) {
-  let generatedWorkflow;
-  if(generatedWorkflow=await generateWorkflow(workflowId, username, language, implementationUnits, res)) {
-    try {
-      if(!await Download.createPFZipResponse(res, workflowId, generatedWorkflow.workflow.name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, language?language:generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, generatedWorkflow.workflow.about)) {
-        logger.debug("Error generating workflow.");
-        return false;
-      }
-    } catch(createPFZipResponseError) {
-      logger.error("Error creating ZIP: " + createPFZipResponseError);
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
-
-/**
- * @swagger
- * /phenoflow/phenotype/generate/{phenotypeId}:
- *   post:
- *     summary: Generate a computable phenotype
- *     description: Generate a CWL workflow based on a phenotype definition
- *     parameters:
- *       - in: path
- *         name: phenotypeId
- *         required: true
- *         description: ID of the phenotype to generate
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userName:
- *                 type: string
- *                 description: Username of the owner of this definition
- *                 example: martinchapman
- *     responses:
- *       200:
- *         description: An executable workflow
- */
-router.post("/generate/:workflowId", async function(req, res, next) {
-  if(!req.body.userName) return res.sendStatus(401);
-  let user = await models.user.findOne({where:{name: req.body.userName}});
-  if(!credentialsCheck(user, req, res)) return;
-  try {
-    if (!await createZip(req.params.workflowId, req.body.userName, null, req.body.implementationUnits?req.body.implementationUnits:{}, res)) return res.sendStatus(500);
-  } catch(error) {
-    logger.debug("Error generating worflow: " + error);
-    return res.sendStatus(500);
-  }
 });
 
 module.exports = router;
