@@ -1,7 +1,11 @@
 const fsAsync = require('fs').promises;
 const fs = require('fs');
 const logger = require('../config/winston');
-const git = require('isomorphic-git')
+const config = require('config');
+const path = require('path')
+const { Octokit } = require("@octokit/rest");
+const glob = require('fast-glob');
+
 
 const Workflow = require("../util/workflow");
 
@@ -64,42 +68,130 @@ class Github {
     return true;
   }
 
-  static async commit(workflowId, username) {
+  static async commit(id, name, about, username) {
     
-    let generatedWorkflow = await Workflow.generateWorkflow(workflowId, username);
+    let generatedWorkflow = await Workflow.generateWorkflow(id, username);
 
-    let workflowRepo = "output/" + workflowId;
+    let workflowRepo = "output/" + id;
     if(!await Github.createRepositoryContent(workflowRepo, generatedWorkflow.workflow.name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, generatedWorkflow.workflow.about)) {
       logger.error('Unable to create repository content.');
       return false;
     }
     
-    try {
-      await git.init({fs, dir: workflowRepo})
-    } catch(gitInitError) {
-      logger.error('Unable to initialise local Git repository: ' + gitInitError);
-      return false;
-    }
-    try {
-      await git.add({fs, dir: workflowRepo, filepath: '.'});
-    } catch(gitStageError) {
-      logger.error('Unable to stage changes in local Git repository: ' + gitStageError);
-    }
-    try {
-      let sha = await git.commit({
-        fs,
-        dir: workflowRepo,
-        author: {
-          name: "martinchapman",
-          email: "contact@martinchapman.co.uk",
-        },
-        message: "Update"
+    //
+
+    const getCurrentCommit = async (octo, org, repo, branch='main') => {
+      try {
+        var { data:refData } = await octo.git.getRef({owner:org, repo, ref:'heads/'+branch});
+      } catch(error) {
+        logger.error("Error getting existing commit reference: " + error + ". " + repo + " " + branch);
+        return false;
+      }
+      const commitSha = refData.object.sha;
+      try {
+        var { data:commitData } = await octo.git.getCommit({owner:org, repo, commit_sha:commitSha,
       });
-      logger.debug("SHA: " + sha);
-    } catch(gitCommitError) {
-      logger.error('Unable to commit to local Git repoistory: ' + gitCommitError);
+      } catch(error) {
+        logger.error("Error getting existing commit: " + error + ". " + org + " " + repo + " " + commitSha);
+        return false;
+      }
+      return {commitSha, treeSha:commitData.tree.sha}
+    }
+
+    const getFileAsUTF8 = async(filePath) => {
+      try {
+        return await fsAsync.readFile(filePath, 'utf8');
+      } catch(exception) {
+        logger.error("Error reading utf8 version of file: " + filePath);
+        return false;
+      }
+    }
+
+    const createBlobForFile = (octo, org, repo) => async(filePath) => {
+      const content = await getFileAsUTF8(filePath)
+      if(!content) return false;
+      let blobData;
+      try {
+        blobData = await octo.git.createBlob({owner:org, repo, content, encoding:'utf-8'})
+      } catch(exception) {
+        logger.error("Error creating blob: " + exception + ". " + org + " " + repo + " " + filePath + " " + content);
+        return false;
+      }
+      return blobData.data
     }
     
+    const createNewTree = async (octo, owner, repo, blobs, paths, parentTreeSha) => {
+      const tree = blobs.map(({ sha }, index) => ({path:paths[index], mode:'100644', type:'blob', sha}));
+      try {
+        var { data } = await octo.git.createTree({owner, repo, tree, base_tree: parentTreeSha});
+      } catch(error) {
+        logger.error("Error creating tree: " + exception + ". " + owner + " " + repo + " " + tree + " " + parentTreeSha);
+        return false;
+      }
+      return data;
+    }
+
+    const createNewCommit = async(octo, org, repo, message, currentTreeSha, currentCommitSha) => {
+      let newCommit
+      try {
+        newCommit = await octo.git.createCommit({owner: org, repo, message, tree:currentTreeSha, parents:[currentCommitSha]});
+      } catch(error) {
+        logger.error("Unable to create commit: " + error + ". " + org + " " + repo + " " + message + " " + currentTreeSha + " " + currentCommitSha);
+        return false;
+      }
+      return newCommit.data;
+    } 
+
+    const setBranchToCommit = async(octo, org, repo, commitSha, branch='main') => {
+      try {
+        await octo.git.updateRef({owner:org, repo, ref:'heads/'+branch, sha:commitSha});
+      } catch(error) {
+        logger.error("Unable to commit to branch: " + error + ". " + org + " " + repo + " " + branch + " " + commitSha);
+        return false;
+      }
+      return true;
+    };
+
+    const uploadToRepo = async (octo, coursePath, org, repo, branch='main') => {
+      const currentCommit = await getCurrentCommit(octo, org, repo, branch);
+      if(!currentCommit) return false;
+      const filesPaths = await glob(coursePath+'/**/*');
+      const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(octo, org, repo)));
+      if(!filesBlobs) return false;
+      const pathsForBlobs = filesPaths.map(fullPath => path.relative(coursePath, fullPath));
+      const newTree = await createNewTree(octo, org, repo, filesBlobs, pathsForBlobs, currentCommit.treeSha);
+      if(!newTree) return false;
+      const commitMessage = 'My commit message';
+      const newCommit = await createNewCommit(octo, org, repo, commitMessage, newTree.sha, currentCommit.commitSha);
+      if(!newCommit) return false;
+      if(!await setBranchToCommit(octo, org, repo, newCommit.sha, branch)) return false;
+      return true;
+    }
+
+    const createRepo = async(octo, org, name, description) => { 
+      try {
+        await octo.repos.createInOrg({org, name, description, auto_init:true}) 
+      } catch(error) {
+        logger.error("Error creating repo: " + error + ". " + org + " " + name + " " + description);
+        return false;
+      }
+      return true;
+    };
+
+    const accessToken = config.get("github.ACCESS_TOKEN");
+    const octokit = new Octokit({auth:accessToken});
+    const repo = about.replace(/ /g, '-').toLowerCase();
+    let repos;
+    try {
+      repos = await octokit.repos.listForOrg({org:'phenoflow'});
+    } catch(error) {
+      logger.error("Error enumerating repos: " + error);
+    }
+
+    if (!repos.data.map((repo) => repo.name).includes(repo)) {
+      if(!await createRepo(octokit, 'phenoflow', repo, about)) return false;
+    }
+    await uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo);
 
   }
 

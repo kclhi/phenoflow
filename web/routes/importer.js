@@ -81,7 +81,7 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
   try {
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
-      await Github.commit(workflow.id, req.body.userName);
+      await Github.commit(workflow.id, workflow.name, workflow.about, req.body.userName);
     }
     return res.sendStatus(200);
   } catch(importListsError) {
@@ -339,7 +339,7 @@ class Importer {
   }
 
   static async importChangesExistingWorkflow(workflowId, steps) {
-    if(!workflowId|!steps) return false;
+    if(!workflowId||!steps) return false;
     let existingSteps = await models.step.findAll({where:{workflowId:workflowId}});
     if(existingSteps.length!=steps.length) return true;
     steps = steps.sort((a, b)=>a.position-b.position);
