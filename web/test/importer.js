@@ -131,6 +131,10 @@ describe("importer", () => {
       var zip = new AdmZip();
       for(let file of Importer.getCSVs()) zip.addFile(file.filename, Buffer.from(file.content, "utf8"));
       nock(config.get("parser.URL")).post("/phenoflow/parser/parseCodelists").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseCodelists.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-disc.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-i2b2.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-omop.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-fhir.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").attach('csvs', zip.toBuffer(), 'csvs.zip').field({name:"Imported codelist"}).field({about:"Imported codelist"}).field({userName:"martinchapman"});
       res.should.have.status(200);
       let workflows;
