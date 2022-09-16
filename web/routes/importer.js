@@ -81,11 +81,11 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
   try {
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
-      await Github.commit(workflow.id, workflow.name, workflow.about, req.body.userName);
+      await Github.commit(workflow.id, workflow.name, workflow.about, workflow.steps[0].stepName, req.body.userName);
     }
     return res.sendStatus(200);
   } catch(importListsError) {
-    logger.error(importListsError);
+    logger.error("Error importing list: " + importListsError);
     return res.sendStatus(500);
   }
 });

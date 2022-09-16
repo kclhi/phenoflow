@@ -40,6 +40,9 @@ class Github {
       try {
         if(step.fileName) {
           let implementationPath = implementationUnits&&implementationUnits[step.name]?implementationUnits[step.name]:"other";
+          if(implementationPath=="other") {
+            logger.warn("'Other' language path used for step: " + JSON.stringify(step) + ". Implementation units: " + JSON.stringify(implementationUnits));
+          }
           let implementationFile = step.fileName;
           try {
             await fsAsync.mkdir(workflowRepo + "/" + implementationPath, {recursive:true});
@@ -68,7 +71,7 @@ class Github {
     return true;
   }
 
-  static async commit(id, name, about, username) {
+  static async commit(id, name, about, connector, username) {
     
     let generatedWorkflow = await Workflow.generateWorkflow(id, username);
 
@@ -81,16 +84,23 @@ class Github {
     //
 
     const getCurrentCommit = async (octo, org, repo, branch='main') => {
+      let refData;
       try {
-        var { data:refData } = await octo.git.getRef({owner:org, repo, ref:'heads/'+branch});
+        // Exception swalled if branch does not yet exist
+        ({ data:refData } = await octo.git.getRef({owner:org, repo, ref:'heads/'+branch}));
       } catch(error) {
-        logger.error("Error getting existing commit reference: " + error + ". " + repo + " " + branch);
-        return false;
+        try {
+          // If branch does not yet exist, use base branch as commit reference
+          ({ data:refData } = await octo.git.getRef({owner:org, repo, ref:'heads/main'}));
+        } catch(error) {
+          logger.error("Error getting existing commit reference: " + error + ". " + repo + " " + branch);
+          return false;
+        }
       }
       const commitSha = refData.object.sha;
+      let commitData;
       try {
-        var { data:commitData } = await octo.git.getCommit({owner:org, repo, commit_sha:commitSha,
-      });
+        ({ data:commitData } = await octo.git.getCommit({owner:org, repo, commit_sha:commitSha}));
       } catch(error) {
         logger.error("Error getting existing commit: " + error + ". " + org + " " + repo + " " + commitSha);
         return false;
@@ -132,7 +142,7 @@ class Github {
     }
 
     const createNewCommit = async(octo, org, repo, message, currentTreeSha, currentCommitSha) => {
-      let newCommit
+      let newCommit;
       try {
         newCommit = await octo.git.createCommit({owner: org, repo, message, tree:currentTreeSha, parents:[currentCommitSha]});
       } catch(error) {
@@ -144,10 +154,15 @@ class Github {
 
     const setBranchToCommit = async(octo, org, repo, commitSha, branch='main') => {
       try {
-        await octo.git.updateRef({owner:org, repo, ref:'heads/'+branch, sha:commitSha});
+        // Create branch if doesn't exit (swallow exception if it does)
+        await octo.git.createRef({owner:org, repo, ref:'refs/heads/'+branch, sha:commitSha});
       } catch(error) {
-        logger.error("Unable to commit to branch: " + error + ". " + org + " " + repo + " " + branch + " " + commitSha);
-        return false;
+        try {
+          await octo.git.updateRef({owner:org, repo, ref:'heads/'+branch, sha:commitSha});
+        } catch(error) {
+          logger.error("Unable to commit to branch: " + error + ". " + org + " " + repo + " " + branch + " " + commitSha);
+          return false;
+        }
       }
       return true;
     };
@@ -170,7 +185,7 @@ class Github {
 
     const createRepo = async(octo, org, name, description) => { 
       try {
-        await octo.repos.createInOrg({org, name, description, auto_init:true}) 
+        await octo.repos.createInOrg({org, name, description, auto_init:true});
       } catch(error) {
         logger.error("Error creating repo: " + error + ". " + org + " " + name + " " + description);
         return false;
@@ -186,12 +201,12 @@ class Github {
       repos = await octokit.repos.listForOrg({org:'phenoflow'});
     } catch(error) {
       logger.error("Error enumerating repos: " + error);
+      return false;
     }
 
-    if (!repos.data.map((repo) => repo.name).includes(repo)) {
-      if(!await createRepo(octokit, 'phenoflow', repo, about)) return false;
-    }
-    await uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo);
+    if (!repos.data.map((repo) => repo.name).includes(repo)) if(!await createRepo(octokit, 'phenoflow', repo, about)) return false;
+
+    await uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo, connector);
 
   }
 
