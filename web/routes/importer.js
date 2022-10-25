@@ -154,6 +154,7 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
   try {
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
+      await Github.commit(workflow.id, workflow.name, workflow.about, workflow.steps[0].stepName, req.body.userName);
     }
     return res.sendStatus(200);
   } catch(importListsError) {
@@ -231,6 +232,9 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
   try {
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
+    }
+    for(let workflow of generatedWorkflows) {
+      await Github.commit(workflow.id, workflow.name, workflow.about, workflow.steps[0].stepName, workflow.userName);
     }
     return res.sendStatus(200);
   } catch(importListsError) {

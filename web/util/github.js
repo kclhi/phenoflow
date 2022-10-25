@@ -6,7 +6,6 @@ const path = require('path')
 const { Octokit } = require("@octokit/rest");
 const glob = require('fast-glob');
 
-
 const Workflow = require("../util/workflow");
 
 class Github {
@@ -86,7 +85,7 @@ class Github {
     const getCurrentCommit = async (octo, org, repo, branch='main') => {
       let refData;
       try {
-        // Exception swalled if branch does not yet exist
+        // Exception swallowed if branch does not yet exist
         ({ data:refData } = await octo.git.getRef({owner:org, repo, ref:'heads/'+branch}));
       } catch(error) {
         try {

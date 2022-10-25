@@ -154,6 +154,11 @@ describe("importer", () => {
         };
       let csvs = Importer.getParsedCSVs().concat(Importer.getBranchCSVs());
       nock(config.get("parser.URL")).post("/phenoflow/parser/parseSteplist").reply(200, JSON.parse(await fs.readFile('test/fixtures/importer/parser/parseSteplist.json', 'utf8')));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchSteplist-disc.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchSteplist-i2b2.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchSteplist-omop.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchSteplist-fhir.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchSteplist-branchA.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.steplistHash(steplist, csvs)+" - "+ImporterUtils.getName(steplist.filename), userName:"martinchapman"});
       res.should.have.status(200);
       let workflows;
@@ -173,6 +178,12 @@ describe("importer", () => {
         };
       let csvs = Importer.getParsedCSVs().concat(Importer.getBranchCSVs());
       nock(config.get("parser.URL")).post("/phenoflow/parser/parseSteplist").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseSteplist_branch-only.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchOnlySteplist-disc.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchOnlySteplist-i2b2.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchOnlySteplist-omop.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchOnlySteplist-fhir.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchOnlySteplist-branchA.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchOnlySteplist-branchB.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.steplistHash(steplist, csvs)+" - "+ImporterUtils.getName(steplist.filename), userName:"martinchapman"});
       res.should.have.status(200);
     }).timeout(0);
@@ -188,6 +199,10 @@ describe("importer", () => {
         ]
       };
       nock(config.get("parser.URL")).post("/phenoflow/parser/parseKeywordList").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseKeywordList.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateKeywordList-disc.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateKeywordList-i2b2.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateKeywordList-omop.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateKeywordList-fhir.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importKeywordList").send({keywords:keywords, name:"Imported keywords", about:"Imported keywords", userName:"martinchapman"});
       res.should.have.status(200);
     }).timeout(0);
