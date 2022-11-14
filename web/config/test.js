@@ -16,6 +16,7 @@ module.exports = {
     SAIL_PASSWORD: process.env.SAIL_PASSWORD
   },
   github: {
-    ACCESS_TOKEN: "abcd"
+    BASE_URL: "https://github.kcl.ac.uk/api/v3",
+    ACCESS_TOKEN: process.env.GHE_ACCESS_TOKEN
   }
 }

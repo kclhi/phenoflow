@@ -70,9 +70,48 @@ class Github {
     return true;
   }
 
-  static async commit(id, name, about, connector, username) {
-    
-    let generatedWorkflow = await Workflow.generateWorkflow(id, username);
+  static async getConnection() {
+    let octokit;
+    const accessToken = config.get("github.ACCESS_TOKEN");
+    try {
+      octokit = new Octokit({baseUrl:config.get("github.BASE_URL"), auth:accessToken});
+    } catch(error) {
+      logger.error("Error connecting to Github: " + error);
+      return false;
+    }
+    return octokit;
+  }
+
+  static async getRepos(org='phenoflow') {
+    let octokit = await Github.getConnection();
+    if(!octokit) return false;
+    let repos;
+    try {
+      repos = await octokit.repos.listForOrg({org:org});
+    } catch(error) {
+      logger.error("Error enumerating repos: " + error);
+      return false;
+    }
+    return repos;
+  }
+
+  static async clearAllRepos(org='phenoflow') {
+    let octokit = await Github.getConnection();
+    if(!octokit) return false;
+    let repos = await Github.getRepos(org);
+    if(!repos) return false;
+    try {
+      for(let repo of repos.data) {
+        await octokit.repos.delete({owner:org, repo:repo.name});
+      }
+    } catch(error) {
+      logger.error("Error deleting test repos: " + error);
+      return false;
+    }
+    return true;
+  }
+
+  static async commit(generatedWorkflow, id, name, about, connector) {
 
     let workflowRepo = "output/" + id;
     if(!await Github.createRepositoryContent(workflowRepo, generatedWorkflow.workflow.name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, generatedWorkflow.workflow.about)) {
@@ -192,20 +231,53 @@ class Github {
       return true;
     };
 
-    const accessToken = config.get("github.ACCESS_TOKEN");
-    const octokit = new Octokit({auth:accessToken});
+    let repos = await Github.getRepos();
     const repo = about.replace(/ /g, '-').toLowerCase();
-    let repos;
-    try {
-      repos = await octokit.repos.listForOrg({org:'phenoflow'});
-    } catch(error) {
-      logger.error("Error enumerating repos: " + error);
-      return false;
-    }
-
+    let octokit = await Github.getConnection();
+    if(!octokit || !repos) return false;
     if (!repos.data.map((repo) => repo.name).includes(repo)) if(!await createRepo(octokit, 'phenoflow', repo, about)) return false;
 
-    await uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo, connector);
+    if(!await uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo, connector)) return false;
+    return true;
+
+  }
+
+  static async generateAndCommit(id, name, about, connector, username) {
+    return await this.commit(await Workflow.generateWorkflow(id, username), name, about, connector)
+  }
+
+  static async generateAndCommitAll(generatedWorkflows) {
+
+    let generatedYAMLWorkflows = [];
+    for(let workflow of generatedWorkflows) {
+      generatedYAMLWorkflows.push(await Workflow.generateWorkflow(workflow.id,  workflow.userName));
+    }
+
+    let nested = [];
+    for(let workflowA of generatedYAMLWorkflows) {
+      for(let workflowB of generatedYAMLWorkflows) {
+        if(workflowA.workflow.id==workflowB.workflow.id || nested.map(workflow=>workflow.workflow.id).includes(workflowB.workflow.id) || nested.map(workflow=>workflow.workflow.id).includes(workflowA.workflow.id)) continue;
+        let workflowAContent = workflowA.generate.body.workflow;
+        let workflowANestedSteps = workflowA.generate.body.steps.filter(step=>!step.fileName);
+        let workflowBContent = workflowB.generate.body.workflow;
+        for(let nestedWorkflow of workflowANestedSteps) {
+          // if nested workflow represented by other passed workflow
+          if(nestedWorkflow.content.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')==workflowBContent.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')) {
+            // point parent workflow to subfolder containing nested workflow
+            generatedYAMLWorkflows[generatedYAMLWorkflows.findIndex(workflow=>workflow.workflow.id==workflowA.workflow.id)].generate.body.workflow = workflowAContent.replace(nestedWorkflow.name, workflowB.workflow.about.replace(/ /g, '-').toLowerCase() + '/' + nestedWorkflow.name);
+            // change nested workflow to be part of parent workflow, as opposed to outputting dedicated cases
+            generatedYAMLWorkflows[generatedYAMLWorkflows.findIndex(workflow=>workflow.workflow.id==workflowB.workflow.id)].generate.body.workflow = workflowBContent.replace('outputs:\n  cases:\n    id: cases', 'outputs:\n  output:\n    id: output');
+            nested.push(generatedYAMLWorkflows[generatedYAMLWorkflows.findIndex(workflow=>workflow.workflow.id==workflowB.workflow.id)]);
+          }
+        }
+      }
+    }
+
+    let parent = generatedYAMLWorkflows.filter(generatedYAMLWorkflow=>!nested.includes(generatedYAMLWorkflow));
+    generatedYAMLWorkflows = nested.concat(parent);
+    for(let generatedYAMLWorkflow of generatedYAMLWorkflows) {
+      if(!await Github.commit(generatedYAMLWorkflow, generatedYAMLWorkflow.workflow.id, generatedYAMLWorkflow.workflow.name, generatedYAMLWorkflow.workflow.about, generatedYAMLWorkflow.workflow.steps[0].name)) return false;
+    }
 
   }
 

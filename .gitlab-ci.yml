@@ -23,3 +23,5 @@ test_web:
   before_script:
     - cd web
   script: npm test
+  variables:
+    GHE_ACCESS_TOKEN: "foo"

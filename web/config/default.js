@@ -16,6 +16,7 @@ module.exports = {
     GROUP_SIMILAR_PHENOTYPES: false
   },
   github: {
+    BASE_URL: "https://api.github.com",
     ACCESS_TOKEN: process.env.GITHUB_ACCESS_TOKEN
   }
 };

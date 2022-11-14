@@ -248,10 +248,6 @@ class Workflow {
     }
     // make implementation unit language selections for each branch and add to the parent language choices
     implementationUnits = Object.assign({}, implementationUnits, ...workflow.steps.map(step=>step.implementation.steps).filter(step=>step!=undefined).flat().filter(step=>!Object.keys(implementationUnits).includes(step.name)).map((step)=>({[step.name]: step.implementation.language})));
-    // combine parent phenotype steps with the steps of each branch
-    generate.body.steps = generate.body.steps.concat(generate.body.steps.map(step=>step.steps).filter(step=>step!=undefined)).flat();
-    // remove any duplicates introduced with previous combination
-    generate.body.steps = generate.body.steps.filter(({name}, index)=>!generate.body.steps.map(step=>step.name).includes(name, index+1));
     if(generate.body.workflow&&generate.body.workflowInputs) {
       return {"workflow":workflow, "generate":generate, "implementationUnits":implementationUnits};
     } else {
