@@ -17,6 +17,7 @@ module.exports = {
   },
   github: {
     BASE_URL: "https://github.kcl.ac.uk/api/v3",
-    ACCESS_TOKEN: process.env.GHE_ACCESS_TOKEN
+    ACCESS_TOKEN: process.env.GHE_ACCESS_TOKEN,
+    ORGANISATION_SSH: "git@github.kcl.ac.uk:phenoflow"
   }
 }

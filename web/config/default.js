@@ -17,6 +17,7 @@ module.exports = {
   },
   github: {
     BASE_URL: "https://api.github.com",
-    ACCESS_TOKEN: process.env.GITHUB_ACCESS_TOKEN
+    ACCESS_TOKEN: process.env.GITHUB_ACCESS_TOKEN,
+    ORGANISATION_SSH: "git@github.com:phenoflow"
   }
 };

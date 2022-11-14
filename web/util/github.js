@@ -111,7 +111,7 @@ class Github {
     return true;
   }
 
-  static async commit(generatedWorkflow, id, name, about, connector) {
+  static async commit(generatedWorkflow, id, name, about, connector, submodules=[]) {
 
     let workflowRepo = "output/" + id;
     if(!await Github.createRepositoryContent(workflowRepo, generatedWorkflow.workflow.name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, generatedWorkflow.workflow.about)) {
@@ -155,21 +155,31 @@ class Github {
       }
     }
 
-    const createBlobForFile = (octo, org, repo) => async(filePath) => {
-      const content = await getFileAsUTF8(filePath)
-      if(!content) return false;
+    const createBlob = async(octo, org, repo, content) => {
       let blobData;
       try {
         blobData = await octo.git.createBlob({owner:org, repo, content, encoding:'utf-8'})
       } catch(exception) {
-        logger.error("Error creating blob: " + exception + ". " + org + " " + repo + " " + filePath + " " + content);
+        logger.error("Error creating blob: " + exception + ". " + org + " " + repo + " " + content);
         return false;
       }
       return blobData.data
     }
+
+    const createBlobForFile = (octo, org, repo) => async(filePath) => {
+      const content = await getFileAsUTF8(filePath)
+      if(!content) return false;
+      try {
+        return await createBlob(octo, org, repo, content);
+      } catch(exception) {
+        logger.error("Error creating blob for file: " + exception + " " + filePath);
+        return false;
+      }
+    }
     
-    const createNewTree = async (octo, owner, repo, blobs, paths, parentTreeSha) => {
-      const tree = blobs.map(({ sha }, index) => ({path:paths[index], mode:'100644', type:'blob', sha}));
+    const createNewTree = async (octo, owner, repo, blobs, paths, parentTreeSha, submodules=[]) => {
+      let tree = blobs.map(({ sha }, index) => ({path:paths[index], mode:'100644', type:'blob', sha}));
+      if(submodules.length) tree = tree.concat(submodules.map(submodule=>({path:submodule.name, mode:'160000', type:'commit', sha:submodule.sha})));
       try {
         var { data } = await octo.git.createTree({owner, repo, tree, base_tree: parentTreeSha});
       } catch(error) {
@@ -205,20 +215,33 @@ class Github {
       return true;
     };
 
-    const uploadToRepo = async (octo, coursePath, org, repo, branch='main') => {
+    const createGitModulesBlob = async(octo, org, repo, submodules) => {
+      let content = submodules.map(submodule=>'[submodule "'+submodule.name+'"]\n\tpath = '+submodule.name+'\n\turl = '+submodule.url).join('\n');
+      let blobData;
+      try {
+        return await createBlob(octo, org, repo, content);
+      } catch(exception) {
+        logger.error("Error creating blob: " + exception + ". " + org + " " + repo + " " + JSON.stringify(submodules) + " " + content);
+        return false;
+      }
+    }
+
+    const uploadToRepo = async (octo, coursePath, org, repo, branch='main', submodules=[]) => {
       const currentCommit = await getCurrentCommit(octo, org, repo, branch);
       if(!currentCommit) return false;
       const filesPaths = await glob(coursePath+'/**/*');
       const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(octo, org, repo)));
       if(!filesBlobs) return false;
+      if(submodules.length) filesBlobs.push(await createGitModulesBlob(octo, org, repo, submodules));
       const pathsForBlobs = filesPaths.map(fullPath => path.relative(coursePath, fullPath));
-      const newTree = await createNewTree(octo, org, repo, filesBlobs, pathsForBlobs, currentCommit.treeSha);
+      if(submodules.length) pathsForBlobs.push('.gitmodules');
+      const newTree = await createNewTree(octo, org, repo, filesBlobs, pathsForBlobs, currentCommit.treeSha, submodules);
       if(!newTree) return false;
       const commitMessage = 'My commit message';
       const newCommit = await createNewCommit(octo, org, repo, commitMessage, newTree.sha, currentCommit.commitSha);
       if(!newCommit) return false;
       if(!await setBranchToCommit(octo, org, repo, newCommit.sha, branch)) return false;
-      return true;
+      return newCommit.sha;
     }
 
     const createRepo = async(octo, org, name, description) => { 
@@ -237,8 +260,8 @@ class Github {
     if(!octokit || !repos) return false;
     if (!repos.data.map((repo) => repo.name).includes(repo)) if(!await createRepo(octokit, 'phenoflow', repo, about)) return false;
 
-    if(!await uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo, connector)) return false;
-    return true;
+    let sha = await uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo, connector, submodules);
+    return sha ? sha : false;
 
   }
 
@@ -253,30 +276,43 @@ class Github {
       generatedYAMLWorkflows.push(await Workflow.generateWorkflow(workflow.id,  workflow.userName));
     }
 
-    let nested = [];
+    let parents = [], nested = [];
+    let parentToNested = {};
     for(let workflowA of generatedYAMLWorkflows) {
       for(let workflowB of generatedYAMLWorkflows) {
-        if(workflowA.workflow.id==workflowB.workflow.id || nested.map(workflow=>workflow.workflow.id).includes(workflowB.workflow.id) || nested.map(workflow=>workflow.workflow.id).includes(workflowA.workflow.id)) continue;
-        let workflowAContent = workflowA.generate.body.workflow;
-        let workflowANestedSteps = workflowA.generate.body.steps.filter(step=>!step.fileName);
+        if(workflowA.workflow.id==workflowB.workflow.id || nested.map(workflow=>workflow.workflow.id).includes(workflowA.workflow.id)) continue;
         let workflowBContent = workflowB.generate.body.workflow;
-        for(let nestedWorkflow of workflowANestedSteps) {
+        for(let nestedWorkflowInStep of workflowA.generate.body.steps.filter(step=>!step.fileName)) {
           // if nested workflow represented by other passed workflow
-          if(nestedWorkflow.content.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')==workflowBContent.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')) {
+          if(nestedWorkflowInStep.content.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')==workflowBContent.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')) {
+            let nestedWorkflowId = workflowB.workflow.about.replace(/ /g, '-').toLowerCase();
             // point parent workflow to subfolder containing nested workflow
-            generatedYAMLWorkflows[generatedYAMLWorkflows.findIndex(workflow=>workflow.workflow.id==workflowA.workflow.id)].generate.body.workflow = workflowAContent.replace(nestedWorkflow.name, workflowB.workflow.about.replace(/ /g, '-').toLowerCase() + '/' + nestedWorkflow.name);
+            workflowA.generate.body.workflow = workflowA.generate.body.workflow.replace(nestedWorkflowInStep.name, nestedWorkflowId + '/' + workflowB.workflow.name);
+            // point parent workflow inputs to nested workflow implementation units
+            workflowA.generate.body.workflowInputs = workflowA.generate.body.workflowInputs.replaceAll(/inputModule\d\-\d:\n  class: File\n  path: /g, '$&' + nestedWorkflowId + '/');
             // change nested workflow to be part of parent workflow, as opposed to outputting dedicated cases
-            generatedYAMLWorkflows[generatedYAMLWorkflows.findIndex(workflow=>workflow.workflow.id==workflowB.workflow.id)].generate.body.workflow = workflowBContent.replace('outputs:\n  cases:\n    id: cases', 'outputs:\n  output:\n    id: output');
-            nested.push(generatedYAMLWorkflows[generatedYAMLWorkflows.findIndex(workflow=>workflow.workflow.id==workflowB.workflow.id)]);
+            workflowB.generate.body.workflow = workflowBContent.replace('outputs:\n  cases:\n    id: cases', 'outputs:\n  output:\n    id: output');
+            parents.push(workflowA);
+            nested.push(workflowB);
+            parentToNested[workflowA.workflow.id] = Object.keys(parentToNested).includes(workflowA.workflow.id) ? parentToNested[workflowA.workflow.id].concat([workflowB.workflow.id]) : [workflowB.workflow.id];
           }
         }
       }
     }
 
-    let parent = generatedYAMLWorkflows.filter(generatedYAMLWorkflow=>!nested.includes(generatedYAMLWorkflow));
-    generatedYAMLWorkflows = nested.concat(parent);
+    // commit subflows first to retrieve SHAs to be used to create submodule references in parent(s)
+    let subModules = {};
+    for(let subflow of new Set(nested)) {
+      // assume subflows don't have connectors of their own
+      let sha = await Github.commit(subflow, subflow.workflow.id, subflow.workflow.name, subflow.workflow.about, 'main');
+      if(!sha) return false;
+      let nestedWorkflowId = subflow.workflow.about.replace(/ /g, '-').toLowerCase();
+      subModules[subflow.workflow.id] = {'name': nestedWorkflowId, 'url': config.get("github.ORGANISATION_SSH") + '/' + nestedWorkflowId + '.git', 'sha': sha};
+    }
+
+    generatedYAMLWorkflows = parents.concat(generatedYAMLWorkflows.filter(generatedYAMLWorkflow=>!parents.includes(generatedYAMLWorkflow) && !nested.includes(generatedYAMLWorkflow)));
     for(let generatedYAMLWorkflow of generatedYAMLWorkflows) {
-      if(!await Github.commit(generatedYAMLWorkflow, generatedYAMLWorkflow.workflow.id, generatedYAMLWorkflow.workflow.name, generatedYAMLWorkflow.workflow.about, generatedYAMLWorkflow.workflow.steps[0].name)) return false;
+      if(!await Github.commit(generatedYAMLWorkflow, generatedYAMLWorkflow.workflow.id, generatedYAMLWorkflow.workflow.name, generatedYAMLWorkflow.workflow.about, generatedYAMLWorkflow.workflow.steps[0].name, parentToNested[generatedYAMLWorkflow.workflow.id].map(nested=>subModules[nested]))) return false;
     }
 
   }
