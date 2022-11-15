@@ -41,34 +41,6 @@ class Workflow {
     return workflow;
   }
 
-  static async completeWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT"), getRestricted=false) {
-    try {
-      let workflows = await models.workflow.findAll({where:{complete:true, '$user.restricted$':getRestricted, [op.or]:[{name:{[op.like]:"%"+category+"%"}},{[op.or]:[{about:{[op.like]:"%"+category+"%"}},{userName:{[op.like]:"%"+category+"%"}}]}], [op.and]:[{'$parent.child.workflowId$':null}, {'$parent.child.parentId$':null}]}, include:[{model:models.workflow, as:"parent", required:false},{model:models.user}], order:[['name', 'ASC']]});
-      return workflows.slice(offset, offset+limit);
-    } catch(error) {
-      error = "Error getting complete workflows: " + error;
-      logger.debug(error);
-      throw error;
-    }
-  }
-
-  static async restrictedWorkflows(category="", offset=0, limit=config.get("ui.PAGE_LIMIT")) {
-    return await this.completeWorkflows(category, offset, limit, true);
-  }
-
-  static async getRandomWorkflow() {
-    try {
-      let workflows = await this.completeWorkflows()
-      workflows = workflows.map(workflow=>this.workflow(workflow));
-      if(!workflows||!workflows.length) return false;
-      return workflows[Math.floor(Math.random() * workflows.length)];
-    } catch(error) {
-      error = "Error getting workflow: " + error;
-      logger.debug(error);
-      throw error;
-    }
-  }
-
   static async deleteStepsFromWorkflow(workflowId) {
     try {
       let steps = await models.step.findAll({where:{workflowId:workflowId}});
@@ -104,24 +76,6 @@ class Workflow {
       }
     } catch(exception) {
       console.error("Error getting steps to delete:"+error);
-    }
-  }
-
-  static async addChildrenToStep(workflow) {
-    try {
-      let children = await models.child.findAll({where:{parentId:workflow.id}});
-      for(let child of children) {
-        if(child.distinctStepPosition&&child.distinctStepName) {
-          if(!workflow.steps[child.distinctStepPosition-1]) continue;
-          if(!workflow.steps[child.distinctStepPosition-1].children) workflow.steps[child.distinctStepPosition-1].children = [];
-          workflow.steps[child.distinctStepPosition-1].children.push({workflowId:child.workflowId, stepName:child.distinctStepName});
-        }
-      }
-      return workflow;
-    } catch(error) {
-      error = "Error getting workflow siblings: " + error;
-      logger.debug(error);
-      throw error;
     }
   }
 

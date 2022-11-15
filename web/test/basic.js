@@ -1,10 +1,6 @@
 const chai = require("chai");
 chai.use(require("chai-http"));
-const server = require("../app");
-const should = chai.should();
 const expect = chai.expect;
-const fs = require("fs");
-const got = require("got");
 const models = require("../models");
 const logger = require("../config/winston");
 const config = require("config");
@@ -237,7 +233,7 @@ describe("basic", () => {
 
 		it("Should be able to add implementation to first step (of a restricted workflow).", async() => {
 			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py", "restrictedUser");
-		});
+		}).timeout(0);
 
     // 
 

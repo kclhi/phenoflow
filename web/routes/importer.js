@@ -12,7 +12,6 @@ var FormData = require('form-data');
 const { v1: uuidv1 } = require("uuid");
 
 const config = require("config");
-const WorkflowUtils = require("../util/workflow");
 const ImporterUtils = require("../util/importer");
 const Workflow = require('../util/workflow');
 const Github = require('../util/github');
@@ -307,8 +306,8 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
     
     let duplicatedWorkflowId = await Importer.createWorkflow(uuidv1(), existingWorkflow.name, existingWorkflow.about, existingWorkflow.userName);
     await Importer.createSteps(duplicatedWorkflowId, existingWorkflow.steps);
-    await WorkflowUtils.workflowComplete(duplicatedWorkflowId);
-    await WorkflowUtils.workflowChild(duplicatedWorkflowId);
+    await Workflow.workflowComplete(duplicatedWorkflowId);
+    await Workflow.workflowChild(duplicatedWorkflowId);
   }
   res.sendStatus(200);
 });
@@ -328,14 +327,14 @@ class Importer {
     }
     let existingWorkflowChanged = await Importer.importChangesExistingWorkflow(existingWorkflowId, steps);
     if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) { 
-      if(existingWorkflowChanged) await WorkflowUtils.deleteStepsFromWorkflow(existingWorkflowId);
+      if(existingWorkflowChanged) await Workflow.deleteStepsFromWorkflow(existingWorkflowId);
       try {
         await Importer.createSteps(workflowId, steps);
       } catch(createStepsError) {
         logger.error('Error creating steps: '+createStepsError);
         return false;
       }
-      await WorkflowUtils.workflowComplete(workflowId);
+      await Workflow.workflowComplete(workflowId);
     }
     return true;
   }

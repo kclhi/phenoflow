@@ -45,10 +45,6 @@ const swaggerUi = require('swagger-ui-express');
 require('dotenv').config()
 
 const login = require("./routes/login");
-const workflow = require("./routes/workflow");
-const step = require("./routes/step");
-const input = require("./routes/input");
-const output = require("./routes/output");
 const implementation = require("./routes/implementation");
 const importer = require("./routes/importer");
 
@@ -62,10 +58,6 @@ app.use(cookieParser());
 
 const router = express.Router();
 router.use("/login", login);
-router.use("/phenotype", workflow);
-router.use("/step", step);
-router.use("/input", input);
-router.use("/output", output);
 
 router.use(fileUpload({createParentPath:true}));
 router.use("/implementation", implementation);
