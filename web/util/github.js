@@ -10,7 +10,7 @@ const Workflow = require("../util/workflow");
 
 class Github {
 
-  static async createRepositoryContent(workflowRepo, name, workflow, workflowInputs, implementationUnits, steps, about) {
+  static async createRepositoryContent(workflowRepo, name, workflow, workflowInputs, implementationUnits, steps, about, author) {
     try {
       await fsAsync.mkdir(workflowRepo, {recursive:true});
     } catch(error) {
@@ -63,6 +63,7 @@ class Github {
     let readme = await fsAsync.readFile("templates/README.md", "utf8");
     readme = readme.replace(/\[id\]/g, name);
     readme = readme.replace(/\[about\]/g, about);
+    readme = readme.replace(/\[author\]/g, author);
     await fsAsync.writeFile(workflowRepo + "/README.md", readme);
     let license = await fsAsync.readFile("templates/LICENSE.md", "utf8");
     license = license.replace(/\[year\]/g, new Date().getFullYear());
@@ -111,10 +112,10 @@ class Github {
     return true;
   }
 
-  static async commit(generatedWorkflow, id, name, about, connector, submodules=[]) {
+  static async commit(generatedWorkflow, id, name, about, author, connector, submodules=[]) {
 
     let workflowRepo = "output/" + id;
-    if(!await Github.createRepositoryContent(workflowRepo, generatedWorkflow.workflow.name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, generatedWorkflow.workflow.about)) {
+    if(!await Github.createRepositoryContent(workflowRepo, name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, about, author)) {
       logger.error('Unable to create repository content.');
       return false;
     }
@@ -241,12 +242,18 @@ class Github {
       const newCommit = await createNewCommit(octo, org, repo, commitMessage, newTree.sha, currentCommit.commitSha);
       if(!newCommit) return false;
       if(!await setBranchToCommit(octo, org, repo, newCommit.sha, branch)) return false;
+      try {
+        await octokit.repos.update({owner:org, repo:repo, default_branch:branch});
+      } catch(setDefaultBranchError) {
+        logger.error("Error setting default branch: " + setDefaultBranchError);
+        return false;
+      }
       return newCommit.sha;
     }
 
     const createRepo = async(octo, org, name, description) => { 
       try {
-        await octo.repos.createInOrg({org, name, description, auto_init:true});
+        await octo.repos.createInOrg({org, name, description, homepage:'https://kclhi.org/phenoflow', auto_init:true});
       } catch(error) {
         logger.error("Error creating repo: " + error + ". " + org + " " + name + " " + description);
         return false;
@@ -266,7 +273,7 @@ class Github {
   }
 
   static async generateAndCommit(id, name, about, connector, username) {
-    return await this.commit(await Workflow.generateWorkflow(id, username), name, about, connector)
+    return await this.commit(await Workflow.generateWorkflow(id, username), name, about, username, connector)
   }
 
   static async generateAndCommitAll(generatedWorkflows) {
@@ -304,7 +311,7 @@ class Github {
     let subModules = {};
     for(let subflow of new Set(nested)) {
       // assume subflows don't have connectors of their own
-      let sha = await Github.commit(subflow, subflow.workflow.id, subflow.workflow.name, subflow.workflow.about, 'main');
+      let sha = await Github.commit(subflow, subflow.workflow.id, subflow.workflow.name, subflow.workflow.about, subflow.workflow.userName, 'main');
       if(!sha) return false;
       let nestedWorkflowId = subflow.workflow.about.replace(/ /g, '-').toLowerCase();
       subModules[subflow.workflow.id] = {'name': nestedWorkflowId, 'url': config.get("github.ORGANISATION_SSH") + '/' + nestedWorkflowId + '.git', 'sha': sha};
@@ -312,8 +319,10 @@ class Github {
 
     generatedYAMLWorkflows = parents.concat(generatedYAMLWorkflows.filter(generatedYAMLWorkflow=>!parents.includes(generatedYAMLWorkflow) && !nested.includes(generatedYAMLWorkflow)));
     for(let generatedYAMLWorkflow of generatedYAMLWorkflows) {
-      if(!await Github.commit(generatedYAMLWorkflow, generatedYAMLWorkflow.workflow.id, generatedYAMLWorkflow.workflow.name, generatedYAMLWorkflow.workflow.about, generatedYAMLWorkflow.workflow.steps[0].name, parentToNested[generatedYAMLWorkflow.workflow.id].map(nested=>subModules[nested]))) return false;
+      if(!await Github.commit(generatedYAMLWorkflow, generatedYAMLWorkflow.workflow.id, generatedYAMLWorkflow.workflow.name, generatedYAMLWorkflow.workflow.about, generatedYAMLWorkflow.workflow.userName, generatedYAMLWorkflow.workflow.steps[0].name, Object.keys(parentToNested).includes(generatedYAMLWorkflow.workflow.id)?parentToNested[generatedYAMLWorkflow.workflow.id].map(nested=>subModules[nested]):[])) return false;
     }
+
+    return true;
 
   }
 
