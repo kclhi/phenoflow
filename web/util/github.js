@@ -238,7 +238,7 @@ class Github {
       if(submodules.length) pathsForBlobs.push('.gitmodules');
       const newTree = await createNewTree(octo, org, repo, filesBlobs, pathsForBlobs, currentCommit.treeSha, submodules);
       if(!newTree) return false;
-      const commitMessage = 'My commit message';
+      const commitMessage = 'Update made by Phenoflow';
       const newCommit = await createNewCommit(octo, org, repo, commitMessage, newTree.sha, currentCommit.commitSha);
       if(!newCommit) return false;
       if(!await setBranchToCommit(octo, org, repo, newCommit.sha, branch)) return false;
