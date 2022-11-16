@@ -43,9 +43,9 @@ class Importer {
     return res;
   }
 
-  static async addDefaultUser() {
+  static async addDefaultUser(restricted=false) {
     await models.sequelize.sync({force:true});
-    await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});
+    await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk", restricted: restricted});
   };
 
   static getCSVs() {
@@ -220,7 +220,21 @@ describe("importer", () => {
       res.should.have.status(200);
     }).timeout(0);
 
-    it("[IM7] Create children for imported phenotypes.", async() => {
+    it("[IM7] Workflows associated with restricted users should be private.", async() => {
+      await Importer.addDefaultUser(true);
+      nock(config.get("parser.URL")).post("/phenoflow/parser/parseCodelists").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseCodelists.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-disc.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-i2b2.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-omop.json", "utf8")));
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-fhir.json", "utf8")));
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:Importer.getParsedCSVs(), name:"Imported codelist", about:"Imported codelist", userName:"martinchapman"});
+      res.should.have.status(200);
+      let workflows;
+			try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
+			expect(workflows).to.have.lengthOf(4);
+    }).timeout(0);
+
+    it("[IM8] Create children for imported phenotypes.", async() => {
       for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
     }).timeout(0);
   

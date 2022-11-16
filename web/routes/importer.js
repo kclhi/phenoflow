@@ -80,7 +80,14 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
   try {
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
-      await Github.generateAndCommit(workflow.id, workflow.name, workflow.about, workflow.steps[0].stepName, req.body.userName);
+      let restricted = false;
+      try {
+        let user = await models.user.findOne({where:{name:req.body.userName}});
+        restricted = user.restricted;
+      } catch(getUserError) {
+        logger.error("Error getting user restricted status: " + getUserError);
+      }
+      await Github.generateAndCommit(workflow.id, workflow.name, workflow.about, workflow.steps[0].stepName, req.body.userName, restricted);
     }
     return res.sendStatus(200);
   } catch(importListsError) {
@@ -153,7 +160,14 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
   try {
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
-      await Github.generateAndCommit(workflow.id, workflow.name, workflow.about, workflow.steps[0].stepName, req.body.userName);
+      let restricted = false;
+      try {
+        let user = await models.user.findOne({where:{name:req.body.userName}});
+        restricted = user.restricted;
+      } catch(getUserError) {
+        logger.error("Error getting user restricted status: " + getUserError);
+      }
+      await Github.generateAndCommit(workflow.id, workflow.name, workflow.about, workflow.steps[0].stepName, req.body.userName, restricted);
     }
     return res.sendStatus(200);
   } catch(importListsError) {
@@ -232,7 +246,14 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
     }
-    await Github.generateAndCommitAll(generatedWorkflows);
+    let restricted = false;
+    try {
+      let user = await models.user.findOne({where:{name:req.body.userName}});
+      restricted = user.restricted;
+    } catch(getUserError) {
+      logger.error("Error getting user restricted status: " + getUserError);
+    }
+    await Github.generateAndCommitAll(generatedWorkflows, restricted);
     return res.sendStatus(200);
   } catch(importListsError) {
     logger.error(importListsError);
@@ -316,8 +337,14 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
     existingWorkflow.steps = existingWorkflow.steps.map(({workflowId, ...step}) => ({...step, workflowId:duplicatedWorkflowId}));
     await Importer.createSteps(duplicatedWorkflowId, existingWorkflow.steps);
     await Workflow.workflowComplete(duplicatedWorkflowId);
-    await Workflow.workflowChild(duplicatedWorkflowId);
-    await Github.generateAndCommit(duplicatedWorkflowId, existingWorkflow.name, existingWorkflow.about, existingWorkflow.steps[0].stepName, existingWorkflow.userName);
+    let restricted = false;
+    try {
+      let user = await models.user.findOne({where:{name:existingWorkflow.userName}});
+      restricted = user.restricted;
+    } catch(getUserError) {
+      logger.error("Error getting user restricted status: " + getUserError);
+    }
+    await Github.generateAndCommit(duplicatedWorkflowId, existingWorkflow.name, existingWorkflow.about, existingWorkflow.steps[0].stepName, existingWorkflow.userName, restricted);
   }
   res.sendStatus(200);
 });
