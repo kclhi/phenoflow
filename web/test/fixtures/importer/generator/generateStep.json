@@ -1,0 +1,41 @@
+{
+    "workflow": "cwlVersion: v1.0\nsteps:\n  '1':\n    run: read-potential-cases-template.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule1\n  '2':\n    run: lista---secondary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule2\n      potentialCases:\n        id: potentialCases\n        source: 1/output\n  '3':\n    run: listb-termf---primary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule3\n      potentialCases:\n        id: potentialCases\n        source: 2/output\n  '4':\n    run: listb---primary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule4\n      potentialCases:\n        id: potentialCases\n        source: 3/output\n  '5':\n    run: output-listb-following-lista-cases.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule5\n      potentialCases:\n        id: potentialCases\n        source: 4/output\nclass: Workflow\ninputs:\n  inputModule1:\n    id: inputModule1\n    doc: Python implementation unit\n    type: File\n  inputModule2:\n    id: inputModule2\n    doc: Python implementation unit\n    type: File\n  inputModule3:\n    id: inputModule3\n    doc: Python implementation unit\n    type: File\n  inputModule4:\n    id: inputModule4\n    doc: Python implementation unit\n    type: File\n  inputModule5:\n    id: inputModule5\n    doc: Python implementation unit\n    type: File\noutputs:\n  cases:\n    id: cases\n    type: File\n    outputSource: 5/output\n    outputBinding:\n      glob: '*.csv'\nrequirements:\n  SubworkflowFeatureRequirement: {}\n",
+    "steps": [
+        {
+            "name": "read-potential-cases-template",
+            "type": "external",
+            "workflowId": "cb6853c0-6504-11ed-9773-c711ec3f673e",
+            "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Read potential cases from template\nid: read-potential-cases-template\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\noutputs:\n- doc: Initial potential cases, read from template\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: external\n",
+            "fileName": "read-potential-cases.template.py"
+        },
+        {
+            "name": "lista---secondary",
+            "type": "logic",
+            "workflowId": "cb6853c0-6504-11ed-9773-c711ec3f673e",
+            "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify ListA - secondary\nid: lista---secondary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Codelist steplist branch A\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with clinical codes indicating Codelist steplist branch A related\n    events in electronic health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+            "fileName": "lista---secondary.py"
+        },
+        {
+            "name": "listb-termf---primary",
+            "type": "logic",
+            "workflowId": "cb6853c0-6504-11ed-9773-c711ec3f673e",
+            "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify Listb termf - primary\nid: listb-termf---primary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Codelist steplist branch A\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with clinical codes indicating Codelist steplist branch A related\n    events in electronic health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+            "fileName": "listb-termf---primary.py"
+        },
+        {
+            "name": "listb---primary",
+            "type": "logic",
+            "workflowId": "cb6853c0-6504-11ed-9773-c711ec3f673e",
+            "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify ListB - primary\nid: listb---primary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Codelist steplist branch A\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with clinical codes indicating Codelist steplist branch A related\n    events in electronic health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+            "fileName": "listb---primary.py"
+        },
+        {
+            "name": "output-listb-following-lista-cases",
+            "type": "output",
+            "workflowId": "cb6853c0-6504-11ed-9773-c711ec3f673e",
+            "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Output cases\nid: output-listb-following-lista-cases\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Codelist steplist branch A\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this type of Codelist steplist\n    branch A\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: output\n",
+            "fileName": "output-listb-following-lista-cases.py"
+        }
+    ],
+    "workflowInputs": "inputModule1:\n  class: File\n  path: python/read-potential-cases.template.py\ninputModule2:\n  class: File\n  path: python/lista---secondary.py\ninputModule3:\n  class: File\n  path: python/listb-termf---primary.py\ninputModule4:\n  class: File\n  path: python/listb---primary.py\ninputModule5:\n  class: File\n  path: python/output-listb-following-lista-cases.py\n"
+}

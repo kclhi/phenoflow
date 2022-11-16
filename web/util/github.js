@@ -273,7 +273,7 @@ class Github {
   }
 
   static async generateAndCommit(id, name, about, connector, username) {
-    return await this.commit(await Workflow.generateWorkflow(id, username), name, about, username, connector)
+    return await this.commit(await Workflow.generateWorkflow(id, username), id, name, about, username, connector)
   }
 
   static async generateAndCommitAll(generatedWorkflows) {

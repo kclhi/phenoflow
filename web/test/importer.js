@@ -215,7 +215,8 @@ describe("importer", () => {
     it("[IM6] Should be able to add a connector.", async() => {
       let allPhenotypes = await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]});
       nock(config.get("parser.URL")).post("/phenoflow/parser/parseStep").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseStep.json", "utf8")));
-      let res = await chai.request(testServerObject).post("/phenoflow/importer/addConnector").attach("implementationTemplate", "templates/read-potential-cases.template.py", "read-potential-cases.template.py").field({"existingWorkflowIds":[allPhenotypes[0].id], "dataSource":"template", "language":"python"});
+      nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateStep.json", "utf8")));
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/addConnector").set('content-type', 'application/json').attach("implementationTemplate", "templates/read-potential-cases.template.py", "read-potential-cases.template.py").field({"existingWorkflowIds":[allPhenotypes[0].id], "dataSource":"template", "language":"python", "newWorkflowId":"cb6853c0-6504-11ed-9773-c711ec3f673e"});
       res.should.have.status(200);
     }).timeout(0);
 

@@ -290,8 +290,16 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
       step.outputDoc = step.outputs[0].doc;
       step.outputExtension = step.outputs[0].extension;
       for(let implementation in step.implementations) {
+        if(!step.implementations[implementation].fileName.includes(".")) continue;
         const source = "uploads/"+existingWorkflow.id+"/"+step.implementations[implementation].language;
-        let sourceFile = await fs.readFile(source+"/"+step.implementations[implementation].fileName.replace(/\//g, ""), "utf8");
+        let sourceFile;
+        try {
+          let path = source+"/"+step.implementations[implementation].fileName.replace(/\//g, "");
+          sourceFile = await fs.readFile(path, "utf8");
+        } catch(error) {
+          logger.error("Unable to read file: " + error + " " + path);
+          res.sendStatus(500);
+        }
         step.implementations[implementation].implementationTemplate = sourceFile;
       }
     }
@@ -304,10 +312,12 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
       return res.sendStatus(500);
     }
     
-    let duplicatedWorkflowId = await Importer.createWorkflow(uuidv1(), existingWorkflow.name, existingWorkflow.about, existingWorkflow.userName);
+    let duplicatedWorkflowId = await Importer.createWorkflow(req.body.newWorkflowId?req.body.newWorkflowId:uuidv1(), existingWorkflow.name, existingWorkflow.about, existingWorkflow.userName);
+    existingWorkflow.steps = existingWorkflow.steps.map(({workflowId, ...step}) => ({...step, workflowId:duplicatedWorkflowId}));
     await Importer.createSteps(duplicatedWorkflowId, existingWorkflow.steps);
     await Workflow.workflowComplete(duplicatedWorkflowId);
     await Workflow.workflowChild(duplicatedWorkflowId);
+    await Github.generateAndCommit(duplicatedWorkflowId, existingWorkflow.name, existingWorkflow.about, existingWorkflow.steps[0].stepName, existingWorkflow.userName);
   }
   res.sendStatus(200);
 });

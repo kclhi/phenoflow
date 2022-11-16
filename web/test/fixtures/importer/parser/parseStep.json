@@ -11,6 +11,7 @@
   ],
   "inputDoc": "firstInputDoc",
   "outputDoc": "Initial potential cases, read from template",
+  "outputExtension": "csv",
   "position": 1,
   "stepDoc": "Read potential cases from template",
   "stepName": "read-potential-cases-template",
