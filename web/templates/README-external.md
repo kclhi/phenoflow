@@ -8,7 +8,7 @@
 
 ## Configuration
 
-Specify input dataset path in '[id]-inputs.yml'.
+Specify data source credentials in [[connectorPath]]([connectorPath]).
 
 ## Usage
 

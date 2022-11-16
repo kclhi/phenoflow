@@ -60,10 +60,12 @@ class Github {
       }
     }
 
-    let readme = await fsAsync.readFile("templates/README.md", "utf8");
+    let inputType = steps[0].type;
+    let readme = inputType=="load"?await fsAsync.readFile("templates/README-load.md", "utf8"):await fsAsync.readFile("templates/README-external.md", "utf8");
     readme = readme.replace(/\[id\]/g, name);
     readme = readme.replace(/\[about\]/g, about);
     readme = readme.replace(/\[author\]/g, author);
+    if(inputType=="external") readme = readme.replace(/\[connectorPath\]/g, (implementationUnits&&implementationUnits[steps[0].name]?implementationUnits[steps[0].name]:"other") + "/" + steps[0].fileName);
     await fsAsync.writeFile(workflowRepo + "/README.md", readme);
     let license = await fsAsync.readFile("templates/LICENSE.md", "utf8");
     license = license.replace(/\[year\]/g, new Date().getFullYear());
