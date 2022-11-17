@@ -107,15 +107,15 @@ class Importer {
 
 }
 
-before(async function() {
-  this.timeout(0); 
-  await Github.clearAllRepos(); 
-})
-
 describe("importer", () => {
 
   describe("/POST import", () => {
     
+    before(async function() {
+      this.timeout(0); 
+      await Github.clearAllRepos(); 
+    })
+
     it("[IM1] Should be able to import a codelist.", async() => {
       await Importer.addDefaultUser();
       // Set up mocks in the order in which they will be called

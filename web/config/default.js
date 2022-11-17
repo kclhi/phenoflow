@@ -1,4 +1,7 @@
 module.exports = {
+  phenoflow: {
+    HOMEPAGE: "https://kclhi.org/phenoflow"
+  },
   workflow: {
     LANGUAGES: ["knime", "python", "js"],
     CONCEPTS: ["load", "external", "logic", "boolean", "output"]
@@ -13,7 +16,8 @@ module.exports = {
     PHENOTYPE_FOLDER: "fixtures/importer/caliber",
     CODELIST_FOLDER: "fixtures/importer/phekb",
     KEYWORD_LIST_FOLDER: "fixtures/importer/kclhi",
-    GROUP_SIMILAR_PHENOTYPES: false
+    GROUP_SIMILAR_PHENOTYPES: false,
+    HDR_API: "https://phenotypes.healthdatagateway.org/api/v1",
   },
   github: {
     BASE_URL: "https://api.github.com",
