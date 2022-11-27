@@ -15,6 +15,7 @@ const config = require("config");
 const ImporterUtils = require("../util/importer");
 const Workflow = require('../util/workflow');
 const Github = require('../util/github');
+const { workflow } = require('../util/workflow');
 
 /**
  * @swagger
@@ -78,8 +79,22 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
     }
   }
   try {
+    let parent;
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
+      if(workflow.steps[0].stepType=="load"||workflow.steps[0].stepType=="external") {
+        try {
+          if(!parent) {
+            parent = await models.workflow.findOne({where:{id:workflow.id}});
+          } else {
+            let child = await models.workflow.findOne({where:{id:workflow.id}});
+            await child.addParent(parent, {through:{name:parent.name, distinctStepName:workflow.steps[0].stepName, distinctStepPosition:0}});
+          }
+        } catch(setParentError) {
+          logger.error(setParentError);
+          return res.sendStatus(500);
+        }
+      }
       let restricted = false;
       try {
         let user = await models.user.findOne({where:{name:req.body.userName}});
@@ -158,8 +173,22 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
     }
   }
   try {
+    let parent;
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
+      if(workflow.steps[0].stepType=="load"||workflow.steps[0].stepType=="external") {
+        try {
+          if(!parent) {
+            parent = await models.workflow.findOne({where:{id:workflow.id}});
+          } else {
+            let child = await models.workflow.findOne({where:{id:workflow.id}});
+            await child.addParent(parent, {through:{name:parent.name, distinctStepName:workflow.steps[0].stepName, distinctStepPosition:0}});
+          }
+        } catch(setParentError) {
+          logger.error(setParentError);
+          return res.sendStatus(500);
+        }
+      }
       let restricted = false;
       try {
         let user = await models.user.findOne({where:{name:req.body.userName}});
@@ -243,8 +272,21 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
     }
   }
   try {
+    let parent;
     for(let workflow of generatedWorkflows) {
       if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
+      if(workflow.steps[0].stepType!="load"&&workflow.steps[0].stepType!="external") continue;
+      try {
+        if(!parent) {
+          parent = await models.workflow.findOne({where:{id:workflow.id}});
+        } else {
+          let child = await models.workflow.findOne({where:{id:workflow.id}});
+          await child.addParent(parent, {through:{name:parent.name, distinctStepName:workflow.steps[0].stepName, distinctStepPosition:0}});
+        }
+      } catch(setParentError) {
+        logger.error(setParentError);
+        return res.sendStatus(500);
+      }
     }
     let restricted = false;
     try {

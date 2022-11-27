@@ -39,7 +39,7 @@ class Importer {
     let csvs = await this.getSteplistCSVs(steplist.content, path);
     let id = await ImporterUtils.steplistHash(steplist, csvs);
     let name = ImporterUtils.getName(steplist.filename);
-    let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:name, about:id+" - "+ImporterUtils.getName(steplist.filename), userName:author});
+    let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:name, about:ImporterUtils.getName(steplist.filename)+' - '+id, userName:author});
     return res;
   }
 
@@ -164,7 +164,7 @@ describe("importer", () => {
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchSteplist-omop.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchSteplist-fhir.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchSteplist-branchA.json", "utf8")));
-      let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.steplistHash(steplist, csvs)+" - "+ImporterUtils.getName(steplist.filename), userName:"martinchapman"});
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.getName(steplist.filename)+" - "+ImporterUtils.steplistHash(steplist, csvs), userName:"martinchapman"});
       res.should.have.status(200);
       let workflows;
 			try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
@@ -189,7 +189,7 @@ describe("importer", () => {
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchOnlySteplist-fhir.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchOnlySteplist-branchA.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateBranchOnlySteplist-branchB.json", "utf8")));
-      let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.steplistHash(steplist, csvs)+" - "+ImporterUtils.getName(steplist.filename), userName:"martinchapman"});
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/importSteplist").send({steplist:steplist, csvs:csvs, name:ImporterUtils.getName(steplist.filename), about:ImporterUtils.getName(steplist.filename)+" - "+ImporterUtils.steplistHash(steplist, csvs), userName:"martinchapman"});
       res.should.have.status(200);
     }).timeout(0);
 
@@ -232,10 +232,6 @@ describe("importer", () => {
       let workflows;
 			try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
 			expect(workflows).to.have.lengthOf(4);
-    }).timeout(0);
-
-    it("[IM8] Create children for imported phenotypes.", async() => {
-      for(let workflow of await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]})) await WorkflowUtils.workflowChild(workflow.id);
     }).timeout(0);
   
   });

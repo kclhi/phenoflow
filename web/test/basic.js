@@ -19,7 +19,7 @@ describe("basic", () => {
 			await models.sequelize.sync({force:true});
 			const result = await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk"});
 			result.should.be.a("object");
-		});
+		}).timeout(0);
 
 		let workflowId;
 		let name = "workflow";
@@ -147,12 +147,6 @@ describe("basic", () => {
 
 		let workflows;
 
-		it("Second workflow should not be marked as a child of the first (non-overlapping workflows should not be marked as such).", async() => {
-			await WorkflowUtils.workflowChild(workflowId);
-			workflows = await models.workflow.findAll();
-			expect(await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].countParent()).equal(0);
-		});
-
 		it("Should be able to add a new step, for a second workflow.", async() => {
 			stepId = await Workflow.upsertStep(workflowId, 1, "stepName1", "updatedStepDoc", "logic");
 		});
@@ -167,11 +161,6 @@ describe("basic", () => {
 
 		it("Should be able to add a new implementation, for a step (of a second workflow).", async() => {
 			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
-		});
-
-		it("Second workflow should be marked as a child of the first (overlapping workflows should be marked as such).", async() => {
-			await WorkflowUtils.workflowChild(workflowId);
-			expect(await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].countParent()).equal(1);
 		});
 
     // Delete:
@@ -200,12 +189,6 @@ describe("basic", () => {
 
 		it("Should be able to add implementation to second step (of a third workflow).", async() => {
 			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py");
-		});
-
-		it("Identical workflows are not considered to be children.", async() => {
-			await WorkflowUtils.workflowChild(workflowId);
-			workflows = await models.workflow.findAll();
-			expect(await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].countParent()).equal(0);
 		});
 
     //

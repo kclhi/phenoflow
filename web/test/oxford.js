@@ -3,6 +3,8 @@ chai.use(require("chai-http"));
 const fs = require("fs").promises;
 const config = require("config");
 const models = require('../models');
+const nock = require('nock')
+
 const Importer = require("./importer");
 
 async function testOxfordSteplist(file) {
@@ -26,6 +28,7 @@ describe("oxford importer", () => {
 		}).timeout(0);
 
     it("[OX2] Should be able to construct a phenotype from a list of steps.", async() => { 
+      nock.restore();
       await testOxfordSteplist("long-covid.csv");
     }).timeout(0);
 

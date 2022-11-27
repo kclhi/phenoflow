@@ -1,5 +1,4 @@
 const fsAsync = require('fs').promises;
-const fs = require('fs');
 const logger = require('../config/winston');
 const config = require('config');
 const path = require('path')
@@ -7,6 +6,7 @@ const { Octokit } = require("@octokit/rest");
 const glob = require('fast-glob');
 
 const Workflow = require("../util/workflow");
+const Importer = require("../util/importer");
 
 class Github {
 
@@ -28,7 +28,7 @@ class Github {
       logger.error("Error creating workflow input file: " + createWorkflowInputsError);
     }
     
-    if(steps && steps[0] && steps[0].type.indexOf("external") < 0) await fsAsync.copyFile("templates/replaceMe.csv", workflowRepo + "/replaceMe.csv");
+    if(steps && steps[0] && steps[0].type=="load") await fsAsync.copyFile("templates/replaceMe.csv", workflowRepo + "/replaceMe.csv");
 
     for(let step of steps) {
       try {
@@ -61,7 +61,7 @@ class Github {
     }
 
     let inputType = steps[0].type;
-    let readme = inputType=="load"?await fsAsync.readFile("templates/README-load.md", "utf8"):await fsAsync.readFile("templates/README-external.md", "utf8");
+    let readme = inputType=="load"?await fsAsync.readFile("templates/README-load.md", "utf8"):inputType=="external"?await fsAsync.readFile("templates/README-external.md", "utf8"):await fsAsync.readFile("templates/README-sub.md", "utf8");
     readme = readme.replace(/\[id\]/g, name);
     readme = readme.replace(/\[about\]/g, about);
     readme = readme.replace(/\[author\]/g, author);
@@ -264,7 +264,8 @@ class Github {
     };
 
     let repos = await Github.getRepos();
-    const repo = about.replace(/ /g, '-').toLowerCase();
+    let parentId = await Workflow.getParent(id);
+    const repo = name + '---' + (parentId?parentId:id);
     let octokit = await Github.getConnection();
     if(!octokit || !repos) return false;
     if (!repos.data.map((repo) => repo.name).includes(repo)) if(!await createRepo(octokit, 'phenoflow', repo, about, restricted)) return false;
@@ -294,11 +295,11 @@ class Github {
         for(let nestedWorkflowInStep of workflowA.generate.body.steps.filter(step=>!step.fileName)) {
           // if nested workflow represented by other passed workflow
           if(nestedWorkflowInStep.content.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')==workflowBContent.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')) {
-            let nestedWorkflowId = workflowB.workflow.about.replace(/ /g, '-').toLowerCase();
+            let nestedWorkflowId = workflowB.workflow.name + '---' + workflowB.workflow.id;
             // point parent workflow to subfolder containing nested workflow
             workflowA.generate.body.workflow = workflowA.generate.body.workflow.replace(nestedWorkflowInStep.name, nestedWorkflowId + '/' + workflowB.workflow.name);
             // point parent workflow inputs to nested workflow implementation units
-            workflowA.generate.body.workflowInputs = workflowA.generate.body.workflowInputs.replaceAll(/inputModule\d\-\d:\n  class: File\n  path: /g, '$&' + nestedWorkflowId + '/');
+            workflowA.generate.body.workflowInputs = workflowA.generate.body.workflowInputs.replaceAll(new RegExp('inputModule' + (workflowA.generate.body.steps.indexOf(nestedWorkflowInStep) + 1) +'(\-[0-9]*)?:\n  class: File\n  path: ', 'g'), '$&' + nestedWorkflowId + '/');
             // change nested workflow to be part of parent workflow, as opposed to outputting dedicated cases
             workflowB.generate.body.workflow = workflowBContent.replace('outputs:\n  cases:\n    id: cases', 'outputs:\n  output:\n    id: output');
             parents.push(workflowA);
@@ -315,12 +316,13 @@ class Github {
       // assume subflows don't have connectors of their own
       let sha = await Github.commit(subflow, subflow.workflow.id, subflow.workflow.name, subflow.workflow.about, subflow.workflow.userName, 'main');
       if(!sha) return false;
-      let nestedWorkflowId = subflow.workflow.about.replace(/ /g, '-').toLowerCase();
+      let nestedWorkflowId = subflow.workflow.name + '---' + subflow.workflow.id;
       subModules[subflow.workflow.id] = {'name': nestedWorkflowId, 'url': config.get("github.ORGANISATION_SSH") + '/' + nestedWorkflowId + '.git', 'sha': sha};
     }
 
-    generatedYAMLWorkflows = parents.concat(generatedYAMLWorkflows.filter(generatedYAMLWorkflow=>!parents.includes(generatedYAMLWorkflow) && !nested.includes(generatedYAMLWorkflow)));
+    generatedYAMLWorkflows = [...new Set(parents)].concat(generatedYAMLWorkflows.filter(generatedYAMLWorkflow=>!parents.includes(generatedYAMLWorkflow) && !nested.includes(generatedYAMLWorkflow)));
     for(let generatedYAMLWorkflow of generatedYAMLWorkflows) {
+      generatedYAMLWorkflow.generate.body.steps = generatedYAMLWorkflow.generate.body.steps.filter(step=>step.fileName);
       if(!await Github.commit(generatedYAMLWorkflow, generatedYAMLWorkflow.workflow.id, generatedYAMLWorkflow.workflow.name, generatedYAMLWorkflow.workflow.about, generatedYAMLWorkflow.workflow.userName, generatedYAMLWorkflow.workflow.steps[0].name, Object.keys(parentToNested).includes(generatedYAMLWorkflow.workflow.id)?parentToNested[generatedYAMLWorkflow.workflow.id].map(nested=>subModules[nested]):[]), restricted) return false;
     }
 

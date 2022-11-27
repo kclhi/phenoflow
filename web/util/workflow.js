@@ -101,52 +101,17 @@ class Workflow {
     }
   }
 
-  // A workflow is defined as being a child of another if all but one of their steps overlap
-  static async workflowChild(workflowId, exhaustive=false) {
-    let workflows = await models.workflow.findAll();
-    if(!workflows.filter(workflow=>workflow.id==workflowId).length) return;
-    const children = await models.child.findAll({where:{parentId:workflowId}});
-    // Can't be child of workflow that already parent of.
-    workflows = workflows.filter(workflow=>children.map(child=>child.workflowId).indexOf(workflow.id)<0);
-    // Non-exhaustive searches only examine potential parent workflows with the same name.
-    if(!exhaustive) workflows = workflows.filter(workflow=>workflow.name==workflows.filter((workflow)=>{return workflow.id==workflowId})[0].name);
-    const candidateChildSteps = await models.step.findAll({where:{workflowId:workflowId}});
-    if (!candidateChildSteps) throw new Error(ERROR_PREFIX + "Error getting candidate workflow steps.");
-    for(let workflow of workflows) {
-      let matchingSteps = 0;
-      if(workflowId!=workflow.id) {
-        const ERROR_PREFIX = "Unable to identify workflow intersection: ";
-        const workflowSteps = await models.step.findAll({where:{workflowId:workflow.id}});
-        if(!workflowSteps) throw new Error(ERROR_PREFIX + "Error getting other workflow steps.");
-        if(workflowSteps.length!=candidateChildSteps.length) continue;
-        let distinctStepName, distinctStepPosition;
-        for(let candidateChildStep of candidateChildSteps) {
-          let workflowStep = null;
-          if((workflowStep=workflowSteps.filter((step)=>{return candidateChildStep.name==step.name&&candidateChildStep.doc==step.doc&&candidateChildStep.type==step.type})) && workflowStep.length) {
-            // ~MDC Again, eventually there may be multiple inputs and outputs.
-            let candidateChildStepInput=await models.input.findOne({where:{stepId:candidateChildStep.id}});
-            if(!candidateChildStepInput) throw new Error(ERROR_PREFIX + "Error getting candidate child step input.");
-            let candidateChildStepOutput=await models.output.findOne({where:{stepId:candidateChildStep.id}});
-            if(!candidateChildStepOutput) throw new Error(ERROR_PREFIX + "Error getting candidate child step output.");
-            let workflowStepInput = await models.input.findOne({where:{stepId:workflowStep[0].id}});
-            if(!workflowStepInput) throw new Error(ERROR_PREFIX + "Error getting workflow step input.");
-            let workflowStepOutput = await models.output.findOne({where:{stepId:workflowStep[0].id}});
-            if(!workflowStepOutput) throw new Error(ERROR_PREFIX + "Error getting workflow step output.");
-            if(candidateChildStepInput.doc==workflowStepInput.doc&&candidateChildStepOutput.doc==workflowStepOutput.doc&&candidateChildStepOutput.extension==workflowStepOutput.extension) { 
-              matchingSteps++;
-              continue;
-            }
-          }
-          distinctStepName = candidateChildStep.name;
-          distinctStepPosition = candidateChildStep.position;
-        }
-  
-        if(distinctStepName&&distinctStepPosition
-          &&(matchingSteps==candidateChildSteps.length||matchingSteps==workflowSteps.length-1)
-          // We aren't able to tell if 3-step workflows are children via a middle distinct step.
-          &&!(matchingSteps==2&&!distinctStepName.includes("read")&&!distinctStepName.includes("output"))
-          ) await workflows.filter((workflow)=>{return workflow.id==workflowId})[0].addParent(workflow, {through:{name:workflow.name, distinctStepName:distinctStepName, distinctStepPosition:distinctStepPosition}});
+  static async getParent(workflowId) {
+    try {
+      let child = await models.child.findOne({where:{workflowId:workflowId}});
+      if(child&&child.parentId) {
+        return child.parentId;
+      } else {
+        return false;
       }
+    } catch(getParentError) {
+      logger.error("Error getting child's parent: " + getParentError);
+      return false;
     }
   }
 
