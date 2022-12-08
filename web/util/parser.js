@@ -1,6 +1,4 @@
 const logger = require('../config/winston');
-const parse = require('neat-csv');
-const fs = require('fs').promises;
 const nlp = require('compromise');
 const stringSimilarity = require("string-similarity");
 const natural = require("natural");
@@ -27,7 +25,7 @@ class Parser {
   }
 
   static ignoreInStepName(word) {
-    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction", "accident", "difficulty", "symptom", "symptoms"];
+    let conditionSynonyms = ["syndrome", "infection", "infections", "disease", "diseases", "disorder", "disorders", "malignancy", "status", "diagnosis", "dysfunction", "accident", "difficulty", "symptom", "symptoms", "cause", "caused"];
     let ignoreWords = ["not", "use", "type", "using", "anything", "enjoying"];
     let nlpd = nlp(word);
     return word.length <= 2
@@ -309,7 +307,7 @@ class Parser {
       }
     }
     steplist = steplist.reverse();
-    return includes[0]+(includes.length>1?" following "+includes.slice(1).join(" and "):"")+(without.length?", without "+without.join(" and "):"");
+    return includes[0]+(includes.length>1?" following "+includes.slice(1).join(" and "):"")+(without.length?", without a record of "+without.join(" and "):"");
   }
 
 }

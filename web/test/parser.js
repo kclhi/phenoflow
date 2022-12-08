@@ -81,7 +81,7 @@ class Parser {
 
 describe("parser", () => {
 
-  describe("/POST import", () => {
+  describe("/POST parse", () => {
 
     it("[PA1] Common terms should be grouped by category.", async() => {
       let categories = ParserUtils.getCategories([{"filename":"file.csv", 
@@ -133,7 +133,7 @@ describe("parser", () => {
             {"logicType": "branch", "param": "branch-b.csv"}
           ]
         };
-      let csvs = Parser.getCSVs().concat(Parser.getBranchCSVs());
+      let csvs = Parser.getParsedCSVs().concat(Parser.getBranchCSVs());
       let res = await Parser.parseSteplist(stepList, csvs, ParserUtils.getName(stepList.filename), ParserUtils.steplistHash(stepList, csvs)+" - "+ParserUtils.getName(stepList.filename), "martinchapman");
       res.should.have.status(200);
     }).timeout(0);

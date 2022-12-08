@@ -240,7 +240,7 @@ class Parser {
         nestedWorkflows = nestedWorkflows.concat(branchNestedWorkflows);
         let nestedWorkflowName = ParserUtils.summariseSteplist(nestedSteplist);
         let id = ParserUtils.steplistHash(nestedSteplist, csvs);
-        let nestedWorkflow = await Parser.parseNestedPhenotype(name, nestedWorkflowName, id+" - "+nestedWorkflowName.charAt(0).toUpperCase()+nestedWorkflowName.substring(1), userName, branchList);
+        let nestedWorkflow = await Parser.parseNestedPhenotype(name, nestedWorkflowName, nestedWorkflowName.charAt(0).toUpperCase()+nestedWorkflowName.substring(1)+' - '+id, userName, branchList);
         nestedWorkflows.push(nestedWorkflow);
         list.push({"logicType":"branch", "nestedWorkflowName":nestedWorkflowName, "nestedWorkflowId":nestedWorkflow.id});
       }
@@ -254,7 +254,7 @@ class Parser {
     steps.pop();
     steps.push(await this.getOutputCasesConditional(steps.flat().length+1, name, OUTPUT_EXTENSION, "python", parentStepName, steps));
     steps = steps.flat();
-    let workflow = Parser.createWorkflow(name, about, userName);
+    let workflow = Parser.createWorkflow(ParserUtils.clean(name), about, userName);
     return {...workflow, steps};
   }
 
