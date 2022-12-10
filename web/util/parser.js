@@ -218,8 +218,9 @@ class Parser {
             }
             // If no common term, pick most representative term from description
             if(!matched) {
-              let keyTerm = getKeyTerm(description, name);
-              categories[keyTerm+codingSystemGroup]?categories[keyTerm+codingSystemGroup].push(codeAndSystem):categories[keyTerm+codingSystemGroup]=[codeAndSystem];
+              let keyTerm = getKeyTerm(description, name).replace('-', '');
+              let existingKey = Object.keys(categories).filter(key=>key.toLowerCase()==(keyTerm+codingSystemGroup).toLowerCase())[0];
+              categories[existingKey]?categories[existingKey].push(codeAndSystem):categories[keyTerm+codingSystemGroup]=[codeAndSystem];
             }
           } else if(csvFileContent.length==1) {
             // If there's only one code, use its description
