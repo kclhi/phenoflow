@@ -116,8 +116,7 @@ describe("importer", () => {
       await Github.clearAllRepos(); 
     })
 
-    it("[IM1] Should be able to import a codelist.", async() => {
-      await Importer.addDefaultUser();
+    async function importCodelist() {
       // Set up mocks in the order in which they will be called
       nock(config.get("parser.URL")).post("/phenoflow/parser/parseCodelists").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseCodelists.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-disc.json", "utf8")));
@@ -125,6 +124,12 @@ describe("importer", () => {
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-omop.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-fhir.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:Importer.getParsedCSVs(), name:"Imported codelist", about:"Imported codelist", userName:"martinchapman"});
+      return res;
+    }
+
+    it("[IM1] Should be able to import a codelist.", async() => {
+      await Importer.addDefaultUser();
+      let res = await importCodelist();
       res.should.have.status(200);
       let workflows;
 			try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
@@ -213,6 +218,8 @@ describe("importer", () => {
     }).timeout(0);
 
     it("[IM6] Should be able to add a connector.", async() => {
+      await Importer.addDefaultUser();
+      await importCodelist();
       let allPhenotypes = await models.workflow.findAll({where:{complete:true}, order:[['createdAt', 'DESC']]});
       nock(config.get("parser.URL")).post("/phenoflow/parser/parseStep").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseStep.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateStep.json", "utf8")));

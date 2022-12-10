@@ -338,7 +338,7 @@
 {
   "about": "8j2n3Vnv0Z0SE9bWfxk973sMNE - ListB following listA",
   "id": "06bf3fb0-2d1a-11ed-b046-8d37e4483e8c",
-  "name": "Codelist steplist branch B",
+  "name": "Codelist-steplist-branch-B",
   "steps": [
     {
       "implementations": [
@@ -468,7 +468,7 @@
 {
   "about": "v5a7FTXtJV6dbL2OYe1BUWiyHs8 - ListD, without listC",
   "id": "06f23690-2d1a-11ed-b046-8d37e4483e8c",
-  "name": "Codelist steplist branch B",
+  "name": "Codelist-steplist-branch-B",
   "steps": [
     {
       "implementations": [
