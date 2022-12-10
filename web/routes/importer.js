@@ -379,6 +379,14 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
     existingWorkflow.steps = existingWorkflow.steps.map(({workflowId, ...step}) => ({...step, workflowId:duplicatedWorkflowId}));
     await Importer.createSteps(duplicatedWorkflowId, existingWorkflow.steps);
     await Workflow.workflowComplete(duplicatedWorkflowId);
+    try {
+      let parent = await models.workflow.findOne({where:{id:existingWorkflowId}});
+      let child = await models.workflow.findOne({where:{id:duplicatedWorkflowId}});
+      await child.addParent(parent, {through:{name:parent.name, distinctStepName:existingWorkflow.steps[0].stepName, distinctStepPosition:0}});
+    } catch(setParentError) {
+      logger.error(setParentError);
+      return res.sendStatus(500);
+    }
     let restricted = false;
     try {
       let user = await models.user.findOne({where:{name:existingWorkflow.userName}});
