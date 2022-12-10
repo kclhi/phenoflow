@@ -2,7 +2,7 @@
 
 import sys, csv
 
-codes = ["138875005","840539006","840539006","840539006","840544004","840544004","840544004","840544004","840546002","840546002","840546002","840533007","840533007","840533007","840536004","840536004","840536004","840535000","840535000","840535000","840534001","840534001","840534001","840534001"];
+codes = [{"code":"138875005","system":"system"},{"code":"840539006","system":"system"},{"code":"840539006","system":"system"},{"code":"840539006","system":"system"},{"code":"840544004","system":"system"},{"code":"840544004","system":"system"},{"code":"840544004","system":"system"},{"code":"840544004","system":"system"},{"code":"840546002","system":"system"},{"code":"840546002","system":"system"},{"code":"840546002","system":"system"},{"code":"840533007","system":"system"},{"code":"840533007","system":"system"},{"code":"840533007","system":"system"},{"code":"840536004","system":"system"},{"code":"840536004","system":"system"},{"code":"840536004","system":"system"},{"code":"840535000","system":"system"},{"code":"840535000","system":"system"},{"code":"840535000","system":"system"},{"code":"840534001","system":"system"},{"code":"840534001","system":"system"},{"code":"840534001","system":"system"},{"code":"840534001","system":"system"}];
 
 with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', newline='') as file_out:
     csv_reader = csv.DictReader(file_in)
@@ -11,7 +11,7 @@ with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', n
     for row in csv_reader:
         newRow = row.copy();
         for cell in row:
-            if ([value for value in row[cell].split(",") if value in codes]):
+            if ([value for value in row[cell].split(",") if value in list(map(lambda code: code['code'], codes))]):
                 newRow["snomed-intl-identified"] = "CASE";
                 break;
             else:

@@ -2,7 +2,7 @@
 
 import sys, csv
 
-codes = ["EMISNQEX58", 	"EMISNQSU106", "EMISNQTE31", "EMISNQCO303", "EMISNQEX59"];
+codes = [{"code":"EMISNQEX58","system":"system"}, {"code":"EMISNQSU106","system":"system"}, {"code":"EMISNQTE31","system":"system"}, {"code":"EMISNQCO303","system":"system"}, {"code":"EMISNQEX59","system":"system"}];
 with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', newline='') as file_out:
     csv_reader = csv.DictReader(file_in)
     csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + ["emis-identified"])
@@ -10,7 +10,7 @@ with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', n
     for row in csv_reader:
         newRow = row.copy();
         for cell in row:
-            if ([value for value in row[cell].split(",") if value in codes]):
+            if ([value for value in row[cell].split(",") if value in list(map(lambda code: code['code'], codes))]):
                 newRow["emis-identified"] = "CASE";
                 break;
             else:

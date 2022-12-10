@@ -2,7 +2,7 @@
 
 import sys, csv
 
-codes = ["Y20d2", "Y20d1", "Y20d0", "Y20cf", "Y20ce"];
+codes = [{"code":"Y20d2","system":"system"}, {"code":"Y20d1","system":"system"}, {"code":"Y20d0","system":"system"}, {"code":"Y20cf","system":"system"}, {"code":"Y20ce","system":"system"}];
 with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', newline='') as file_out:
     csv_reader = csv.DictReader(file_in)
     csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + ["ctv3-identified"])
@@ -10,7 +10,7 @@ with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', n
     for row in csv_reader:
         newRow = row.copy();
         for cell in row:
-            if ([value for value in row[cell].split(",") if value in codes]):
+            if ([value for value in row[cell].split(",") if value in list(map(lambda code: code['code'], codes))]):
                 newRow["ctv3-identified"] = "CASE";
                 break;
             else:

@@ -36,13 +36,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-terma---secondary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"123\",\"234\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-terma---secondary",
-            "LIST": "\"123\",\"234\"",
+            "LIST": "{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -61,13 +61,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist---secondary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"345\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"345\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist---secondary",
-            "LIST": "\"345\"",
+            "LIST": "{\"code\":\"345\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -86,13 +86,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-termf---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-termf---primary",
-            "LIST": "\"456\",\"567\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -111,13 +111,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist---primary",
-            "LIST": "\"678\"",
+            "LIST": "{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -136,13 +136,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-terml---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\",\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terml---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terml---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terml---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terml---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terml---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terml---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-terml---primary",
-            "LIST": "\"456\",\"567\",\"678\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -161,13 +161,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-termn---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\",\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termn---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termn---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termn---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termn---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termn---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termn---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-termn---primary",
-            "LIST": "\"456\",\"567\",\"678\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -234,13 +234,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-terma---secondary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"123\",\"234\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-terma---secondary",
-            "LIST": "\"123\",\"234\"",
+            "LIST": "{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -259,13 +259,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist---secondary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"345\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"345\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist---secondary",
-            "LIST": "\"345\"",
+            "LIST": "{\"code\":\"345\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -284,13 +284,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-termf---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-termf---primary",
-            "LIST": "\"456\",\"567\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -309,13 +309,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist---primary",
-            "LIST": "\"678\"",
+            "LIST": "{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -334,13 +334,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-terml---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\",\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terml---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terml---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terml---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terml---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terml---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terml---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-terml---primary",
-            "LIST": "\"456\",\"567\",\"678\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -359,13 +359,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-termn---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\",\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termn---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termn---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termn---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termn---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termn---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termn---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-termn---primary",
-            "LIST": "\"456\",\"567\",\"678\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -432,13 +432,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-terma---secondary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"123\",\"234\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-terma---secondary",
-            "LIST": "\"123\",\"234\"",
+            "LIST": "{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -457,13 +457,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist---secondary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"345\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"345\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist---secondary",
-            "LIST": "\"345\"",
+            "LIST": "{\"code\":\"345\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -482,13 +482,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-termf---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-termf---primary",
-            "LIST": "\"456\",\"567\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -507,13 +507,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist---primary",
-            "LIST": "\"678\"",
+            "LIST": "{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -532,13 +532,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-terml---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\",\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terml---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terml---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terml---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terml---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terml---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terml---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-terml---primary",
-            "LIST": "\"456\",\"567\",\"678\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -557,13 +557,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-termn---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\",\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termn---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termn---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termn---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termn---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termn---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termn---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-termn---primary",
-            "LIST": "\"456\",\"567\",\"678\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -630,13 +630,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-terma---secondary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"123\",\"234\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-terma---secondary",
-            "LIST": "\"123\",\"234\"",
+            "LIST": "{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -655,13 +655,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist---secondary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"345\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"345\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist---secondary",
-            "LIST": "\"345\"",
+            "LIST": "{\"code\":\"345\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -680,13 +680,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-termf---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-termf---primary",
-            "LIST": "\"456\",\"567\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -705,13 +705,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist---primary",
-            "LIST": "\"678\"",
+            "LIST": "{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -730,13 +730,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-terml---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\",\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terml---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terml---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terml---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-terml---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-terml---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-terml---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-terml---primary",
-            "LIST": "\"456\",\"567\",\"678\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022
@@ -755,13 +755,13 @@
       "implementations": [
         {
           "fileName": "imported-codelist-termn---primary.py",
-          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\",\"678\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termn---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termn---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termn---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"imported-codelist-termn---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"imported-codelist-termn---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"imported-codelist-termn---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
           "implementationTemplatePath": "templates/codelist.py",
           "language": "python",
           "substitutions": {
             "AUTHOR": "martinchapman",
             "CATEGORY": "imported-codelist-termn---primary",
-            "LIST": "\"456\",\"567\",\"678\"",
+            "LIST": "{\"code\":\"456\",\"system\":\"system\"},{\"code\":\"567\",\"system\":\"system\"},{\"code\":\"678\",\"system\":\"system\"}",
             "PHENOTYPE": "imported-codelist",
             "REQUIRED_CODES": 1,
             "YEAR": 2022

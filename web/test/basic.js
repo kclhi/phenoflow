@@ -7,7 +7,6 @@ const config = require("config");
 
 const Workflow = require("./workflow");
 const WorkflowUtils = require("../util/workflow");
-const Implementation = require('../util/implementation');
 
 describe("basic", () => {
 
@@ -217,13 +216,6 @@ describe("basic", () => {
 		it("Should be able to add implementation to first step (of a restricted workflow).", async() => {
 			await Workflow.implementation(stepId, "python", "test/fixtures/basic/python/", "hello-world.py", "restrictedUser");
 		}).timeout(0);
-
-    // 
-
-    it("Should be able to aggregate codes in an implementation.", async() => {
-      let codes = await Implementation.getCodes(firstWorkflowId);
-			expect(JSON.stringify(codes)).to.equal(JSON.stringify([{"system":"read/snomed", "codes": ["abc", "def", "ghi"]}, {"system":"icd/opcs/cpt", "codes":[]}]));
-		});
 
 	});
 

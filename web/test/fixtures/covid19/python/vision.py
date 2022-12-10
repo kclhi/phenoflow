@@ -2,7 +2,7 @@
 
 import sys, csv
 
-codes = ["4J3R100", "4J3R200", "9Niq.",	"A7951", "65PW100",	"4J3R.", "9N312", "8CAO1", "8CAO.", "1JX1."];
+codes = [{"code":"4J3R100","system":"system"}, {"code":"4J3R200","system":"system"}, {"code":"9Niq.","system":"system"},	{"code":"A7951","system":"system"}, {"code":"65PW100","system":"system"},	{"code":"4J3R.","system":"system"}, {"code":"9N312","system":"system"}, {"code":"8CAO1","system":"system"}, {"code":"8CAO.","system":"system"}, {"code":"1JX1.","system":"system"}];
 with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', newline='') as file_out:
     csv_reader = csv.DictReader(file_in)
     csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + ["vision-identified"])
@@ -10,7 +10,7 @@ with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', n
     for row in csv_reader:
         newRow = row.copy();
         for cell in row:
-            if ([value for value in row[cell].split(",") if value in codes]):
+            if ([value for value in row[cell].split(",") if value in list(map(lambda code: code['code'], codes))]):
                 newRow["vision-identified"] = "CASE";
                 break;
             else:

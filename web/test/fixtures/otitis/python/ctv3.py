@@ -16,7 +16,7 @@ def postRequest(url, params):
     return response.read().decode('utf8');
 
 def identifyCodes(dynamicCodes):
-    staticCodes = ["F527.", "F520.", "XE2QD", "Y20ff"];
+    staticCodes = [{"code":"F527.","system":"read"}, {"code":"F520.","system":"read"}, {"code":"XE2QD","system":"read"}, {"code":"Y20ff","system":"read"}];
     codes = staticCodes + dynamicCodes;
     with open(sys.argv[1], 'r') as file_in, open('otitis-potential-cases.csv', 'w', newline='') as file_out:
         csv_reader = csv.DictReader(file_in)
@@ -25,7 +25,7 @@ def identifyCodes(dynamicCodes):
         for row in csv_reader:
             newRow = row.copy();
             for cell in row:
-                if ([value for value in row[cell].split(",") if value in codes]):
+                if ([value for value in row[cell].split(",") if value in list(map(lambda code: code['code'], codes))]):
                     newRow["ctv3-identified"] = "CASE";
                     break;
                 else:

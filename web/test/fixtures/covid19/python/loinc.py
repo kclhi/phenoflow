@@ -2,7 +2,7 @@
 
 import sys, csv
 
-codes = ["94558-4", "94507-1", "94508-9", "94562-6", "94563-4", "94564-2", "94547-7", "94661-6", "94506-3", "94505-5"];
+codes = [{"code":"94558-4","system":"system"}, {"code":"94507-1","system":"system"}, {"code":"94508-9","system":"system"}, {"code":"94562-6","system":"system"}, {"code":"94563-4","system":"system"}, {"code":"94564-2","system":"system"}, {"code":"94547-7","system":"system"}, {"code":"94661-6","system":"system"}, {"code":"94506-3","system":"system"}, {"code":"94505-5","system":"system"}];
 
 with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', newline='') as file_out:
     csv_reader = csv.DictReader(file_in)
@@ -11,7 +11,7 @@ with open(sys.argv[1], 'r') as file_in, open('covid-potential-cases.csv', 'w', n
     for row in csv_reader:
         newRow = row.copy();
         for cell in row:
-            if ([value for value in row[cell].split(",") if value in codes]):
+            if ([value for value in row[cell].split(",") if value in list(map(lambda code: code['code'], codes))]):
                 newRow["loinc-identified"] = "CASE";
                 break;
             else:
