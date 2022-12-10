@@ -203,6 +203,24 @@ router.post('/parseSteplist', async function(req, res, next) {
   }
 });
 
+router.post('/parseStep', async function(req, res, next) {
+  req.setTimeout(0);
+  if(!req.body.name||!req.body.doc||!req.body.type||!req.body.position||!req.body.inputDoc||!req.body.outputDoc||!req.body.outputExtensions||!req.body.implementations) res.status(500).send("Missing params.");
+  try {
+    let step = await Parser.getStep(req.body.name, req.body.doc, req.body.type, req.body.position, req.body.inputDoc, req.body.outputDoc, req.body.outputExtensions, req.body.implementations)
+    if(step) {
+      console.log(JSON.stringify(step));
+      return res.send(step).status(200);
+    }
+    else { 
+      return res.sendStatus(500); 
+    }
+  } catch(parseStepError) {
+    logger.error("Parse step error: "+parseStepError);
+    return res.sendStatus(500);
+  }
+});
+
 //
 
 class Parser {
