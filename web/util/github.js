@@ -6,9 +6,55 @@ const { Octokit } = require("@octokit/rest");
 const glob = require('fast-glob');
 
 const Workflow = require("../util/workflow");
-const Importer = require("../util/importer");
 
 class Github {
+
+  static getCommonCondition(stepA, stepB) {
+    let stepASplit = stepA.split("-");
+    let stepBSplit = stepB.split("-");
+    let commonSubstring = [];
+    for(let term=0; term<Math.min(stepASplit.length, stepBSplit.length); term+=1) {
+      if(stepASplit[term]!=stepBSplit[term]) return commonSubstring.join("-");
+      commonSubstring.push(stepASplit[term]);
+    }
+  }
+
+  static getCodelists(steps, stepImplementations) {
+    steps = steps.slice(1, steps.length-1);
+    let conditions = [];
+    for(let stepA of steps) {
+      for(let stepB of steps) {
+        let condition;
+        if(condition = Github.getCommonCondition(stepA.name, stepB.name)) {
+          if(!conditions.includes(condition)) conditions.push(condition);
+          break;
+        }
+      }
+    }
+    
+    const groupedSteps = steps.reduce((codelistSteps, step) => {
+      let days;
+      let groupId = conditions.filter(condition=>step.name.startsWith(condition))[0] + (step.name.includes("exclude")?"-exclude":"") + ((days = step.name.match(/\d*\-to\-\d*\-days\-after\-[A-Za-z0-9]*/))?"-"+days[0]:"");
+      const group = (codelistSteps[groupId] || []);
+      group.push(step);
+      codelistSteps[groupId] = group;
+      return codelistSteps;
+    }, {});
+    
+    let codelists = {};
+    for(let group of Object.keys(groupedSteps)) {
+      codelists[group] = groupedSteps[group].map(function(step) {
+        let codes, codeMatch;
+        codes = (codeMatch = stepImplementations[step.name].match(/codes = \[(.*)\]/))?codeMatch[1]:null || 
+        (codeMatch = stepImplementations[step.name].match(/codes_exclude = \[(.*)\]/))?codeMatch[1]:null || 
+        (codeMatch = stepImplementations[step.name].match(/codes_after = \[(.*)\]/))?codeMatch[1]:null || 
+        "";
+        return JSON.parse("[" + codes + "]").map(codeSystem=>codeSystem.code+","+codeSystem.system);
+      });
+      codelists[group] = "code,system\n" + codelists[group].flat().join("\n")
+    }
+    return codelists;
+  }
 
   static async createRepositoryContent(workflowRepo, name, workflow, workflowInputs, implementationUnits, steps, about, author) {
     try {
@@ -30,6 +76,7 @@ class Github {
     
     if(steps && steps[0] && steps[0].type=="load") await fsAsync.copyFile("templates/replaceMe.csv", workflowRepo + "/replaceMe.csv");
 
+    let stepImplementations = {};
     for(let step of steps) {
       try {
         await fsAsync.writeFile(workflowRepo + "/" + step.name + ".cwl", step.content);
@@ -50,6 +97,7 @@ class Github {
           }
           try {
             await fsAsync.copyFile("uploads/" + step.workflowId + "/" + implementationPath + "/" + implementationFile, workflowRepo + "/" + implementationPath + "/" + implementationFile);
+            stepImplementations[step.name] = await fsAsync.readFile("uploads/" + step.workflowId + "/" + implementationPath + "/" + implementationFile, 'utf-8');
           } catch(copyImplementationUnitError) {
             logger.error("Error copying implementation unit: " + copyImplementationUnitError);
           }
@@ -70,6 +118,19 @@ class Github {
     let license = await fsAsync.readFile("templates/LICENSE.md", "utf8");
     license = license.replace(/\[year\]/g, new Date().getFullYear());
     await fsAsync.writeFile(workflowRepo + "/LICENSE.md", license);
+
+    try {
+      await fsAsync.mkdir(workflowRepo + "/source", {recursive:true});
+    } catch(createSourceFolderError) {
+      logger.error("Error creating source folder: " + createSourceFolderError);
+    }
+    try {
+      for(let codelist of Object.entries(Github.getCodelists(steps, stepImplementations))) {
+        await fsAsync.writeFile(workflowRepo + "/source/" + codelist[0] + ".csv", codelist[1]);
+      }
+    } catch(createCodelistsError) {
+      logger.error("Error creating codelists: " + createCodelistsError);
+    }
     return true;
   }
 
