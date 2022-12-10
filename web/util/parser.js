@@ -14,6 +14,10 @@ class Parser {
     return ["icdcode", "icd10code", "icd11code", "opcs4code", "icdcodeuncat", "keyword"];
   }
 
+  static otherCodingSystems() {
+    return ["UK Biobank", "TADDS", "HES"];
+  }
+
   static splitExpression() {
     return /\s?\/\s?|\s?\+\s?|\s?\_\s?|\s/;
   }
@@ -73,6 +77,15 @@ class Parser {
     const codeKeys = Parser.primaryCodeKeys().concat(Parser.secondaryCodeKeys());
     if((otherKeyCodes=Object.keys(row).filter(key=>codeKeys.includes(key.toLowerCase())))&&otherKeyCodes) for(let keyCode of otherKeyCodes) if(row[keyCode]) return row[keyCode];
     throw "No usable value for "+JSON.stringify(row)+" "+otherKeyCodes;
+  }
+
+  static getCodingSystem(csvFile) {
+    let filename = csvFile.filename.split(".")[0];
+    let systems;
+    let system = (csvFile.content[0]["codingsystem"]||csvFile.content[0]["codetype"]||csvFile.content[0]["vocabulary"])||
+    ((systems = Parser.primaryCodeKeys().concat(Parser.secondaryCodeKeys()).filter(codeKey=>Object.keys(csvFile.content[0]).map(key=>Parser.fullClean(key)).includes(Parser.fullClean(codeKey)))).length?systems[0]:null)||
+    Parser.otherCodingSystems().filter((system)=>Parser.fullClean(system)==Parser.fullClean(filename.split("_")[filename.split("_").length-1]))[0];
+    return system.replace('code', '').replace('conceptid', '');
   }
 
   static getDescription(row) {
@@ -177,21 +190,20 @@ class Parser {
 
     for(let csvFile of csvFiles) {
       let codingSystem;
-      let filename = csvFile.filename.split(".")[0];
-      csvFile=csvFile.content.filter(row=>(row["case_incl"]&&row["case_incl"]!="N")||!row["case_incl"]);
-      
+      let csvFileContent=csvFile.content.filter(row=>(row["case_incl"]&&row["case_incl"]!="N")||!row["case_incl"]);
+
       function isCodingSystemGroup(groupSystems, groupKeys) {
-        return ((codingSystem=csvFile[0]["codingsystem"]||csvFile[0]["codetype"]||csvFile[0]["vocabulary"])&&groupSystems.includes(Parser.fullClean(codingSystem)))||groupKeys().filter(codeKey=>Object.keys(csvFile[0]).map(key=>Parser.fullClean(key)).includes(Parser.fullClean(codeKey))).length;
+        return ((codingSystem=Parser.getCodingSystem(csvFile))&&groupSystems.includes(Parser.fullClean(codingSystem)))||groupKeys().includes(Parser.getCodingSystem(csvFile));
       }
       
       var codingSystemGroup = isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)?"--primary":(isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)?"--secondary":"");
-      let termCount = this.getTermCount(csvFile, name, descriptionFunction);
+      let termCount = this.getTermCount(csvFileContent, name, descriptionFunction);
 
-      for(let row of csvFile) {
+      for(let row of csvFileContent) {
         let category, description=descriptionFunction(row);
-        const OTHER_CODING_SYSTEMS = ["UK Biobank", "TADDS", "HES"];
-        if(description&&(isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)||isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)||(codingSystemGroup="--"+OTHER_CODING_SYSTEMS.filter((system)=>Parser.fullClean(system)==Parser.fullClean(filename.split("_")[filename.split("_").length-1]))[0]))) {
+        if(description&&(isCodingSystemGroup(primaryCodingSystems, this.primaryCodeKeys)||isCodingSystemGroup(secondaryCodingSystems, this.secondaryCodeKeys)||(codingSystemGroup="--"+this.getCodingSystem(csvFile)))) {
           let code=valueFunction(row);
+          let codeAndSystem = {"code":code, "system":codingSystem};
           // Remaining work to categorise descriptions
           if(termCount.length) {
             let matched=false;
@@ -199,7 +211,7 @@ class Parser {
               if(description.split(" ").filter(word=>stringSimilarity.compareTwoStrings(Parser.singular(this.fullClean(word)), term) >= 0.8 
               || term.includes(Parser.singular(this.fullClean(word))) 
               || Parser.singular(this.fullClean(word)).includes(term)).length) {
-                categories[term+codingSystemGroup]?categories[term+codingSystemGroup].push(code):categories[term+codingSystemGroup]=[code];
+                categories[term+codingSystemGroup]?categories[term+codingSystemGroup].push(codeAndSystem):categories[term+codingSystemGroup]=[codeAndSystem];
                 matched=true;
                 break;
               }
@@ -207,24 +219,25 @@ class Parser {
             // If no common term, pick most representative term from description
             if(!matched) {
               let keyTerm = getKeyTerm(description, name);
-              categories[keyTerm+codingSystemGroup]?categories[keyTerm+codingSystemGroup].push(code):categories[keyTerm+codingSystemGroup]=[code];
+              categories[keyTerm+codingSystemGroup]?categories[keyTerm+codingSystemGroup].push(codeAndSystem):categories[keyTerm+codingSystemGroup]=[codeAndSystem];
             }
-          } else if(csvFile.length==1) {
+          } else if(csvFileContent.length==1) {
             // If there's only one code, use its description
             category=findAndCapitaliseName(description)+codingSystemGroup;
-            categories[category]?categories[category].push(code):categories[category]=[code];
+            categories[category]?categories[category].push(codeAndSystem):categories[category]=[codeAndSystem];
           } else {
             // Otherwise, just use the name of the definition itself
             category=name+codingSystemGroup;
-            categories[category]?categories[category].push(code):categories[category]=[code];
+            categories[category]?categories[category].push(codeAndSystem):categories[category]=[codeAndSystem];
           }
         } else if(category=row["category"]||row["calibercategory"]) {
           let code=valueFunction(row);
+          let codeAndSystem = {"code":code, "system":codingSystem};
           category+=codingSystemGroup;
-          categories[category]?categories[category].push(code):categories[category]=[code];
+          categories[category]?categories[category].push(codeAndSystem):categories[category]=[codeAndSystem];
         } else if(row["prodcode"]) {
           category="Use of "+row["drugsubstance"]+codingSystemGroup;
-          categories[category]?categories[category].push(row["prodcode"]):categories[category]=[row["prodcode"]];
+          categories[category]?categories[category].push({"code":row["prodcode"], "system":codingSystem}):categories[category]=[{"code":row["prodcode"], "system":codingSystem}];
         } else {
           logger.warn("No handler for: "+JSON.stringify(row)+" "+name);
           //return false;

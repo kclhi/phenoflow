@@ -2,7 +2,7 @@
 
 import sys, csv, re
 
-codes_exclude = [[LIST]];
+codes_exclude = [LIST];
 
 with open(sys.argv[1], 'r') as file_in, open('[PHENOTYPE]-potential-cases.csv', 'w', newline='') as file_out:
     csv_reader = csv.DictReader(file_in)
@@ -15,6 +15,6 @@ with open(sys.argv[1], 'r') as file_in, open('[PHENOTYPE]-potential-cases.csv', 
         for cell in row:
             # Iterate cell lists (e.g. codes)
             for item in re.findall(r'\(([^,]*)\,', row[cell]):
-                if(item in codes_exclude):
+                if(item in list(map(lambda code: code['code'], codes_exclude))):
                     newRow["[CATEGORY]-exclusion"] = "TRUE";        
         csv_writer.writerow(newRow);

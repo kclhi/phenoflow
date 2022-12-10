@@ -72,7 +72,9 @@ class Parser {
       {"filename":"branch-b.csv",
       "content": [
         {"logicType": "codelistExclude", "param": "listC_system.csv:1"},
-        {"logicType": "codelist", "param": "listD_system.csv:1"},
+        {"logicType": "age", "param": "40:90"},
+        {"logicType": "lastEncounter", "param": "5"},
+        {"logicType": "codelistsTemporal", "param": "listD_system.csv:listA_system.csv:10:20"}
       ]}
     ];
   }
@@ -86,17 +88,17 @@ describe("parser", () => {
     it("[PA1] Common terms should be grouped by category.", async() => {
       let categories = ParserUtils.getCategories([{"filename":"file.csv", 
         "content": [
-          {"ICD-10 code": "123", "description": "TermA TermB"},
-          {"ICD-10 code": "234", "description": "TermA TermC"},
-          {"ICD-10 code": "345", "description": "TermD TermE"}
+          {"SNOMED code": "123", "description": "TermA TermB"},
+          {"SNOMED code": "234", "description": "TermA TermC"},
+          {"SNOMED code": "345", "description": "TermD TermE"}
         ]
       }], "Phenotype");
-      categories.should.have.property("Phenotype terma - secondary");
-      categories.should.have.property("Phenotype - secondary");
-      categories["Phenotype terma - secondary"].should.be.a("Array");
-      categories["Phenotype - secondary"].should.be.a("Array");
-      categories["Phenotype terma - secondary"].should.deep.equal(['123','234']);
-      categories["Phenotype - secondary"].should.deep.equal(['345']);
+      categories.should.have.property("Phenotype terma - primary");
+      categories.should.have.property("Phenotype - primary");
+      categories["Phenotype terma - primary"].should.be.a("Array");
+      categories["Phenotype - primary"].should.be.a("Array");
+      categories["Phenotype terma - primary"].should.deep.equal([{'code':'123', 'system':'snomed'}, {'code':'234', 'system':'snomed'}]);
+      categories["Phenotype - primary"].should.deep.equal([{'code':'345', 'system':'snomed'}]);
     }).timeout(0);
     
     it("[PA2] Should be able to parse a codelist.", async() => {

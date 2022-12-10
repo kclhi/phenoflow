@@ -228,7 +228,8 @@ class Parser {
       } else if(row["logicType"]=="codelistsTemporal") {
         let fileBefore = row["param"].split(":")[0];
         let fileAfter = row["param"].split(":")[1];
-        let codesBefore = [...new Set(csvs.filter((csv)=>csv.filename==fileBefore).map((csv)=>csv.content)[0].map((row)=>"\""+ParserUtils.getValue(row)+"\""))];
+        let csv = csvs.filter((csv)=>csv.filename==fileBefore)[0];
+        let codesBefore = [...new Set(csv.content.map((row)=>"{\"code\":\""+ParserUtils.getValue(ParserUtils.cleanCSVHeaders(row))+"\",\"system\":\""+ParserUtils.getCodingSystem(csv)+"\"}"))];
         let categoriesAfter = ParserUtils.getCategories([csvs.filter((csv)=>csv.filename==fileAfter)[0]], ParserUtils.getName(fileAfter));
         let minDays = row["param"].split(":")[2];
         let maxDays = row["param"].split(":")[3];
@@ -430,7 +431,7 @@ class Parser {
           let fileName = ParserUtils.clean(stepShort) + ".py";
 
           try {
-            let step = await Parser.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":fileName, "language":item.language, "implementationTemplatePath":"templates/codelists-temporal.py", "substitutions":{"PHENOTYPE":ParserUtils.clean(name.toLowerCase()), "LIST_BEFORE":item.codesBefore, "LIST_AFTER":"\""+item.categoriesAfter[categoryAfter].join('","')+"\"", "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":stepName, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]);
+            let step = await Parser.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":fileName, "language":item.language, "implementationTemplatePath":"templates/codelists-temporal.py", "substitutions":{"PHENOTYPE":ParserUtils.clean(name.toLowerCase()), "LIST_BEFORE":"["+item.codesBefore+"]", "LIST_AFTER":JSON.stringify(item.categoriesAfter[categoryAfter]), "MIN_DAYS":item.minDays, "MAX_DAYS": item.maxDays, "CATEGORY":stepName, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]);
             temporalSteps.push(step);
           } catch(error) {
             error = "Error creating imported step (" + stepName + "): " + error;
@@ -507,7 +508,7 @@ class Parser {
       let fileName = ParserUtils.clean(category.toLowerCase())+".py";
 
       try {
-        steps.push(await Parser.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":(exclude?"exclude-":"")+fileName, "language":language, "implementationTemplatePath":template, "substitutions":{"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":ParserUtils.clean(category.toLowerCase()), "LIST":'"'+categories[category].join('","')+'"', "REQUIRED_CODES":requiredCodes, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]));
+        steps.push(await Parser.getStep(stepName, stepDoc, stepType, position, inputDoc, outputDoc, outputExtension, [{"fileName":(exclude?"exclude-":"")+fileName, "language":language, "implementationTemplatePath":template, "substitutions":{"PHENOTYPE":name.toLowerCase().replace(/ /g, "-"), "CATEGORY":ParserUtils.clean(category.toLowerCase()), "LIST":JSON.stringify(categories[category]), "REQUIRED_CODES":requiredCodes, "AUTHOR":userName, "YEAR":new Date().getFullYear()}}]));
       } catch(error) {
         error = "Error creating imported step (" + stepName + "): " + error;
         throw error;

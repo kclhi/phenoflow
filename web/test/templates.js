@@ -48,13 +48,13 @@ async function writeGenericSampleData(sampleDataFile) {
   await fs.appendFile("/tmp/"+sampleDataFile, '2,2020-01-01,"(Y01,2004-10-17T00:00:00.000),(Y02,2005-10-17T00:00:00.000),(Z01,2004-10-17T00:00:00.000),(Z02,2005-10-17T00:00:00.000)","keyword1,keyword2",1920-01-01\n');
 }
 
-async function testCodelist(existingTimestamp=null, codelist="X01", exclude=false) {
+async function testCodelist(existingTimestamp=null, codelist=[{"code":"X01", "system":"system"}], exclude=false) {
 
   const TIMESTAMP = Date.now();
   let source = await fs.readFile(exclude?"templates/codelist-exclude.py":"templates/codelist.py", "utf-8");
   source = source.replaceAll("[AUTHOR]", "martinchapman");
   source = source.replaceAll("[YEAR]", "2021");
-  source = source.replaceAll("[LIST]", "'"+codelist+"'");
+  source = source.replaceAll("[LIST]", JSON.stringify(codelist));
   source = source.replaceAll("[REQUIRED_CODES]", "1");
   source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
   source = source.replaceAll("[CATEGORY]", "category");
@@ -182,7 +182,7 @@ describe("templates", () => {
     });
 
     it("[TE06] Should be able to execute a codelist exclude.", async() => {
-      await testCodelist(null, "X01", true);
+      await testCodelist(null, [{"code":"X01", "system":"system"}], true);
     });
 
     it("[TE08] Should be able to execute a keyword list.", async() => {
@@ -227,7 +227,7 @@ describe("templates", () => {
 
     it("[TE12] i2b2 output to codelist.", async() => {
       let timestamp = await testReadData("i2b2", 8081);
-      if(timestamp) await testCodelist(timestamp, "466.11"); // Known code for first patient (and not second) in test i2b2 DB
+      if(timestamp) await testCodelist(timestamp, [{"code":"466.11", "system":"system"}]); // Known code for first patient (and not second) in test i2b2 DB
     }).timeout(0);
 
     it("[TE13] i2b2 output to age check.", async() => {
@@ -242,7 +242,7 @@ describe("templates", () => {
 
     it("[TE15] OMOP output to codelist.", async() => {
       let timestamp = await testReadData("omop", 8081);
-      if(timestamp) await testCodelist(timestamp, "80502");
+      if(timestamp) await testCodelist(timestamp, [{"code":"80502", "system":"system"}]);
     }).timeout(0);
 
     it("[TE16] OMOP output to age check.", async() => {
@@ -257,7 +257,7 @@ describe("templates", () => {
 
     it("[TE18] FHIR output to codelist.", async() => {
       let timestamp = await testReadData("fhir", 8081);
-      if(timestamp) await testCodelist(timestamp, "19169002");
+      if(timestamp) await testCodelist(timestamp, [{"code":"19169002", "system":"system"}]);
     }).timeout(0);
 
     it("[TE19] FHIR output to age check.", async() => {
@@ -276,8 +276,8 @@ describe("templates", () => {
       let source = await fs.readFile("templates/codelists-temporal.py", "utf-8");
       source = source.replaceAll("[AUTHOR]", "martinchapman");
       source = source.replaceAll("[YEAR]", "2021");
-      source = source.replaceAll("[LIST_BEFORE]", "'Y01','Y02'");
-      source = source.replaceAll("[LIST_AFTER]", "'Z01','Z02'");
+      source = source.replaceAll("[LIST_BEFORE]", "[{'code':'Y01', 'system':'system'}, {'code':'Y02', 'system':'system'}]");
+      source = source.replaceAll("[LIST_AFTER]", "[{'code':'Z01', 'system':'system'}, {'code':'Z02', 'system':'system'}]");
       source = source.replaceAll("[MIN_DAYS]", "31");
       source = source.replaceAll("[MAX_DAYS]", "186");
       source = source.replaceAll("[PHENOTYPE]", "/tmp/phenotype-"+TIMESTAMP);
