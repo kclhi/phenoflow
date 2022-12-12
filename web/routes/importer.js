@@ -81,13 +81,14 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
   try {
     let parent;
     for(let workflow of generatedWorkflows) {
-      if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
+      if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) continue;
       if(workflow.steps[0].stepType=="load"||workflow.steps[0].stepType=="external") {
         try {
+          let child = await models.workflow.findOne({where:{id:workflow.id}});
+          let hasParent = await child.getParent();
           if(!parent) {
             parent = await models.workflow.findOne({where:{id:workflow.id}});
-          } else {
-            let child = await models.workflow.findOne({where:{id:workflow.id}});
+          } else if(parent && !hasParent.length) {
             await child.addParent(parent, {through:{name:parent.name, distinctStepName:workflow.steps[0].stepName, distinctStepPosition:0}});
           }
         } catch(setParentError) {
@@ -175,13 +176,14 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
   try {
     let parent;
     for(let workflow of generatedWorkflows) {
-      if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
+      if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) continue;
       if(workflow.steps[0].stepType=="load"||workflow.steps[0].stepType=="external") {
         try {
+          let child = await models.workflow.findOne({where:{id:workflow.id}});
+          let hasParent = await child.getParent();
           if(!parent) {
             parent = await models.workflow.findOne({where:{id:workflow.id}});
-          } else {
-            let child = await models.workflow.findOne({where:{id:workflow.id}});
+          } else if(parent && !hasParent.length) {
             await child.addParent(parent, {through:{name:parent.name, distinctStepName:workflow.steps[0].stepName, distinctStepPosition:0}});
           }
         } catch(setParentError) {
@@ -272,15 +274,17 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
     }
   }
   try {
-    let parent;
+    let importedWorkflows = [], parent;
     for(let workflow of generatedWorkflows) {
-      if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) return res.sendStatus(500);
+      if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) continue;
+      importedWorkflows.push(workflow);
       if(workflow.steps[0].stepType!="load"&&workflow.steps[0].stepType!="external") continue;
       try {
+        let child = await models.workflow.findOne({where:{id:workflow.id}});
+        let hasParent = await child.getParent();
         if(!parent) {
           parent = await models.workflow.findOne({where:{id:workflow.id}});
-        } else {
-          let child = await models.workflow.findOne({where:{id:workflow.id}});
+        } else if(parent && !hasParent.length) {
           await child.addParent(parent, {through:{name:parent.name, distinctStepName:workflow.steps[0].stepName, distinctStepPosition:0}});
         }
       } catch(setParentError) {
@@ -295,7 +299,7 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
     } catch(getUserError) {
       logger.error("Error getting user restricted status: " + getUserError);
     }
-    await Github.generateAndCommitAll(generatedWorkflows, restricted);
+    await Github.generateAndCommitAll(importedWorkflows, restricted);
     return res.sendStatus(200);
   } catch(importListsError) {
     logger.error(importListsError);
@@ -404,7 +408,7 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
 class Importer {
 
   static async importPhenotype(generatedWorkflowId, name, about, userName, steps) {
-    let existingWorkflowId = await Importer.existingWorkflow(name, about, userName, steps[0].stepName);
+    let existingWorkflowId = await Importer.existingWorkflow(name, about, userName, steps[0].stepType=="load"||steps[0].stepType=="external"?steps[0].stepName:null);
     let workflowId;
     try {
       workflowId = (existingWorkflowId||await Importer.createWorkflow(generatedWorkflowId, name, about, userName));
@@ -422,8 +426,9 @@ class Importer {
         return false;
       }
       await Workflow.workflowComplete(workflowId);
+      return true;
     }
-    return true;
+    return false;
   }
 
   static async importChangesExistingWorkflow(workflowId, steps) {
@@ -438,15 +443,17 @@ class Importer {
       if(steps[step].stepType!=existingSteps[step].type) return true;
       let existingInput = await models.input.findOne({where:{stepId:existingSteps[step].id}});
       let existingOutput = await models.output.findOne({where:{stepId:existingSteps[step].id}});
-      let existingImplementation = await models.implementation.findOne({where:{stepId:existingSteps[step].id}});
+      let existingImplementations = await models.implementation.findAll({where:{stepId:existingSteps[step].id}});
       if(steps[step].inputDoc!=existingInput.doc) return true;
       if(steps[step].outputDoc!=existingOutput.doc) return true;
+      if(steps[step].outputExtension!=existingOutput.extension) return true;
       for(let implementation of steps[step].implementations) {
-        if(implementation.outputExtension!=existingOutput.extension) return true;
-        if(implementation.fileName!=existingImplementation.fileName) return true;
-        if(implementation.language!=existingImplementation.language) return true;
-        const destination = "uploads/" + workflowId + "/" + existingImplementation.language;
-        let storedImplementation = await fs.readFile(destination+"/"+existingImplementation.fileName, "utf8");
+        if(!implementation.fileName.includes(".")) continue;
+        let matchingImplementation = existingImplementations.find(existingImplementation=>existingImplementation.fileName==implementation.fileName);
+        if(!matchingImplementation) return true;
+        if(implementation.language!=matchingImplementation.language) return true;
+        const destination = "uploads/" + workflowId + "/" + matchingImplementation.language;
+        let storedImplementation = await fs.readFile(destination+"/"+matchingImplementation.fileName, "utf8");
         if(implementation.implementationTemplate!=storedImplementation) return true;
       }
     }
@@ -456,6 +463,7 @@ class Importer {
   static async existingWorkflow(name, about, userName, connectorStepName="") {
     try {
       let workflows = await models.workflow.findAll({where: {name:name, about:about, userName:sanitizeHtml(userName)}});
+      if(workflows.length==1&&!connectorStepName) return workflows[0].id;
       if(workflows.length) {
         if(workflows.length>4) throw "More than one match when checking for existing workflows.";
         for(let workflow of workflows) {
