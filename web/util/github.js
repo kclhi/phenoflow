@@ -34,7 +34,7 @@ class Github {
     
     const groupedSteps = steps.reduce((codelistSteps, step) => {
       let days;
-      let groupId = conditions.filter(condition=>step.name.startsWith(condition))[0] + (step.name.includes("exclude")?"-exclude":"") + ((days = step.name.match(/\d*\-to\-\d*\-days\-after\-[A-Za-z0-9]*/))?"-"+days[0]:"");
+      let groupId = (conditions.filter(condition=>step.name.startsWith(condition))[0]||conditions.filter(condition=>step.name.split("---")[0].endsWith(condition))[0]) + (step.name.includes("exclude")?"-exclude":"") + ((days = step.name.match(/\d*\-to\-\d*\-days\-after\-[A-Za-z0-9]*/))?"-"+days[0]:"");
       const group = (codelistSteps[groupId] || []);
       group.push(step);
       codelistSteps[groupId] = group;
