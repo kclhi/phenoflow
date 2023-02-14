@@ -36,7 +36,7 @@ SecretStorage==3.3.1
 six==1.16.0
 smmap==5.0.0
 sniffio==1.2.0
-starlette==0.17.1
+starlette==0.25.0
 tqdm==4.62.3
 twine==3.6.0
 urllib3==1.26.7
