@@ -38,7 +38,7 @@
     "pug": "^3.0.2",
     "python-shell": "^3.0.1",
     "sanitize-html": "^2.7.0",
-    "sequelize": "^6.17.0",
+    "sequelize": "^6.29.0",
     "sequelize-cli": "^6.4.1",
     "string-similarity": "^4.0.4",
     "swagger-jsdoc": "^6.1.0",
