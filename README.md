@@ -17,6 +17,10 @@ Phenoflow - Import parsed definitions and make them available for generation as 
 
 `RSA_PRIVATE_KEY_FULL_PATH=`
 
+3. Add development GitHub credentials:
+
+`GHE_ACCESS_TOKEN=`
+
 ### .env (production)
 
 1. Create a `.env` file in project root (or add to existing development file).
@@ -42,6 +46,10 @@ MYSQL_DATABASE=
 5. Add a path on the target deployment host to the deployment RSA private key (without the key name), e.g. `/home/ubunut/.certs/`:
 
 `HOST_RSA_PRIVATE_KEY_PATH=`
+
+6. Add production GitHub credentials:
+
+`GITHUB_ACCESS_TOKEN=`
 
 #### DB encryption
 

@@ -21,3 +21,4 @@ test_web:
   script: npm test
   variables:
     GHE_ACCESS_TOKEN: "foo"
+    RSA_PRIVATE_KEY_FULL_PATH: "README.md"
