@@ -12,7 +12,7 @@ describe("sail", () => {
 
   describe("/POST import sail databank", () => {
 
-    it("Should be able to add a new user.", async () => {
+    it("[S1] Should be able to add a new user.", async () => {
       const result = await models.user.create({ name: "sail", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://saildatabank.com" });
       result.should.be.a("object");
     });
@@ -59,13 +59,13 @@ describe("sail", () => {
 
     }
 
-    it("Should be able to import a phenotype from sail.", async () => {
+    it("[S2] Should be able to import a phenotype from sail.", async () => {
       // Can't perform test if credentials not available.
       if (!config.has("importer.SAIL_USERNAME") || !config.has("importer.SAIL_PASSWORD")) return true;
       expect(await importPhenotypeWeb(94)).to.be.true;
     }).timeout(0);
 
-    it("Should be able to import all phenotypes from sail.", async () => {
+    it("[S3] Should be able to import all phenotypes from sail.", async () => {
       if (!config.has("importer.SAIL_USERNAME") || !config.has("importer.SAIL_PASSWORD")) return true;
       expect(await importPhenotypeWeb()).to.be.true;
     }).timeout(0);
