@@ -4,19 +4,19 @@ const server = require("../app");
 const should = chai.should();
 const expect = chai.expect;
 const proxyquire = require('proxyquire');
-const testServerObject = proxyquire('../app', {'./routes/parser':proxyquire('../routes/parser', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
+const app = require('../app')
 const ParserUtils = require("../util/parser");
 const AdmZip = require('adm-zip');
 
 class Parser {
 
   static async parseSteplist(steplist, csvs, name, about, userName) {
-    let res = await chai.request(testServerObject).post("/phenoflow/parser/parseSteplist").send({steplist:steplist, csvs:csvs, name:name, about:about, userName:userName});
+    let res = await chai.request(app).post("/phenoflow/parser/parseSteplist").send({steplist:steplist, csvs:csvs, name:name, about:about, userName:userName});
     return res;
   }
 
   static async parseKeywordList(keywords, name, about, userName) {
-    let res = await chai.request(testServerObject).post("/phenoflow/parser/parseKeywordList").send({keywords:keywords, name:name, about:about, userName:userName});
+    let res = await chai.request(app).post("/phenoflow/parser/parseKeywordList").send({keywords:keywords, name:name, about:about, userName:userName});
     return res;
   }
 
@@ -102,14 +102,14 @@ describe("parser", () => {
     }).timeout(0);
     
     it("[PA2] Should be able to parse a codelist.", async() => {
-      let res = await chai.request(testServerObject).post("/phenoflow/parser/parseCodelists").send({csvs:Parser.getParsedCSVs(), name:"Parsed codelist", about:"Parsed codelist", userName:"martinchapman"});
+      let res = await chai.request(app).post("/phenoflow/parser/parseCodelists").send({csvs:Parser.getParsedCSVs(), name:"Parsed codelist", about:"Parsed codelist", userName:"martinchapman"});
       res.should.have.status(200);
     }).timeout(0);
 
     it("[PA3] Should be able to parse a zipped codelist.", async() => {
       var zip = new AdmZip();
       for(let file of Parser.getCSVs()) zip.addFile(file.filename, Buffer.from(file.content, "utf8"));
-      let res = await chai.request(testServerObject).post("/phenoflow/parser/parseCodelists").attach('csvs', zip.toBuffer(), 'csvs.zip').field({name:"Parsed codelist"}).field({about:"Parsed codelist"}).field({userName:"martinchapman"});
+      let res = await chai.request(app).post("/phenoflow/parser/parseCodelists").attach('csvs', zip.toBuffer(), 'csvs.zip').field({name:"Parsed codelist"}).field({about:"Parsed codelist"}).field({userName:"martinchapman"});
       res.should.have.status(200);
     }).timeout(0);
 

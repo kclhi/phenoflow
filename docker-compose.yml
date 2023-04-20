@@ -1,19 +1,8 @@
 version: "3.7"
 services:
 
-  proxy:
-    build:
-      context: ./web/proxy
-    command: ["./wait-for-it.sh", "--timeout=0", "webapp:3004", "--", "nginx", "-g", "daemon off;"]
-    depends_on:
-      - webapp
-    restart: "no"
-    entrypoint: ["echo", "Service proxy disabled"]
-
   webapp:
     build: web
-    environment:
-      NODE_EXTRA_CA_CERTS: ${NODE_EXTRA_CA_CERTS}
     restart: unless-stopped
     ports:
       - 3005:3005

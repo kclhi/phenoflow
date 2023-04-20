@@ -1,17 +1,14 @@
 {
-  "name": "web",
+  "name": "parser",
   "version": "0.0.0",
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "test": "NODE_ENV=test mocha --exit",
-    "migrate": "sequelize db:migrate"
+    "test": "NODE_ENV=test mocha --exit"
   },
   "dependencies": {
     "adm-zip": "^0.5.9",
-    "archiver": "^5.3.1",
     "await-spawn": "^4.0.2",
-    "bcrypt": "^5.0.1",
     "body-parser": "^1.20.0",
     "compromise": "^13.11.4",
     "compromise-adjectives": "^0.0.7",
@@ -24,15 +21,11 @@
     "fast-xml-parser": "^3.21.1",
     "fs": "^0.0.1-security",
     "got": "^11.0.0",
-    "he": "^1.2.0",
     "http-errors": "^1.8.1",
-    "isomorphic-git": "^1.19.1",
-    "jsonwebtoken": "^8.5.1",
     "markdown-to-json": "^0.5.4",
     "morgan": "^1.10.0",
     "natural": "^5.2.3",
     "neat-csv": "^5.0.0",
-    "node-cron": "^3.0.1",
     "python-shell": "^3.0.1",
     "sanitize-html": "^2.7.1",
     "string-similarity": "^4.0.4",

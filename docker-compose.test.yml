@@ -7,7 +7,7 @@ services:
      dockerfile: Dockerfile.test
     environment:
       NODE_EXTRA_CA_CERTS: ${NODE_EXTRA_CA_CERTS}
-    command: ["npx", "mocha", "-g", "CI1", "--exit"]
+    command: ["npx", "mocha", "-g", "PA1", "--exit"]
 
 networks:
   default:

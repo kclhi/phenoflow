@@ -1,7 +1,5 @@
 adm-zip
-archiver
 await-spawn
-bcrypt
 body-parser
 chai
 chai-http
@@ -14,17 +12,13 @@ dotenv
 express
 express-fileupload
 fs
-got
-he
+got@11.0.0
 http-errors
-isomorphic-git
-jsonwebtoken
 markdown-to-json
 mocha
 morgan
 natural
-neat-csv
-node-cron
+neat-csv@4.0.0
 proxyquire
 python-shell
 sanitize-html

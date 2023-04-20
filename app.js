@@ -24,16 +24,7 @@ const swaggerDefinition = {
       url: 'https://kclhi.org',
       description: 'Live server',
     }
-  ],
-  components: {
-    securitySchemes: {
-      bearerAuth: {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-      }
-    }
-  }
+  ]
 };
 const options = {
   swaggerDefinition,
