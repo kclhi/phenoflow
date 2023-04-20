@@ -4,24 +4,20 @@ stages:
 
 cache:
   paths:
-    - web/node_modules/
+    - node_modules/
 
 install_node_dependencies:
   image: node:16
   stage: build_web
-  before_script:
-    - cd web
   script:
     - npm install
   artifacts:
     paths:
-      - web/node_modules/
+      - node_modules/
 
 test_web:
   image: node:16
   stage: test_web
-  before_script:
-    - cd web
   script: npm test
   variables:
     GHE_ACCESS_TOKEN: "foo"

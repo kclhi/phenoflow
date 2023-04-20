@@ -6,7 +6,6 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const logger = require("./config/winston");
 const fileUpload = require("express-fileupload");
-const cron = require("node-cron");
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerDefinition = {
   openapi: '3.0.1',

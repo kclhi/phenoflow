@@ -11,7 +11,6 @@ const fs = require('fs').promises;
 const nock = require('nock')
 const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
 
-const WorkflowUtils = require("../util/workflow");
 const ImporterUtils = require("../util/importer");
 const Github = require("../util/github");
 

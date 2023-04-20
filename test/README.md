@@ -20,7 +20,7 @@ To import CALIBER definitions into Phenoflow:
 
 To import SAIL definitions into Phenoflow:
 
-1. Inside [web/.env](web/.env) specify SAIL API credentials:
+1. Inside [.env](.env) specify SAIL API credentials:
 
 ```
 SAIL_USERNAME=

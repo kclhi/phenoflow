@@ -1,5 +1,4 @@
 adm-zip
-archiver
 await-spawn
 bcrypt
 body-parser
@@ -11,10 +10,11 @@ debug
 dotenv
 express
 express-fileupload
-express-jwt
+express-jwt@6.0.0
+fast-glob
 form-data
 fs
-got
+got@11.0.0
 he
 http-errors
 isomorphic-git
@@ -22,12 +22,11 @@ jsonwebtoken
 markdown-to-json
 mocha
 morgan
+nock
 mysql2
-natural
-neat-csv
-node-cron
+neat-csv@4.0.0
+@octokit/rest
 proxyquire
-python-shell
 sanitize-html
 sequelize
 sequelize-cli
@@ -36,4 +35,3 @@ swagger-jsdoc
 swagger-ui-express
 uuid
 winston
-yaml

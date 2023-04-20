@@ -99,7 +99,7 @@ describe("caliber importer", () => {
     });
     
     it("[CI2] Should be able to import a phenotype CSV.", async() => {
-      await testCaliberPhenotype("caliber_marital_status_cprd_R8V44bGGETqrvQHbhbWpYL.md");
+      await testCaliberPhenotype("kuan_AAA_NJ2gf6ZTTxjayMcK5ksHXf.md");
     }).timeout(0);
 
     it("[CI3] Should be able to import all phenotype CSVs.", async() => {
