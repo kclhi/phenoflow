@@ -2,6 +2,7 @@ from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from api import workflow
 import oyaml as yaml
+import json
 
 app = Starlette(debug=True)
 
@@ -36,7 +37,7 @@ def generateWorkflow(steps, nested=False):
         # Handle unknown language
         generatedStep = '';
 
-      generatedSteps.append({'name':step['name'], 'type':step['type'], 'workflowId':step['workflowId'], 'content':generatedStep, 'fileName':step['implementation']['fileName']});
+      generatedSteps.append({"name":step['name'], "type":step['type'], "workflowId":step['workflowId'], "content":generatedStep, "fileName":step['implementation']['fileName']});
     
     else:
       nestedWorkflow = generateWorkflow(step['implementation']['steps'], True);
@@ -47,7 +48,7 @@ def generateWorkflow(steps, nested=False):
       generatedWorkflow = workflow.createNestedWorkflowStep(generatedWorkflow, step['position'], step['name'], nestedWorkflow);
 
       # If sent a nested workflow to generate, generate this and store it as a step (as opposed to a command line tool)
-      generatedSteps.append({'name':step['name'], 'type':step['type'], 'workflowId':step['workflowId'], 'content':yaml.dump(nestedWorkflow['workflow'], default_flow_style=False), 'steps':nestedWorkflow['steps']});
+      generatedSteps.append({"name":step['name'], "type":step['type'], "workflowId":step['workflowId'], "content":yaml.dump(nestedWorkflow['workflow'], default_flow_style=False), "steps":nestedWorkflow['steps']});
   
   return {'workflow':generatedWorkflow.get_dict(), 'steps':generatedSteps, 'workflowInputs':generatedWorkflowInputs}
 
@@ -60,6 +61,8 @@ async def generate(request):
 
   if(steps): 
     generatedWorkflow = generateWorkflow(steps);
-    return JSONResponse({'workflow': yaml.dump(generatedWorkflow['workflow'], default_flow_style=False), 'steps': generatedWorkflow['steps'], 'workflowInputs': yaml.dump(generatedWorkflow['workflowInputs'], default_flow_style=False)});
+    response = {"workflow": yaml.dump(generatedWorkflow['workflow'], default_flow_style=False), "steps": generatedWorkflow['steps'], "workflowInputs": yaml.dump(generatedWorkflow['workflowInputs'], default_flow_style=False)};
+    print(json.dumps(response));
+    return JSONResponse(response);
   else:
     return JSONResponse({});

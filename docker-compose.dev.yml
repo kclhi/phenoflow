@@ -3,7 +3,7 @@ services:
   
   generator:
     build:
-      context: generator
+      context: .
     restart: unless-stopped
     environment:
       PORT: 3004
