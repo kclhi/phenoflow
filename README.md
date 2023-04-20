@@ -51,9 +51,15 @@ MYSQL_DATABASE=
 
 `GITHUB_ACCESS_TOKEN=`
 
-#### DB encryption
+### DB encryption
 
-6. Run [web/db/encrypt/keys/db-encryption.sh](web/db/encrypt/keys/db-encryption.sh).
+- Run [web/db/encrypt/keys/db-encryption.sh](web/db/encrypt/keys/db-encryption.sh).
+
+### Misc
+
+- Create [uploads](uploads)
+
+## Development
 
 ### Install and Run
 
@@ -79,10 +85,25 @@ cat requirements.txt | xargs npm install -g
 npm start
 ```
 
-### Misc
+## Deployment
 
-- Create [uploads](uploads)
+1. Deployment is via Docker. If using remote machine, ensure it is activated:
 
+```
+docker context use [machine-name]
+```
+
+2. From the root directory, build container:
+
+```
+docker-compose build
+```
+
+3. Run container:
+
+```
+docker-compose up -d
+```
 
 ## Tests
 
