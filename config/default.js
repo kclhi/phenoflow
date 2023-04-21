@@ -13,10 +13,10 @@ module.exports = {
     DEFAULT_PASSWORD: "password"
   },
   generator: {
-    URL: "http://localhost:3004"
+    URL: "https://localhost:3004"
   },
   parser: {
-    URL: "http://localhost:3005"
+    URL: "https://localhost:3005"
   },
   importer: {
     PHENOTYPE_FOLDER: "fixtures/importer/caliber",

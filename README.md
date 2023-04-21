@@ -21,6 +21,10 @@ Phenoflow - Import parsed definitions and make them available for generation as 
 
 `GHE_ACCESS_TOKEN=`
 
+4. Create a folder called [certs](certs) and add a root certificate, named `pf.pem`, to it ([certs/pf.pem](certs/pf.pem)), enabling communicating with other services. Reference this certificate:
+
+`NODE_EXTRA_CA_CERTS=`
+
 ### .env (production)
 
 1. Create a `.env` file in project root (or add to existing development file).
@@ -35,19 +39,15 @@ MYSQL_PASSWORD=
 MYSQL_DATABASE=
 ```
 
-3. In addition, add the location of a root certificate (e.g. '[certs/pf.pem](certs/pf.pem)'), allowing for communication with other services:
-
-`NODE_EXTRA_CA_CERTS=`
-
-4. Add a deployment RSA private key name, e.g. `key.pem` (`openssl genrsa -out key.pem 2048`):
+3. Add a deployment RSA private key name, e.g. `key.pem` (`openssl genrsa -out key.pem 2048`):
 
 `RSA_PRIVATE_KEY=`
 
-5. Add a path on the target deployment host to the deployment RSA private key (without the key name), e.g. `/home/ubunut/.certs/`:
+4. Add a path on the target deployment host to the deployment RSA private key (without the key name), e.g. `/home/ubuntu/.certs/`:
 
 `HOST_RSA_PRIVATE_KEY_PATH=`
 
-6. Add production GitHub credentials:
+5. Add production GitHub credentials:
 
 `GITHUB_ACCESS_TOKEN=`
 
@@ -148,5 +148,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* [python-cwlgen](https://github.com/kclhi/python-cwlgen).
-* [cwlviewer](https://github.com/kclhi/cwlviewer).
+* [python-cwlgen](https://github.com/kclhi/python-cwlgen)
+* [cwlviewer](https://github.com/kclhi/cwlviewer)
