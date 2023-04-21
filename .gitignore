@@ -753,5 +753,7 @@ pip-selfcheck.json
 
 # End of https://www.toptal.com/developers/gitignore/api/git,data,node,latex,images,python,dropbox,certificates,archlinuxpackages,virtualenv
 
+*.csr
+*.srl
 !requirements.txt
 !logo.png
