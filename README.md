@@ -51,9 +51,9 @@ MYSQL_DATABASE=
 
 `GITHUB_ACCESS_TOKEN=`
 
-### DB encryption
+#### DB encryption
 
-- Run [web/db/encrypt/keys/db-encryption.sh](web/db/encrypt/keys/db-encryption.sh).
+- Run [db/encrypt/keys/db-encryption.sh](db/encrypt/keys/db-encryption.sh).
 
 ### Misc
 
@@ -84,6 +84,8 @@ cat requirements.txt | xargs npm install -g
 ```
 npm start
 ```
+
+4. Set up a default user if you wish to run Phenoflow as a [private instance](https://github.com/kclhi/phenoflow/wiki/Usage#private-instance).
 
 ## Deployment
 
