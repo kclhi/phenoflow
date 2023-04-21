@@ -1,16 +1,17 @@
 version: "3.7"
 services:
   
-  generator:
+  webapp:
     build:
       context: .
-    restart: unless-stopped
     environment:
+      GUNICORN_CMD_ARGS: "--keyfile=certs/generator-webapp-1.key --certfile=certs/generator-webapp-1.crt"
       PORT: 3004
+    restart: unless-stopped
     ports:
       - '3004:3004'
 
 networks:
   default:
-    external:
-      name: hi_default # For proxy.
+    name: hi_default # For proxy.
+    external: true
