@@ -1,5 +1,5 @@
-FROM importer_webapp
+FROM importer-webapp
 ENV NODE_ENV development
 RUN npm ci --loglevel=silly
 ENV NODE_ENV production
-CMD ["npx", "mocha", "-g", "t2dm", "--exit"]
+CMD ["npx", "mocha", "-g", "TB1", "--exit"]

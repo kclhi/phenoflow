@@ -6,7 +6,7 @@ module.exports = {
     username: process.env.MYSQL_USER,
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DATABASE,
-    host: "importer_mariadb_1",
+    host: "importer-mariadb-1",
     dialect: "mysql",
     logging: false
   },
@@ -14,10 +14,10 @@ module.exports = {
     DEFAULT_PASSWORD: process.env.DEFAULT_PASSWORD
   },
   parser: {
-    URL: "http://parser_webapp_1:3005"
+    URL: "https://parser-webapp-1:3005"
   },
   generator: {
-    URL: "http://generator:3004"
+    URL: "https://generator-webapp-1:3004"
   },
   jwt: {
     RSA_PRIVATE_KEY: raw(fs.readFileSync("/run/secrets/rsa-private-key", "utf-8"))

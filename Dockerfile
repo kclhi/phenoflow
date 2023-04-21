@@ -1,4 +1,4 @@
-FROM node:11
+FROM node:16
 ENV user node
 WORKDIR /home/$user/app
 RUN chown $user -R /home/$user/app
@@ -8,4 +8,4 @@ ENV NODE_ENV production
 RUN npm ci --only=production --loglevel=silly
 COPY --chown=$user:$user . .
 EXPOSE 3003
-CMD ["npm", "start"]
+CMD ["node", "./bin/www"]
