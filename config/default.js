@@ -1,3 +1,6 @@
+const fs = require('fs');
+const raw = require('config/raw').raw;
+
 module.exports = {
   phenoflow: {
     HOMEPAGE: "https://kclhi.org/phenoflow"
@@ -5,6 +8,9 @@ module.exports = {
   workflow: {
     LANGUAGES: ["knime", "python", "js"],
     CONCEPTS: ["load", "external", "logic", "boolean", "output"]
+  },
+  user:{
+    DEFAULT_PASSWORD: "password"
   },
   generator: {
     URL: "http://localhost:3004"
@@ -18,10 +24,16 @@ module.exports = {
     KEYWORD_LIST_FOLDER: "fixtures/importer/kclhi",
     GROUP_SIMILAR_PHENOTYPES: false,
     HDR_API: "https://phenotypes.healthdatagateway.org/api/v1",
+    SAIL_API: "https://conceptlibrary.saildatabank.com/api",
+    SAIL_USERNAME: process.env.SAIL_USERNAME,
+    SAIL_PASSWORD: process.env.SAIL_PASSWORD
   },
   github: {
-    BASE_URL: "https://api.github.com",
-    ACCESS_TOKEN: process.env.GITHUB_ACCESS_TOKEN,
-    ORGANISATION_SSH: "git@github.com:phenoflow"
+    BASE_URL: "https://github.kcl.ac.uk/api/v3",
+    ACCESS_TOKEN: process.env.GHE_ACCESS_TOKEN,
+    ORGANISATION_SSH: "git@github.kcl.ac.uk:phenoflow"
+  },
+  jwt: {
+    RSA_PRIVATE_KEY: raw(fs.readFileSync(process.env.RSA_PRIVATE_KEY_FULL_PATH.toString(), "utf-8"))
   }
 };
