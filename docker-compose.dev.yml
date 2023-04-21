@@ -4,6 +4,8 @@ services:
   webapp:
     build: .
     restart: unless-stopped
+    ports:
+      - 3005:3005
 
 networks:
   default:
