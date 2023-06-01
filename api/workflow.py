@@ -45,11 +45,11 @@ def createJSStep(id, type, doc, input_doc, extension, output_doc):
 
   return createGenericStep(id, "kclhi/node:latest", "node", type, doc, input_doc, extension, output_doc);
 
-def createNestedWorkflowStep(workflow, position, id, nested_workflow):
+def createNestedWorkflowStep(workflow, position, id, linkedStepId, nested_workflow):
 
   file_binding = cwlgen.CommandLineBinding();
 
-  workflow_step = cwlgen.WorkflowStep(str(position),  id+".cwl");
+  workflow_step = cwlgen.WorkflowStep(str(id),  id+".cwl");
   nested_workflow_inputs = nested_workflow['workflow']['inputs'];
   nested_workflow_input_modules = [nested_workflow_input for nested_workflow_input in nested_workflow_inputs if 'inputModule' in nested_workflow_input];
   for workflow_input in nested_workflow_input_modules:
@@ -58,7 +58,7 @@ def createNestedWorkflowStep(workflow, position, id, nested_workflow):
     workflow.inputs.append(input_module);
 
   # Assume nested workflow isn't first or last in workflow
-  workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=str(position - 1) + "/output"))
+  workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=linkedStepId + "/output"))
   
   workflow_step.out.append(cwlgen.WorkflowStepOutput("output"));
   workflow.steps = workflow.steps + [ workflow_step ];
@@ -66,20 +66,20 @@ def createNestedWorkflowStep(workflow, position, id, nested_workflow):
   return workflow;
 
 
-def createWorkflowStep(workflow, position, id, type, language="KNIME", extension=None, nested=False):
+def createWorkflowStep(workflow, position, id, linkedStepId, type, language="KNIME", extension=None, nested=False):
 
   file_binding = cwlgen.CommandLineBinding();
+  workflow_step = cwlgen.WorkflowStep(str(id), id+".cwl");
 
   # Individual step input
-
-  workflow_step = cwlgen.WorkflowStep(str(position), id+".cwl");
+  
   workflow_step.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule" + str(position)));
 
   if(not "external" in type):
-    if(position==1):
-      workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", "potentialCases"))
+    if(linkedStepId):
+      workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=linkedStepId + "/output"))
     else:
-      workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", source=str(position - 1) + "/output"))
+      workflow_step.inputs.append(cwlgen.WorkflowStepInput("potentialCases", "potentialCases"))
 
   # Individual step output
 
@@ -98,7 +98,7 @@ def createWorkflowStep(workflow, position, id, type, language="KNIME", extension
   # Overall workflow output
 
   if(extension):
-    workflow_output = cwlgen.WorkflowOutputParameter(param_id=('output' if nested else 'cases'), param_type="File", output_source=str(position) + "/output", output_binding=cwlgen.CommandOutputBinding(glob="*." + extension));
+    workflow_output = cwlgen.WorkflowOutputParameter(param_id=('output' if nested else 'cases'), param_type="File", output_source=linkedStepId + "/output", output_binding=cwlgen.CommandOutputBinding(glob="*." + extension));
     workflow.outputs.append(workflow_output);
 
   return workflow;

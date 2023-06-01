@@ -14,6 +14,7 @@ def generateWorkflow(steps, nested=False):
 
   if (not 'external' in steps[0]['type']): generatedWorkflowInputs['potentialCases'] = {'class':'File', 'path':'replaceMe.csv'};
 
+  lastStepId = None
   for step in steps:
       
     if('language' in step['implementation']): 
@@ -23,7 +24,8 @@ def generateWorkflow(steps, nested=False):
 
       if(step==steps[len(steps) - 1]): extension = step['outputs'][0]['extension'];
 
-      generatedWorkflow = workflow.createWorkflowStep(generatedWorkflow, step['position'], step['name'], step['type'], language, extension, nested);
+      generatedWorkflow = workflow.createWorkflowStep(generatedWorkflow, step['position'], step['name'], lastStepId, step['type'], language, extension, nested);
+      lastStepId = step['name'];
       generatedWorkflowInputs['inputModule' + str(step['position'])] = {'class':'File', 'path':language + '/' + step['implementation']['fileName']};
 
       # ~MDC For now, we only assume one variable input to each step, the potential cases; and one variable output, the filtered potential cases.
@@ -45,7 +47,8 @@ def generateWorkflow(steps, nested=False):
       nestedWorkflowInputs = nestedWorkflow['workflowInputs'];
       nestedWorkflowInputModules = [nestedWorkflowInput for nestedWorkflowInput in nestedWorkflowInputs if 'inputModule' in nestedWorkflowInput];
       for workflowInput in nestedWorkflowInputModules: generatedWorkflowInputs['inputModule'+str(step['position'])+'-'+str(list(nestedWorkflowInputModules).index(workflowInput)+1)] = {'class':'File', 'path':nestedWorkflowInputs[workflowInput]['path']};
-      generatedWorkflow = workflow.createNestedWorkflowStep(generatedWorkflow, step['position'], step['name'], nestedWorkflow);
+      generatedWorkflow = workflow.createNestedWorkflowStep(generatedWorkflow, step['position'], step['name'], lastStepId, nestedWorkflow);
+      lastStepId = step['name'];
 
       # If sent a nested workflow to generate, generate this and store it as a step (as opposed to a command line tool)
       generatedSteps.append({"name":step['name'], "type":step['type'], "workflowId":step['workflowId'], "content":yaml.dump(nestedWorkflow['workflow'], default_flow_style=False), "steps":nestedWorkflow['steps']});
