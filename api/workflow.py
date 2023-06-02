@@ -20,30 +20,30 @@ def createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_fil
   cwl_tool.outputs.append(output)
   return cwl_tool;
 
-def createKNIMEStep(id, type, doc, input_doc, extension, output_doc):
+def createKNIMEStep(type, doc, input_doc, extension, output_doc):
 
-  cwl_tool = cwlgen.CommandLineTool(tool_id=id, base_command='/home/kclhi/knime_4.1.1/knime');
+  cwl_tool = cwlgen.CommandLineTool(base_command='/home/kclhi/knime_4.1.1/knime');
   cwl_tool_docker = cwlgen.DockerRequirement(docker_pull="kclhi/knime:amia", docker_output_dir="/home/kclhi/.eclipse");
   cwl_tool.arguments = ['-data', '/home/kclhi/.eclipse', '-reset', '-nosplash', '-nosave', '-application', 'org.knime.product.KNIME_BATCH_APPLICATION'];
   implementation_file_binding = cwlgen.CommandLineBinding(prefix="-workflowFile=", separate=False);
   cases_file_binding = cwlgen.CommandLineBinding(prefix="-workflow.variable=dm_potential_cases,file://", separate=False, value_from=" $(inputs.potentialCases.path),String");
   return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, "knime");
 
-def createGenericStep(id, docker_image, base_command, type, doc, input_doc, extension, output_doc):
+def createGenericStep(docker_image, base_command, type, doc, input_doc, extension, output_doc):
 
-  cwl_tool = cwlgen.CommandLineTool(tool_id=id, base_command=base_command);
+  cwl_tool = cwlgen.CommandLineTool(base_command=base_command);
   cwl_tool_docker = cwlgen.DockerRequirement(docker_pull = docker_image);
   implementation_file_binding = cwlgen.CommandLineBinding(position=1);
   cases_file_binding = cwlgen.CommandLineBinding(position=2);
   return createStep(cwl_tool, cwl_tool_docker, implementation_file_binding, cases_file_binding, type, doc, input_doc, extension, output_doc, base_command);
 
-def createPythonStep(id, type, doc, input_doc, extension, output_doc):
+def createPythonStep(type, doc, input_doc, extension, output_doc):
 
-  return createGenericStep(id, "kclhi/python:latest", "python", type, doc, input_doc, extension, output_doc);
+  return createGenericStep("kclhi/python:latest", "python", type, doc, input_doc, extension, output_doc);
 
-def createJSStep(id, type, doc, input_doc, extension, output_doc):
+def createJSStep(type, doc, input_doc, extension, output_doc):
 
-  return createGenericStep(id, "kclhi/node:latest", "node", type, doc, input_doc, extension, output_doc);
+  return createGenericStep("kclhi/node:latest", "node", type, doc, input_doc, extension, output_doc);
 
 def createNestedWorkflowStep(workflow, position, id, linkedStepId, nested_workflow):
 
@@ -72,7 +72,7 @@ def createWorkflowStep(workflow, position, id, linkedStepId, type, language="KNI
   workflow_step = cwlgen.WorkflowStep(str(id), id+".cwl");
 
   # Individual step input
-  
+
   workflow_step.inputs.append(cwlgen.WorkflowStepInput("inputModule", "inputModule" + str(position)));
 
   if(not "external" in type):

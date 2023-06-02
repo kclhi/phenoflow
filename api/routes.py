@@ -30,11 +30,11 @@ def generateWorkflow(steps, nested=False):
 
       # ~MDC For now, we only assume one variable input to each step, the potential cases; and one variable output, the filtered potential cases.
       if(language=='python'):
-        generatedStep = workflow.createPythonStep(step['name'], step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string()
+        generatedStep = workflow.createPythonStep(step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string()
       elif(language=='knime'):
-        generatedStep = workflow.createKNIMEStep(step['name'], step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string();
+        generatedStep = workflow.createKNIMEStep(step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string();
       elif(language=='js'):
-        generatedStep = workflow.createJSStep(step['name'], step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string();
+        generatedStep = workflow.createJSStep(step['type'], step['doc'], step['inputs'][0]['doc'], step['outputs'][0]['extension'], step['outputs'][0]['doc']).export_string();
       else:
         # Handle unknown language
         generatedStep = '';
