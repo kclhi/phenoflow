@@ -360,7 +360,7 @@ class Github {
           if(nestedWorkflowInStep.content.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')==workflowBContent.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')) {
             let nestedWorkflowId = workflowB.workflow.name + '---' + workflowB.workflow.id;
             // point parent workflow to subfolder containing nested workflow
-            workflowA.generate.body.workflow = workflowA.generate.body.workflow.replace(nestedWorkflowInStep.name, nestedWorkflowId + '/' + workflowB.workflow.name);
+            workflowA.generate.body.workflow = workflowA.generate.body.workflow.replace(nestedWorkflowInStep.name + '.cwl', nestedWorkflowId + '/' + workflowB.workflow.name + '.cwl');
             // point parent workflow inputs to nested workflow implementation units
             workflowA.generate.body.workflowInputs = workflowA.generate.body.workflowInputs.replaceAll(new RegExp('inputModule' + (workflowA.generate.body.steps.indexOf(nestedWorkflowInStep) + 1) +'(\-[0-9]*)?:\n  class: File\n  path: ', 'g'), '$&' + nestedWorkflowId + '/');
             // change nested workflow to be part of parent workflow, as opposed to outputting dedicated cases
