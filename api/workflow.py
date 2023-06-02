@@ -98,7 +98,7 @@ def createWorkflowStep(workflow, position, id, linkedStepId, type, language="KNI
   # Overall workflow output
 
   if(extension):
-    workflow_output = cwlgen.WorkflowOutputParameter(param_id=('output' if nested else 'cases'), param_type="File", output_source=linkedStepId + "/output", output_binding=cwlgen.CommandOutputBinding(glob="*." + extension));
+    workflow_output = cwlgen.WorkflowOutputParameter(param_id=('output' if nested else 'cases'), param_type="File", output_source=str(id) + "/output", output_binding=cwlgen.CommandOutputBinding(glob="*." + extension));
     workflow.outputs.append(workflow_output);
 
   return workflow;

@@ -2,9 +2,16 @@ from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from api import workflow
 import oyaml as yaml
-import json
+import json, re
 
 app = Starlette(debug=True)
+
+def clean(yaml):
+  # Long ids treated as complex types, which adds additional annotations not parsable by a CWL runner
+  # https://github.com/yaml/pyyaml/issues/157
+  yaml = yaml.replace(': run:', '  run:')
+  yaml = re.sub(r'\?\s([^\n]*)', r'\1:', yaml)  
+  return yaml
 
 def generateWorkflow(steps, nested=False):
 
@@ -51,7 +58,7 @@ def generateWorkflow(steps, nested=False):
       lastStepId = step['name'];
 
       # If sent a nested workflow to generate, generate this and store it as a step (as opposed to a command line tool)
-      generatedSteps.append({"name":step['name'], "type":step['type'], "workflowId":step['workflowId'], "content":yaml.dump(nestedWorkflow['workflow'], default_flow_style=False), "steps":nestedWorkflow['steps']});
+      generatedSteps.append({"name":step['name'], "type":step['type'], "workflowId":step['workflowId'], "content":clean(yaml.dump(nestedWorkflow['workflow'], default_flow_style=False)), "steps":nestedWorkflow['steps']});
   
   return {'workflow':generatedWorkflow.get_dict(), 'steps':generatedSteps, 'workflowInputs':generatedWorkflowInputs}
 
@@ -64,7 +71,7 @@ async def generate(request):
 
   if(steps): 
     generatedWorkflow = generateWorkflow(steps);
-    response = {"workflow": yaml.dump(generatedWorkflow['workflow'], default_flow_style=False), "steps": generatedWorkflow['steps'], "workflowInputs": yaml.dump(generatedWorkflow['workflowInputs'], default_flow_style=False)};
+    response = {"workflow": clean(yaml.dump(generatedWorkflow['workflow'], default_flow_style=False)), "steps": generatedWorkflow['steps'], "workflowInputs": clean(yaml.dump(generatedWorkflow['workflowInputs'], default_flow_style=False))};
     print(json.dumps(response));
     return JSONResponse(response);
   else:
