@@ -112,7 +112,7 @@ describe("importer", () => {
     
     before(async function() {
       this.timeout(0); 
-      await Github.clearAllRepos(); 
+      if(process.env.NODE_ENV && process.env.NODE_ENV=="test") await Github.clearAllRepos(); 
     })
 
     async function importCodelist() {
