@@ -386,7 +386,10 @@ class Github {
     generatedYAMLWorkflows = [...new Set(parents)].concat(generatedYAMLWorkflows.filter(generatedYAMLWorkflow=>!parents.includes(generatedYAMLWorkflow) && !nested.includes(generatedYAMLWorkflow)));
     for(let generatedYAMLWorkflow of generatedYAMLWorkflows) {
       generatedYAMLWorkflow.generate.body.steps = generatedYAMLWorkflow.generate.body.steps.filter(step=>step.fileName);
-      if(!await Github.commit(generatedYAMLWorkflow, generatedYAMLWorkflow.workflow.id, generatedYAMLWorkflow.workflow.name, generatedYAMLWorkflow.workflow.about, generatedYAMLWorkflow.workflow.userName, generatedYAMLWorkflow.workflow.steps[0].name, Object.keys(parentToNested).includes(generatedYAMLWorkflow.workflow.id)?parentToNested[generatedYAMLWorkflow.workflow.id].map(nested=>subModules[nested]):[]), restricted) return false;
+      if(!await Github.commit(generatedYAMLWorkflow, generatedYAMLWorkflow.workflow.id, generatedYAMLWorkflow.workflow.name, generatedYAMLWorkflow.workflow.about, generatedYAMLWorkflow.workflow.userName, generatedYAMLWorkflow.workflow.steps[0].name, Object.keys(parentToNested).includes(generatedYAMLWorkflow.workflow.id)?parentToNested[generatedYAMLWorkflow.workflow.id].map(nested=>subModules[nested]):[], restricted)) {
+        logger.error('Commit failed');
+        return false;
+      }
     }
 
     return true;
