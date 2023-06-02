@@ -24,7 +24,7 @@ var Sequelize = require('sequelize');
 var info = {
     "revision": 1,
     "name": "init",
-    "created": "2020-06-09T23:18:07.300Z",
+    "created": "2023-06-02T13:50:33.257Z",
     "comment": ""
 };
 
@@ -43,6 +43,11 @@ var migrationCommands = [{
                     "type": Sequelize.STRING,
                     "field": "password",
                     "allowNull": false
+                },
+                "restricted": {
+                    "type": Sequelize.BOOLEAN,
+                    "field": "restricted",
+                    "defaultValue": false
                 },
                 "verified": {
                     "type": Sequelize.BOOLEAN,
@@ -72,11 +77,10 @@ var migrationCommands = [{
             "workflows",
             {
                 "id": {
-                    "type": Sequelize.INTEGER,
+                    "type": Sequelize.STRING,
                     "field": "id",
-                    "autoIncrement": true,
-                    "primaryKey": true,
-                    "allowNull": false
+                    "allowNull": false,
+                    "primaryKey": true
                 },
                 "name": {
                     "type": Sequelize.STRING,
@@ -144,7 +148,7 @@ var migrationCommands = [{
                     "allowNull": false
                 },
                 "workflowId": {
-                    "type": Sequelize.INTEGER,
+                    "type": Sequelize.STRING,
                     "field": "workflowId",
                     "onUpdate": "CASCADE",
                     "onDelete": "CASCADE",
@@ -155,7 +159,7 @@ var migrationCommands = [{
                     "primaryKey": true
                 },
                 "parentId": {
-                    "type": Sequelize.INTEGER,
+                    "type": Sequelize.STRING,
                     "field": "parentId",
                     "onUpdate": "CASCADE",
                     "onDelete": "CASCADE",
@@ -210,7 +214,7 @@ var migrationCommands = [{
                     "allowNull": false
                 },
                 "workflowId": {
-                    "type": Sequelize.INTEGER,
+                    "type": Sequelize.STRING,
                     "field": "workflowId",
                     "onUpdate": "CASCADE",
                     "onDelete": "CASCADE",
@@ -361,8 +365,7 @@ var migrationCommands = [{
             "implementations",
             ["language", "stepId"],
             {
-                "indicesType": "UNIQUE",
-                "unique": true
+                "indicesType": "UNIQUE"
             }
         ]
     },
@@ -372,8 +375,7 @@ var migrationCommands = [{
             "inputs",
             ["stepId"],
             {
-                "indicesType": "UNIQUE",
-                "unique": true
+                "indicesType": "UNIQUE"
             }
         ]
     },
@@ -383,8 +385,7 @@ var migrationCommands = [{
             "outputs",
             ["stepId"],
             {
-                "indicesType": "UNIQUE",
-                "unique": true
+                "indicesType": "UNIQUE"
             }
         ]
     },
@@ -394,8 +395,7 @@ var migrationCommands = [{
             "steps",
             ["name", "position", "workflowId"],
             {
-                "indicesType": "UNIQUE",
-                "unique": true
+                "indicesType": "UNIQUE"
             }
         ]
     },
@@ -405,8 +405,7 @@ var migrationCommands = [{
             "steps",
             ["name", "workflowId"],
             {
-                "indicesType": "UNIQUE",
-                "unique": true
+                "indicesType": "UNIQUE"
             }
         ]
     },
@@ -416,8 +415,7 @@ var migrationCommands = [{
             "steps",
             ["position", "workflowId"],
             {
-                "indicesType": "UNIQUE",
-                "unique": true
+                "indicesType": "UNIQUE"
             }
         ]
     }

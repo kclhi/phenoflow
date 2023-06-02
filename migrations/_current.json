@@ -34,7 +34,7 @@
                     "onDelete": "CASCADE",
                     "onUpdate": "CASCADE",
                     "field": "workflowId",
-                    "seqType": "Sequelize.INTEGER"
+                    "seqType": "Sequelize.STRING"
                 },
                 "parentId": {
                     "primaryKey": true,
@@ -45,46 +45,7 @@
                     "onDelete": "CASCADE",
                     "onUpdate": "CASCADE",
                     "field": "parentId",
-                    "seqType": "Sequelize.INTEGER"
-                }
-            },
-            "indexes": []
-        },
-        "dois": {
-            "tableName": "dois",
-            "schema": {
-                "doi": {
-                    "primaryKey": true,
-                    "allowNull": false,
-                    "field": "doi",
                     "seqType": "Sequelize.STRING"
-                },
-                "implementationHash": {
-                    "primaryKey": true,
-                    "allowNull": false,
-                    "field": "implementationHash",
-                    "seqType": "Sequelize.STRING"
-                },
-                "createdAt": {
-                    "allowNull": false,
-                    "field": "createdAt",
-                    "seqType": "Sequelize.DATE"
-                },
-                "updatedAt": {
-                    "allowNull": false,
-                    "field": "updatedAt",
-                    "seqType": "Sequelize.DATE"
-                },
-                "workflowId": {
-                    "allowNull": true,
-                    "references": {
-                        "model": "workflows",
-                        "key": "id"
-                    },
-                    "onDelete": "SET NULL",
-                    "onUpdate": "CASCADE",
-                    "field": "workflowId",
-                    "seqType": "Sequelize.INTEGER"
                 }
             },
             "indexes": []
@@ -130,18 +91,14 @@
                 }
             },
             "indexes": {
-                "54fe9245973e4717251375c08d92fbb2665fbc18": {
+                "5aa237f0674f2e7415334f3605b29d4af07cb015": {
                     "unique": true,
                     "fields": [
                         "language",
                         "stepId"
                     ],
-                    "name": "implementations_language_step_id",
                     "options": {
-                        "indexName": "implementations_language_step_id",
-                        "name": "implementations_language_step_id",
-                        "indicesType": "UNIQUE",
-                        "type": "UNIQUE"
+                        "indicesType": "UNIQUE"
                     }
                 }
             }
@@ -183,17 +140,13 @@
                 }
             },
             "indexes": {
-                "857ecfeec0691301a09b02eb13b5ff75dcd9ff03": {
+                "10bc29550498baf7a6ba6f6183cd4755616cda10": {
                     "unique": true,
                     "fields": [
                         "stepId"
                     ],
-                    "name": "inputs_step_id",
                     "options": {
-                        "indexName": "inputs_step_id",
-                        "name": "inputs_step_id",
-                        "indicesType": "UNIQUE",
-                        "type": "UNIQUE"
+                        "indicesType": "UNIQUE"
                     }
                 }
             }
@@ -239,17 +192,13 @@
                 }
             },
             "indexes": {
-                "2d31fadc5fbd1ff81dd5949120738d7e0eb66b4e": {
+                "10bc29550498baf7a6ba6f6183cd4755616cda10": {
                     "unique": true,
                     "fields": [
                         "stepId"
                     ],
-                    "name": "outputs_step_id",
                     "options": {
-                        "indexName": "outputs_step_id",
-                        "name": "outputs_step_id",
-                        "indicesType": "UNIQUE",
-                        "type": "UNIQUE"
+                        "indicesType": "UNIQUE"
                     }
                 }
             }
@@ -301,51 +250,39 @@
                     "onDelete": "CASCADE",
                     "onUpdate": "CASCADE",
                     "field": "workflowId",
-                    "seqType": "Sequelize.INTEGER"
+                    "seqType": "Sequelize.STRING"
                 }
             },
             "indexes": {
-                "dd60665fe2f45101f958399c18705fe9c471b48d": {
+                "a8c077bdab379095ef0211df7b7f289cd55ae3bf": {
                     "unique": true,
                     "fields": [
                         "name",
                         "position",
                         "workflowId"
                     ],
-                    "name": "steps_name_position_workflow_id",
                     "options": {
-                        "indexName": "steps_name_position_workflow_id",
-                        "name": "steps_name_position_workflow_id",
-                        "indicesType": "UNIQUE",
-                        "type": "UNIQUE"
+                        "indicesType": "UNIQUE"
                     }
                 },
-                "b30f6d64836ed5135e1a0beb17b95e615ac79695": {
+                "0ab42c047622ccd7b9dc405225942c62eeae5222": {
                     "unique": true,
                     "fields": [
                         "name",
                         "workflowId"
                     ],
-                    "name": "steps_name_workflow_id",
                     "options": {
-                        "indexName": "steps_name_workflow_id",
-                        "name": "steps_name_workflow_id",
-                        "indicesType": "UNIQUE",
-                        "type": "UNIQUE"
+                        "indicesType": "UNIQUE"
                     }
                 },
-                "3b660d3246814aa133ea7816f7e23708ccc1da44": {
+                "da51803387e6b69522f756c51817141a13a7699d": {
                     "unique": true,
                     "fields": [
                         "position",
                         "workflowId"
                     ],
-                    "name": "steps_position_workflow_id",
                     "options": {
-                        "indexName": "steps_position_workflow_id",
-                        "name": "steps_position_workflow_id",
-                        "indicesType": "UNIQUE",
-                        "type": "UNIQUE"
+                        "indicesType": "UNIQUE"
                     }
                 }
             }
@@ -396,11 +333,10 @@
             "tableName": "workflows",
             "schema": {
                 "id": {
-                    "allowNull": false,
                     "primaryKey": true,
-                    "autoIncrement": true,
+                    "allowNull": false,
                     "field": "id",
-                    "seqType": "Sequelize.INTEGER"
+                    "seqType": "Sequelize.STRING"
                 },
                 "name": {
                     "field": "name",
@@ -442,5 +378,5 @@
             "indexes": []
         }
     },
-    "revision": 3
+    "revision": 1
 }
