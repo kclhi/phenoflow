@@ -1,0 +1,23 @@
+stages:
+  - build_web
+  - test_web
+
+cache:
+  paths:
+    - node_modules/
+
+install_node_dependencies:
+  image: nikolaik/python-nodejs:python3.7-nodejs16
+  stage: build_web
+  script:
+    - npm install
+  artifacts:
+    paths:
+      - node_modules/
+
+test_web:
+  image: nikolaik/python-nodejs:python3.7-nodejs16
+  stage: test_web
+  before_script:
+    - pip install swifter
+  script: npm test

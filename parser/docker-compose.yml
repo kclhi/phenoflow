@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+
+  webapp:
+    build: .
+    restart: unless-stopped
+
+networks:
+  default:
+    name: hi_default # For proxy.
+    external: true
