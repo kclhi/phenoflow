@@ -1,0 +1,67 @@
+version: "3.7"
+services:
+
+  proxy:
+    build:
+      context: proxy
+    command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
+    depends_on:
+      - webapp
+    ports:
+      - 3003:443
+
+  webapp:
+    build: .
+    environment:
+      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
+      NODE_EXTRA_CA_CERTS: ${NODE_EXTRA_CA_CERTS}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
+      GHE_ACCESS_TOKEN: ${GHE_ACCESS_TOKEN}
+    restart: unless-stopped
+    volumes:
+      - pf_uploads:/home/node/app/uploads
+    secrets:
+      - rsa-private-key
+    depends_on:
+      - mariadb
+
+  mariadb:
+    build: db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - pf_data:/var/lib/mysql
+    restart: unless-stopped
+
+  migration:
+    image: importer-webapp:latest
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
+    secrets:
+      - rsa-private-key
+    command: ["./bin/wait-for-it.sh", "--timeout=0", "mariadb:3306", "--", "npm", "run", "migrate"]
+    depends_on:
+      - mariadb
+      - webapp
+
+volumes:
+  pf_uploads:
+  pf_data:
+
+networks:
+  default:
+    name: hi_default # For proxy.
+    external: true
+
+secrets:
+  rsa-private-key:
+    file: ${RSA_PRIVATE_KEY_FULL_PATH}

@@ -1,0 +1,799 @@
+[{
+  "about": "P6yE9OQse0mVDGyVMSdDAVbxU - Codelist steplist branch A",
+  "id": "4addb6f0-2d19-11ed-9cdf-85215b3cee2f",
+  "name": "Codelist-steplist-branch-A",
+  "steps": [
+    {
+      "implementations": [
+        {
+          "fileName": "read-potential-cases.py",
+          "implementationTemplate": "# martinchapman, 2020.\n\nimport sys, csv\n\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames)\n    csv_writer.writeheader();\n    for row in csv_reader:\n        csv_writer.writerow(row)\n",
+          "implementationTemplatePath": "templates/read-potential-cases-disc.py",
+          "language": "python",
+          "substitutions": {
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        },
+        {
+          "fileName": "read-potential-cases.js",
+          "implementationTemplate": "// martinchapman, 2020\n\nconst fs = require('fs').promises;\nconst parse = require('neat-csv');\n\n(async () => {\n\n  let potentialCases;\n  try {\n    potentialCases = await fs.readFile(process.argv.slice(2)[0]);\n  } catch(error) {\n    console.error(\"Could not read input: \"+error);\n  }\n  try {\n    potentialCases = await parse(potentialCases);\n  } catch(error) {\n    console.error(\"Could not parse CSV: \"+error);\n  }\n  await fs.writeFile('codelist-steplist-branch-a-potential-cases.csv', Object.keys(potentialCases[0]).join(\",\")+\"\\n\");\n  for(let line of potentialCases) await fs.appendFile('codelist-steplist-branch-a-potential-cases.csv', Object.values(line).join(\",\")+\"\\n\");\n\n})();\n",
+          "implementationTemplatePath": "templates/read-potential-cases-disc.js",
+          "language": "js",
+          "substitutions": {
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Initial potential cases, read from disc.",
+      "outputExtension": "csv",
+      "position": 1,
+      "stepDoc": "Read potential cases from disc",
+      "stepName": "read-potential-cases-disc",
+      "stepType": "load"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "lista-terma---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista-terma---secondary",
+            "LIST": "\"123\",\"234\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 2,
+      "stepDoc": "Identify Lista terma - secondary",
+      "stepName": "lista-terma---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "lista---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"345\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista---secondary",
+            "LIST": "\"345\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 3,
+      "stepDoc": "Identify ListA - secondary",
+      "stepName": "lista---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "4ac796e0-2d19-11ed-9cdf-85215b3cee2f",
+          "implementationTempaltePath": "",
+          "language": "",
+          "substitutions": {}
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with logic indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 4,
+      "stepDoc": "ListB following listA",
+      "stepName": "listb-following-lista",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb-termf---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb-termf---primary",
+            "LIST": "\"456\",\"567\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 5,
+      "stepDoc": "Identify Listb termf - primary",
+      "stepName": "listb-termf---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb---primary",
+            "LIST": "{\"code\":\"678\",\"system\":\"system\"}",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 6,
+      "stepDoc": "Identify ListB - primary",
+      "stepName": "listb---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "output-cases.py",
+          "implementationTemplate": "# martinchapman, 2020.\n\nimport sys, csv\n\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames)\n    csv_writer.writeheader();\n    for row in csv_reader:\n        newRow = row.copy();\n        # If any exclusion criteria are met prior to any cases being identified, those cases cannot be flagged as such (assist interpretation by user).\n        newRow.update(list(map(lambda item:(item[0],\"UNK\") if len([subitem for subitem in list(newRow.items())[:list(newRow.items()).index(item)] if \"exclusion\" in subitem[0] and subitem[1]==\"TRUE\"])>0 and \"identified\" in item[0] else item, newRow.items())));\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/output-cases.py",
+          "language": "python",
+          "substitutions": {
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Output containing patients flagged as having this type of Codelist-steplist-branch-A",
+      "outputExtension": "csv",
+      "position": 7,
+      "stepDoc": "Output cases",
+      "stepName": "output-cases",
+      "stepType": "output"
+    }
+  ],
+  "userName": "martinchapman"
+},
+{
+  "about": "P6yE9OQse0mVDGyVMSdDAVbxU - Codelist steplist branch A",
+  "id": "4adea150-2d19-11ed-9cdf-85215b3cee2f",
+  "name": "Codelist-steplist-branch-A",
+  "steps": [
+    {
+      "implementations": [
+        {
+          "fileName": "read-potential-cases-i2b2.js",
+          "implementationTemplate": "// martinchapman, 2020.\n\nconst got = require('got');\nconst parser = require('fast-xml-parser');\nconst fs = require('fs').promises;\n\nconst I2B2_ENDPOINT='http://localhost:8081';\nconst USERNAME='demo';\nconst PASSWORD='demouser';\n\nfunction patientToCodes(patients, patient, code) {\n\n  if (!patients[patient]) patients[patient] = new Set();\n  patients[patient].add(code);\n  return patients;\n\n}\n\n(async () => {\n\n  const SECURITY='<security> <domain>i2b2demo</domain> <username>' + USERNAME + '</username> <password>' + PASSWORD + '</password> </security>';\n  const REQUEST_HEADER='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> <ns6:request xmlns:ns4=\"http://www.i2b2.org/xsd/cell/crc/psm/1.1/\" xmlns:ns7=\"http://www.i2b2.org/xsd/cell/ont/1.1/\" xmlns:ns3=\"http://www.i2b2.org/xsd/cell/crc/pdo/1.1/\" xmlns:ns5=\"http://www.i2b2.org/xsd/hive/plugin/\" xmlns:ns2=\"http://www.i2b2.org/xsd/hive/pdo/1.1/\" xmlns:ns6=\"http://www.i2b2.org/xsd/hive/msg/1.1/\" xmlns:ns8=\"http://www.i2b2.org/xsd/cell/crc/psm/querydefinition/1.1/\">';\n  const REQUEST_MESSAGE_HEADER='<proxy><redirect_url>' + I2B2_ENDPOINT + '/i2b2/services/QueryToolService/request</redirect_url></proxy><sending_application><application_name>i2b2_QueryTool</application_name><application_version>1.6</application_version></sending_application><sending_facility><facility_name>PHS</facility_name></sending_facility><receiving_application><application_name>i2b2_DataRepositoryCell</application_name><application_version>1.6</application_version></receiving_application><receiving_facility><facility_name>PHS</facility_name></receiving_facility><message_type><message_code>Q04</message_code><event_type>EQQ</event_type></message_type><message_control_id><message_num>wvf0EEkA5zz9Wxj82Y3ey</message_num><instance_num>0</instance_num></message_control_id><processing_id><processing_id>P</processing_id><processing_mode>I</processing_mode></processing_id><accept_acknowledgement_type>messageId</accept_acknowledgement_type><project_id>Demo</project_id>';\n  const REQUEST='<request_header> <result_waittime_ms>180000</result_waittime_ms> </request_header> <message_body> <ns4:psmheader> <user group=\"Demo\" login=\"demo\">demo</user> <patient_set_limit>0</patient_set_limit> <estimated_time>0</estimated_time> <query_mode>optimize_without_temp_table</query_mode> <request_type>CRC_QRY_runQueryInstance_fromQueryDefinition</request_type> </ns4:psmheader> <ns4:request xsi:type=\"ns4:query_definition_requestType\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> <query_definition> <query_name>Princip-Seconda@10:50:45</query_name> <query_timing>ANY</query_timing> <specificity_scale>0</specificity_scale> <panel> <panel_number>1</panel_number> <panel_accuracy_scale>100</panel_accuracy_scale> <invert>0</invert> <panel_timing>ANY</panel_timing> <total_item_occurrences>1</total_item_occurrences> <item> <hlevel>1</hlevel> <item_key>\\\\\\\\ICD10_ICD9\\\\Diagnoses\\\\(P00-P96) Cert~6976\\\\</item_key> <item_name>Certain conditions originating in the perinatal period (p00-p96)</item_name> <tooltip>Diagnoses \\\\ Certain conditions originating in the perinatal period (p00-p96)</tooltip> <item_icon>FA</item_icon> <class>ENC</class> <constrain_by_modifier> <modifier_name>Principal Diagnosis</modifier_name> <applied_path>\\\\Diagnoses\\\\(P00-P96) Cert~6976\\\\%</applied_path> <modifier_key>\\\\\\\\ICD10_ICD9\\\\Principal Diagnosis\\\\</modifier_key> </constrain_by_modifier> <item_is_synonym>false</item_is_synonym> </item> </panel> <panel> <panel_number>2</panel_number> <panel_accuracy_scale>100</panel_accuracy_scale> <invert>0</invert> <panel_timing>ANY</panel_timing> <total_item_occurrences>1</total_item_occurrences> <item> <hlevel>1</hlevel> <item_key>\\\\\\\\ICD10_ICD9\\\\Diagnoses\\\\(P00-P96) Cert~6976\\\\</item_key> <item_name>Certain conditions originating in the perinatal period (p00-p96)</item_name> <tooltip>Diagnoses \\\\ Certain conditions originating in the perinatal period (p00-p96)</tooltip> <item_icon>FA</item_icon> <class>ENC</class> <constrain_by_modifier> <modifier_name>Secondary Diagnosis</modifier_name> <applied_path>\\\\Diagnoses\\\\(P00-P96) Cert~6976\\\\%</applied_path> <modifier_key>\\\\\\\\ICD10_ICD9\\\\Secondary Diagnosis\\\\</modifier_key> </constrain_by_modifier> <item_is_synonym>false</item_is_synonym> </item> </panel> </query_definition> <result_output_list><result_output priority_index=\"12\" name=\"patientset\"/> </result_output_list> </ns4:request> </message_body> </ns6:request>';\n  const FULL_REQUEST=REQUEST_HEADER+'<message_header>'+REQUEST_MESSAGE_HEADER+SECURITY+'</message_header>'+REQUEST;\n  const QUERY_RESPONSE = await got.post(I2B2_ENDPOINT + '/i2b2/services/QueryToolService/request', {headers:{'Content-Type':'application/xml'}, body:FULL_REQUEST});\n  const QUERY_ID = parser.parse(QUERY_RESPONSE.body)['ns5:response'].message_body['ns4:response'].query_result_instance.result_instance_id;\n  const PDO_REQUEST_HEADER='<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> <ns6:request xmlns:ns4=\"http://www.i2b2.org/xsd/cell/crc/psm/1.1/\" xmlns:ns7=\"http://www.i2b2.org/xsd/cell/crc/psm/querydefinition/1.1/\" xmlns:ns3=\"http://www.i2b2.org/xsd/cell/crc/pdo/1.1/\" xmlns:ns5=\"http://www.i2b2.org/xsd/hive/plugin/\" xmlns:ns2=\"http://www.i2b2.org/xsd/hive/pdo/1.1/\" xmlns:ns6=\"http://www.i2b2.org/xsd/hive/msg/1.1/\">';\n  const PDO_REQUEST_MESSAGE_HEADER='<proxy><redirect_url>' + I2B2_ENDPOINT + '/i2b2/services/QueryToolService/pdorequest</redirect_url></proxy><sending_application><application_name>i2b2_QueryTool</application_name><application_version>1.6</application_version></sending_application><sending_facility><facility_name>PHS</facility_name></sending_facility><receiving_application><application_name>i2b2_DataRepositoryCell</application_name><application_version>1.6</application_version></receiving_application><receiving_facility><facility_name>PHS</facility_name></receiving_facility><message_type><message_code>Q04</message_code><event_type>EQQ</event_type></message_type><message_control_id><message_num>92N7S9ppn20H4ahrRja7y</message_num><instance_num>0</instance_num></message_control_id><processing_id><processing_id>P</processing_id><processing_mode>I</processing_mode></processing_id><accept_acknowledgement_type>messageId</accept_acknowledgement_type><project_id>Demo</project_id>';\n  const PDO_REQUEST='<request_header><result_waittime_ms>180000</result_waittime_ms></request_header><message_body> <ns3:pdoheader> <patient_set_limit></patient_set_limit> <estimated_time>180000</estimated_time> <request_type>getPDO_fromInputList</request_type> </ns3:pdoheader> <ns3:request xsi:type=\"ns3:GetPDOFromInputList_requestType\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"> <input_list> <patient_list min=\"1\" max=\"7\"> <patient_set_coll_id>'+QUERY_ID+'</patient_set_coll_id> </patient_list> </input_list> <filter_list> <panel name=\"\\\\\\\\ICD10_ICD9\\\\Principal Diagnosis\\\\\"> <panel_number>0</panel_number> <panel_accuracy_scale>0</panel_accuracy_scale> <invert>0</invert> <item> <hlevel>1</hlevel> <item_key>\\\\\\\\ICD10_ICD9\\\\Principal Diagnosis\\\\</item_key> <dim_tablename>MODIFIER_DIMENSION</dim_tablename> <dim_dimcode>\\\\Principal Diagnosis\\\\</dim_dimcode> <item_is_synonym>N</item_is_synonym> </item> </panel> <panel name=\"\\\\\\\\ICD10_ICD9\\\\Secondary Diagnosis\\\\\"> <panel_number>0</panel_number> <panel_accuracy_scale>0</panel_accuracy_scale> <invert>0</invert> <item> <hlevel>1</hlevel> <item_key>\\\\\\\\ICD10_ICD9\\\\Secondary Diagnosis\\\\</item_key> <dim_tablename>MODIFIER_DIMENSION</dim_tablename> <dim_dimcode>\\\\Secondary Diagnosis\\\\</dim_dimcode> <item_is_synonym>N</item_is_synonym> </item> </panel> </filter_list> <output_option> <patient_set select=\"using_input_list\" onlykeys=\"false\"/> <observation_set blob=\"true\" onlykeys=\"false\"/> </output_option> </ns3:request> </message_body> </ns6:request>';\n  const FULL_PDO_REQUEST=PDO_REQUEST_HEADER+'<message_header>'+PDO_REQUEST_MESSAGE_HEADER+SECURITY+'</message_header>'+PDO_REQUEST;\n  const PDO_QUERY_RESPONSE = await got.post(I2B2_ENDPOINT + '/i2b2/services/QueryToolService/pdorequest', {headers:{'Content-Type':'application/xml'}, body:FULL_PDO_REQUEST});\n  const PATIENT_DATA = parser.parse(PDO_QUERY_RESPONSE.body)['ns5:response'].message_body['ns3:response']['ns2:patient_data']['ns2:patient_set'];\n  // ~MDC reduce/spread slow but neat:\n  let dobs = PATIENT_DATA.patient.reduce((acc,item) => ({...acc, [item.patient_id]: item.param[5]}), {});\n  const OBSERVATIONS = parser.parse(PDO_QUERY_RESPONSE.body)['ns5:response'].message_body['ns3:response']['ns2:patient_data']['ns2:observation_set'];\n  let primaryPatients = OBSERVATIONS[0].observation;\n  // Sort, so reduce picks up latest encounter as last value for dictionary.\n  primaryPatients.sort((a,b)=>new Date(a.end_date).getTime()-new Date(b.end_date).getTime());\n  let lastEncountersPrimary = primaryPatients.reduce((acc,item) => ({...acc, [item.patient_id]: item.end_date}), {});\n  let secondaryPatients = OBSERVATIONS[1].observation;\n  secondaryPatients.sort((a,b)=>new Date(a.end_date).getTime()-new Date(b.end_date).getTime());\n  let lastEncountersSecondary = primaryPatients.reduce((acc,item) => ({...acc, [item.patient_id]: item.end_date}), {});\n  let lastEncounter = {...lastEncountersPrimary, ...lastEncountersSecondary};\n  let patients = {};\n  for(let patient of primaryPatients) patients=patientToCodes(patients, patient.patient_id, \"(\"+patient.concept_cd.split(\":\")[1]+\",\"+(patient.end_date!=null?patient.end_date.slice(0, -1):\"0000-00-00T00:00:00.000Z\")+\")\");\n  for(let patient of secondaryPatients) patients=patientToCodes(patients, patient.patient_id, \"(\"+patient.concept_cd.split(\":\")[1]+\",\"+(patient.end_date!=null?patient.end_date.slice(0, -1):\"0000-00-00T00:00:00.000Z\")+\")\");\n  await fs.appendFile('codelist-steplist-branch-a-potential-cases.csv', 'patient-id,dob,codes,last-encounter\\n');\n\n  for(let patient in patients) {\n    try {\n      await fs.appendFile('codelist-steplist-branch-a-potential-cases.csv', patient+','+dobs[patient]+',\\\"'+Array.from(patients[patient]).join(',')+'\\\",'+lastEncounter[patient].slice(0, -1)+'\\n');\n    } catch(error) {\n      console.log(error);\n    }\n  }\n\n})();\n",
+          "implementationTemplatePath": "templates/read-potential-cases-i2b2.js",
+          "language": "js",
+          "substitutions": {
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Initial potential cases, read from i2b2.",
+      "outputExtension": "csv",
+      "position": 1,
+      "stepDoc": "Read potential cases from i2b2",
+      "stepName": "read-potential-cases-i2b2",
+      "stepType": "external"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "lista-terma---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista-terma---secondary",
+            "LIST": "\"123\",\"234\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 2,
+      "stepDoc": "Identify Lista terma - secondary",
+      "stepName": "lista-terma---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "lista---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"345\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista---secondary",
+            "LIST": "\"345\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 3,
+      "stepDoc": "Identify ListA - secondary",
+      "stepName": "lista---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "4ac796e0-2d19-11ed-9cdf-85215b3cee2f",
+          "implementationTempaltePath": "",
+          "language": "",
+          "substitutions": {}
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with logic indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 4,
+      "stepDoc": "ListB following listA",
+      "stepName": "listb-following-lista",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb-termf---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb-termf---primary",
+            "LIST": "\"456\",\"567\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 5,
+      "stepDoc": "Identify Listb termf - primary",
+      "stepName": "listb-termf---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb---primary",
+            "LIST": "{\"code\":\"678\",\"system\":\"system\"}",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 6,
+      "stepDoc": "Identify ListB - primary",
+      "stepName": "listb---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "output-cases.py",
+          "implementationTemplate": "# martinchapman, 2020.\n\nimport sys, csv\n\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames)\n    csv_writer.writeheader();\n    for row in csv_reader:\n        newRow = row.copy();\n        # If any exclusion criteria are met prior to any cases being identified, those cases cannot be flagged as such (assist interpretation by user).\n        newRow.update(list(map(lambda item:(item[0],\"UNK\") if len([subitem for subitem in list(newRow.items())[:list(newRow.items()).index(item)] if \"exclusion\" in subitem[0] and subitem[1]==\"TRUE\"])>0 and \"identified\" in item[0] else item, newRow.items())));\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/output-cases.py",
+          "language": "python",
+          "substitutions": {
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Output containing patients flagged as having this type of Codelist-steplist-branch-A",
+      "outputExtension": "csv",
+      "position": 7,
+      "stepDoc": "Output cases",
+      "stepName": "output-cases",
+      "stepType": "output"
+    }
+  ],
+  "userName": "martinchapman"
+},
+{
+  "about": "P6yE9OQse0mVDGyVMSdDAVbxU - Codelist steplist branch A",
+  "id": "4adf1680-2d19-11ed-9cdf-85215b3cee2f",
+  "name": "Codelist-steplist-branch-A",
+  "steps": [
+    {
+      "implementations": [
+        {
+          "fileName": "read-potential-cases-omop.js",
+          "implementationTemplate": "// martinchapman, 2020.\n\nconst got = require('got');\nconst fs = require('fs').promises;\n\nconst OHDSI_WEBAPI_ENDPOINT='http://localhost:8080/WebAPI';\nconst DB_SOURCE_NAME='OHDSI-CDMV5';\n\nfunction patientToCodes(patients, patient, code) {\n\n  if (!patients[patient]) patients[patient] = new Set();\n  patients[patient].add(code);\n  return patients;\n\n}\n\nasync function mapCode(code) {\n  try {\n    let translations = await got.post(OHDSI_WEBAPI_ENDPOINT + '/vocabulary/' + DB_SOURCE_NAME + '/search', {json:{'QUERY': code, 'DOMAIN_ID': ['Condition']}}).json();\n    return translations.filter(mapping=>mapping.CONCEPT_ID==code)[0].CONCEPT_CODE;\n  } catch(e) {\n    return code;\n  }\n}\n\n(async()=>{\n\n  let id=0, persons, years, patients={}, ages={}, lastEncounters={};\n\n  try {\n    persons = await got(OHDSI_WEBAPI_ENDPOINT + '/cdmresults/' + DB_SOURCE_NAME + '/person/').json();\n    if (!persons) return;\n    console.log(\"persons: \" + JSON.stringify(persons));\n  } catch(e) {\n    console.error('Error counting patients in OMOP db.');\n    return;\n  }\n\n  try {\n    years = await got(OHDSI_WEBAPI_ENDPOINT + '/cdmresults/' + DB_SOURCE_NAME + '/observationPeriod/').json();\n    if (!years) return;\n    console.log(\"years: \" + JSON.stringify(years));\n  } catch(e) {\n    console.error('Error getting months.');\n    return;\n  }\n\n  let maxPersons = 1; \n  // For all patients in DB: persons.summary.filter(summary=>summary.attributeName=='Number of persons')[0].attributeValue;\n  let start = new Date(years.observedByMonth[0].monthYear.toString().substring(0,4)+'-'+years.observedByMonth[0].monthYear.toString().substring(4,6)+'-'+'01');\n  while(id < maxPersons) {\n    console.log('Finding patients...'+Math.floor(id/maxPersons*100)+'%');\n    let person;\n    try {\n      person = await got(OHDSI_WEBAPI_ENDPOINT + '/' + DB_SOURCE_NAME + '/person/' + ++id).json();\n      console.log(\"person: \" + JSON.stringify(persons));\n    } catch(e) {\n      console.error(e);\n      continue;\n    }\n    for(let record of person.records.filter(record=>record.domain=='condition')) patients = patientToCodes(patients, id, '('+await mapCode(record.conceptId)+','+(new Date(start.getTime()+record.endDay*24*60*60*1000).toISOString())+')');\n    if(person.yearOfBirth) ages[id]=person.yearOfBirth+'-01-01';\n    else ages[id]='0000-00-00';\n    let lastEncounterEnd = person.records.filter(record=>record.domain=='condition').sort((a,b)=>b.endDay-a.endDay)[0].endDay;\n    let lastEncounter = new Date(start.getTime()+lastEncounterEnd*24*60*60*1000);\n    lastEncounters[id]=lastEncounter.toISOString();\n  }\n\n  await fs.writeFile('codelist-steplist-branch-a-potential-cases.csv', 'patient-id,dob,codes,last-encounter\\n');\n  for(let patient in patients) {\n    try {\n      const row = patient+','+ages[patient]+',\\\"'+Array.from(patients[patient]).join(',')+'\\\",'+lastEncounters[patient].slice(0,-1)+'\\n';\n      console.log(\"row:\" + row);\n      await fs.appendFile('codelist-steplist-branch-a-potential-cases.csv', row);\n    } catch(error) {\n      console.log(error);\n    }\n  }\n\n})();\n",
+          "implementationTemplatePath": "templates/read-potential-cases-omop.js",
+          "language": "js",
+          "substitutions": {
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Initial potential cases, read from an OMOP DB.",
+      "outputExtension": "csv",
+      "position": 1,
+      "stepDoc": "Read potential cases from an OMOP db.",
+      "stepName": "read-potential-cases-omop",
+      "stepType": "external"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "lista-terma---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista-terma---secondary",
+            "LIST": "\"123\",\"234\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 2,
+      "stepDoc": "Identify Lista terma - secondary",
+      "stepName": "lista-terma---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "lista---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"345\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista---secondary",
+            "LIST": "\"345\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 3,
+      "stepDoc": "Identify ListA - secondary",
+      "stepName": "lista---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "4ac796e0-2d19-11ed-9cdf-85215b3cee2f",
+          "implementationTempaltePath": "",
+          "language": "",
+          "substitutions": {}
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with logic indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 4,
+      "stepDoc": "ListB following listA",
+      "stepName": "listb-following-lista",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb-termf---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb-termf---primary",
+            "LIST": "\"456\",\"567\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 5,
+      "stepDoc": "Identify Listb termf - primary",
+      "stepName": "listb-termf---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb---primary",
+            "LIST": "{\"code\":\"678\",\"system\":\"system\"}",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 6,
+      "stepDoc": "Identify ListB - primary",
+      "stepName": "listb---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "output-cases.py",
+          "implementationTemplate": "# martinchapman, 2020.\n\nimport sys, csv\n\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames)\n    csv_writer.writeheader();\n    for row in csv_reader:\n        newRow = row.copy();\n        # If any exclusion criteria are met prior to any cases being identified, those cases cannot be flagged as such (assist interpretation by user).\n        newRow.update(list(map(lambda item:(item[0],\"UNK\") if len([subitem for subitem in list(newRow.items())[:list(newRow.items()).index(item)] if \"exclusion\" in subitem[0] and subitem[1]==\"TRUE\"])>0 and \"identified\" in item[0] else item, newRow.items())));\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/output-cases.py",
+          "language": "python",
+          "substitutions": {
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Output containing patients flagged as having this type of Codelist-steplist-branch-A",
+      "outputExtension": "csv",
+      "position": 7,
+      "stepDoc": "Output cases",
+      "stepName": "output-cases",
+      "stepType": "output"
+    }
+  ],
+  "userName": "martinchapman"
+},
+{
+  "about": "P6yE9OQse0mVDGyVMSdDAVbxU - Codelist steplist branch A",
+  "id": "4adfb2c0-2d19-11ed-9cdf-85215b3cee2f",
+  "name": "Codelist-steplist-branch-A",
+  "steps": [
+    {
+      "implementations": [
+        {
+          "fileName": "read-potential-cases-fhir.js",
+          "implementationTemplate": "// martinchapman, 2021.\n\nconst got = require(\"got\");\nconst fs = require(\"fs\").promises;\n\nconst FHIR_ENDPOINT=\"http://localhost:8081\";\nconst FHIR_API_PATH=\"/hapi/fhir\";\n\nfunction patientToCodes(patients, patient, code) {\n\n  if (!patients[patient]) patients[patient] = new Set();\n  patients[patient].add(code);\n  return patients;\n\n}\n\n(async () => {\n\n  let patients={}, dobs={}, conditions, lastEncounters={};\n  try {\n    conditions = await got.get(FHIR_ENDPOINT+FHIR_API_PATH+\"/Condition\", {responseType:\"json\"});\n    conditions = conditions.body;\n  } catch(error) {\n    console.error(\"Unable to find conditions: \"+error);\n  }\n  for(let condition of conditions.entry) {\n    condition = condition.resource;\n    let patient = await got.get(FHIR_ENDPOINT+FHIR_API_PATH+\"/\"+condition.subject.reference, {responseType:\"json\"});\n    let patientId = patient.body.id;\n    dobs[patientId] = patient.body.birthDate?patient.body.birthDate:\"0000-00-00\";\n    let associatedEncounter = await got.get(FHIR_ENDPOINT+FHIR_API_PATH+\"/\"+condition.context.reference, {responseType:\"json\"});\n    patients = patientToCodes(patients, patientId, \"(\"+condition.code.coding[0].code+\",\"+new Date(associatedEncounter.body.period.end).toISOString()+\")\");\n    if(!lastEncounters[patientId]||new Date(associatedEncounter.body.period.end)>lastEncounters[patientId]) lastEncounters[patientId] = new Date(associatedEncounter.body.period.end);\n  };\n\n  await fs.writeFile(\"codelist-steplist-branch-a-potential-cases.csv\", \"patient-id,dob,codes,last-encounter\\n\");\n  for(let patient in patients) {\n    try {\n      lastEncounters[patient] = lastEncounters[patient].toISOString();\n      const row = patient+\",\"+dobs[patient]+\",\\\"\"+Array.from(patients[patient]).join(\",\")+\"\\\",\"+lastEncounters[patient].slice(0,-1)+\"\\n\";\n      await fs.appendFile(\"codelist-steplist-branch-a-potential-cases.csv\", row);\n    } catch(error) {\n      console.log(error);\n    }\n  }\n\n})();\n",
+          "implementationTemplatePath": "templates/read-potential-cases-fhir.js",
+          "language": "js",
+          "substitutions": {
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Initial potential cases, read from a FHIR server.",
+      "outputExtension": "csv",
+      "position": 1,
+      "stepDoc": "Read potential cases from a FHIR server.",
+      "stepName": "read-potential-cases-fhir",
+      "stepType": "external"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "lista-terma---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista-terma---secondary",
+            "LIST": "\"123\",\"234\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 2,
+      "stepDoc": "Identify Lista terma - secondary",
+      "stepName": "lista-terma---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "lista---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"345\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista---secondary",
+            "LIST": "\"345\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 3,
+      "stepDoc": "Identify ListA - secondary",
+      "stepName": "lista---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "4ac796e0-2d19-11ed-9cdf-85215b3cee2f",
+          "implementationTempaltePath": "",
+          "language": "",
+          "substitutions": {}
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with logic indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 4,
+      "stepDoc": "ListB following listA",
+      "stepName": "listb-following-lista",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb-termf---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb-termf---primary",
+            "LIST": "\"456\",\"567\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 5,
+      "stepDoc": "Identify Listb termf - primary",
+      "stepName": "listb-termf---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb---primary",
+            "LIST": "{\"code\":\"678\",\"system\":\"system\"}",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Patients with clinical codes indicating Codelist-steplist-branch-A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 6,
+      "stepDoc": "Identify ListB - primary",
+      "stepName": "listb---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "output-cases.py",
+          "implementationTemplate": "# martinchapman, 2020.\n\nimport sys, csv\n\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames)\n    csv_writer.writeheader();\n    for row in csv_reader:\n        newRow = row.copy();\n        # If any exclusion criteria are met prior to any cases being identified, those cases cannot be flagged as such (assist interpretation by user).\n        newRow.update(list(map(lambda item:(item[0],\"UNK\") if len([subitem for subitem in list(newRow.items())[:list(newRow.items()).index(item)] if \"exclusion\" in subitem[0] and subitem[1]==\"TRUE\"])>0 and \"identified\" in item[0] else item, newRow.items())));\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/output-cases.py",
+          "language": "python",
+          "substitutions": {
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist-steplist-branch-A",
+      "outputDoc": "Output containing patients flagged as having this type of Codelist-steplist-branch-A",
+      "outputExtension": "csv",
+      "position": 7,
+      "stepDoc": "Output cases",
+      "stepName": "output-cases",
+      "stepType": "output"
+    }
+  ],
+  "userName": "martinchapman"
+},
+{
+  "about": "8j2n3Vnv0Z0SE9bWfxk973sMNE - ListB following listA",
+  "id": "4ac796e0-2d19-11ed-9cdf-85215b3cee2f",
+  "name": "Codelist-steplist-branch-A",
+  "steps": [
+    {
+      "implementations": [
+        {
+          "fileName": "lista-terma---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"123\", \"system\":\"system\"},{\"code\":\"234\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista-terma---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista-terma---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista-terma---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista-terma---secondary",
+            "LIST": "\"123\",\"234\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist steplist branch A",
+      "outputDoc": "Patients with clinical codes indicating Codelist steplist branch A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 1,
+      "stepDoc": "Identify Lista terma - secondary",
+      "stepName": "lista-terma---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "lista---secondary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"345\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"lista---secondary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"lista---secondary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"lista---secondary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "lista---secondary",
+            "LIST": "\"345\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist steplist branch A",
+      "outputDoc": "Patients with clinical codes indicating Codelist steplist branch A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 2,
+      "stepDoc": "Identify ListA - secondary",
+      "stepName": "lista---secondary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb-termf---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [\"456\",\"567\"];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb-termf---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb-termf---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb-termf---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb-termf---primary",
+            "LIST": "\"456\",\"567\"",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist steplist branch A",
+      "outputDoc": "Patients with clinical codes indicating Codelist steplist branch A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 3,
+      "stepDoc": "Identify Listb termf - primary",
+      "stepName": "listb-termf---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "listb---primary.py",
+          "implementationTemplate": "# martinchapman, 2022.\n\nimport sys, csv, re\n\ncodes = [{\"code\":\"678\",\"system\":\"system\"}];\nREQUIRED_CODES = 1;\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-potential-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    csv_writer = csv.DictWriter(file_out, csv_reader.fieldnames + [\"listb---primary-identified\"])\n    csv_writer.writeheader();\n    codes_identified = 0;\n    for row in csv_reader:\n        newRow = row.copy();\n        for cell in row:\n            # Iterate cell lists (e.g. codes)\n            for item in re.findall(r'\\(([^,]*)\\,', row[cell]):\n                if(item in codes): codes_identified+=1;\n                if(codes_identified>=REQUIRED_CODES):\n                    newRow[\"listb---primary-identified\"] = \"CASE\";\n                    break;\n            if(codes_identified>=REQUIRED_CODES): break;\n        if(codes_identified<REQUIRED_CODES):\n            newRow[\"listb---primary-identified\"] = \"UNK\";\n        codes_identified=0;\n        csv_writer.writerow(newRow)\n",
+          "implementationTemplatePath": "templates/codelist.py",
+          "language": "python",
+          "substitutions": {
+            "AUTHOR": "martinchapman",
+            "CATEGORY": "listb---primary",
+            "LIST": "{\"code\":\"678\",\"system\":\"system\"}",
+            "PHENOTYPE": "codelist-steplist-branch-a",
+            "REQUIRED_CODES": "1",
+            "YEAR": 2022
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist steplist branch A",
+      "outputDoc": "Patients with clinical codes indicating Codelist steplist branch A related events in electronic health record.",
+      "outputExtension": "csv",
+      "position": 4,
+      "stepDoc": "Identify ListB - primary",
+      "stepName": "listb---primary",
+      "stepType": "logic"
+    },
+    {
+      "implementations": [
+        {
+          "fileName": "output-listb-following-lista-cases.py",
+          "implementationTemplate": "# martinchapman, 2020.\n\nimport sys, csv\n\ndef checkRow(row):\n    for case_steps in cases: \n        if not \"CASE\" in {col:row[col] for col in case_steps if col in row}.values(): return row;\n    row['listb-following-lista-identified'] = 'CASE';\n    return row;\n\ncases = [[\"lista-terma---secondary-identified\",\"lista---secondary-identified\"],[\"listb-termf---primary-identified\",\"listb---primary-identified\"]];\n\nwith open(sys.argv[1], 'r') as file_in, open('codelist-steplist-branch-a-cases.csv', 'w', newline='') as file_out:\n    csv_reader = csv.DictReader(file_in)\n    all_cases = [category for codes in cases for category in codes];\n    all_exclude = [header for header in csv_reader.fieldnames if \"exclusion\" in header];\n    csv_writer = csv.DictWriter(file_out, list(set(csv_reader.fieldnames)-set(all_cases)-set(all_exclude)) + ['listb-following-lista-identified'])\n    csv_writer.writeheader();\n    for row in csv_reader:\n        new_row = row.copy();\n        new_row.update(list(map(lambda item:(item[0],\"UNK\") if len([subitem for subitem in list(new_row.items())[:list(new_row.items()).index(item)] if \"exclusion\" in subitem[0] and subitem[1]==\"TRUE\"])>0 and \"identified\" in item[0] else item, new_row.items())));\n        new_row['listb-following-lista-identified'] = 'UNK';\n        new_row = checkRow(new_row);\n        for case_key in all_cases+all_exclude: new_row.pop(case_key, None);\n        csv_writer.writerow(new_row);\n",
+          "implementationTemplatePath": "templates/output-codelist-multiple.py",
+          "language": "python",
+          "substitutions": {
+            "CASES": "[[\"lista-terma---secondary-identified\",\"lista---secondary-identified\"],[\"listb-termf---primary-identified\",\"listb---primary-identified\"]]",
+            "NESTED": "listb-following-lista",
+            "PHENOTYPE": "codelist-steplist-branch-a"
+          }
+        }
+      ],
+      "inputDoc": "Potential cases of Codelist steplist branch A",
+      "outputDoc": "Output containing patients flagged as having this type of Codelist steplist branch A",
+      "outputExtension": "csv",
+      "position": 5,
+      "stepDoc": "Output cases",
+      "stepName": "output-listb-following-lista-cases",
+      "stepType": "output"
+    }
+  ],
+  "userName": "martinchapman"
+}]

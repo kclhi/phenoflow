@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  webapp-test:
+    build:
+     context: .
+     dockerfile: Dockerfile.test
+    environment:
+      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD}
+      NODE_EXTRA_CA_CERTS: ${NODE_EXTRA_CA_CERTS}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
+      GITHUB_ACCESS_TOKEN: ${GITHUB_ACCESS_TOKEN}
+    volumes:
+      - pf_uploads:/home/node/app/uploads
+    secrets:
+      - rsa-private-key
+    command: ["./bin/wait-for-it.sh", "--timeout=0", "importer-mariadb-1:3306", "--", "npx", "mocha", "-g", "IM1", "--exit"]
+
+volumes:
+  pf_uploads:
+
+networks:
+  default:
+    name: hi_default # For proxy.
+    external: true
+    
+secrets:
+  rsa-private-key:
+    file: ${HOST_RSA_PRIVATE_KEY_PATH}${RSA_PRIVATE_KEY}

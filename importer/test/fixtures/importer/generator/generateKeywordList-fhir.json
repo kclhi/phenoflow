@@ -1,0 +1,34 @@
+{
+    "workflow": "cwlVersion: v1.0\nsteps:\n  read-potential-cases-fhir:\n    run: read-potential-cases-fhir.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule1\n  imported-keywords-terma---secondary:\n    run: imported-keywords-terma---secondary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule2\n      potentialCases:\n        id: potentialCases\n        source: read-potential-cases-fhir/output\n  imported-keywords---secondary:\n    run: imported-keywords---secondary.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule3\n      potentialCases:\n        id: potentialCases\n        source: imported-keywords-terma---secondary/output\n  output-cases:\n    run: output-cases.cwl\n    out:\n    - output\n    in:\n      inputModule:\n        id: inputModule\n        source: inputModule4\n      potentialCases:\n        id: potentialCases\n        source: imported-keywords---secondary/output\nclass: Workflow\ninputs:\n  inputModule1:\n    id: inputModule1\n    doc: Js implementation unit\n    type: File\n  inputModule2:\n    id: inputModule2\n    doc: Python implementation unit\n    type: File\n  inputModule3:\n    id: inputModule3\n    doc: Python implementation unit\n    type: File\n  inputModule4:\n    id: inputModule4\n    doc: Python implementation unit\n    type: File\noutputs:\n  cases:\n    id: cases\n    type: File\n    outputSource: imported-keywords---secondary/output\n    outputBinding:\n      glob: '*.csv'\nrequirements:\n  SubworkflowFeatureRequirement: {}\n",
+    "steps": [
+        {
+            "name": "read-potential-cases-fhir",
+            "type": "external",
+            "workflowId": "00e09ac0-2d1b-11ed-8f11-fd3d5d906e1c",
+            "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: node\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Read potential cases from a FHIR server.\ninputs:\n- doc: Node implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\noutputs:\n- doc: Initial potential cases, read from a FHIR server.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/node:latest\ns:type: external\n",
+            "fileName": "read-potential-cases-fhir.js"
+        },
+        {
+            "name": "imported-keywords-terma---secondary",
+            "type": "logic",
+            "workflowId": "00e09ac0-2d1b-11ed-8f11-fd3d5d906e1c",
+            "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify Imported keywords terma - secondary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-keywords\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with keywords indicating Imported-keywords related events in electronic\n    health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+            "fileName": "imported-keywords-terma---secondary.py"
+        },
+        {
+            "name": "imported-keywords---secondary",
+            "type": "logic",
+            "workflowId": "00e09ac0-2d1b-11ed-8f11-fd3d5d906e1c",
+            "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Identify Imported keywords - secondary\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-keywords\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Patients with keywords indicating Imported-keywords related events in electronic\n    health record.\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: logic\n",
+            "fileName": "imported-keywords---secondary.py"
+        },
+        {
+            "name": "output-cases",
+            "type": "output",
+            "workflowId": "00e09ac0-2d1b-11ed-8f11-fd3d5d906e1c",
+            "content": "$namespaces:\n  s: http://phenomics.kcl.ac.uk/phenoflow/\nbaseCommand: python\nclass: CommandLineTool\ncwlVersion: v1.0\ndoc: Output cases\ninputs:\n- doc: Python implementation unit\n  id: inputModule\n  inputBinding:\n    position: 1\n  type: File\n- doc: Potential cases of Imported-keywords\n  id: potentialCases\n  inputBinding:\n    position: 2\n  type: File\noutputs:\n- doc: Output containing patients flagged as having this type of Imported-keywords\n  id: output\n  outputBinding:\n    glob: '*.csv'\n  type: File\nrequirements:\n  DockerRequirement:\n    dockerPull: kclhi/python:latest\ns:type: output\n",
+            "fileName": "output-cases.py"
+        }
+    ],
+    "workflowInputs": "inputModule1:\n  class: File\n  path: js/read-potential-cases-fhir.js\ninputModule2:\n  class: File\n  path: python/imported-keywords-terma---secondary.py\ninputModule3:\n  class: File\n  path: python/imported-keywords---secondary.py\ninputModule4:\n  class: File\n  path: python/output-cases.py\n"
+}

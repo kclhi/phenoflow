@@ -1,0 +1,19 @@
+{
+  "stepName":"read-potential-cases-template",
+  "stepDoc":"Read potential cases from template",
+  "stepType":"external",
+  "position":1,
+  "inputDoc":"Potential cases of Imported-codelist",
+  "outputDoc":"Initial potential cases, read from template",
+  "outputExtension":"csv",
+  "implementations":  [
+    {
+      "fileName":"read-potential-cases.template.py",
+      "language":"python",
+      "implementationTemplate":"import csv\n\nwith open('imported-codelist-potential-cases.csv', 'w', newline='') as file_out:\n    csv_writer = csv.DictWriter(file_out, [\"patient-id\",\"dob\",\"codes\",\"last-encounter\"])\n    csv_writer.writeheader();\n",
+      "substitutions":  {
+        "PHENOTYPE":"imported-codelist"
+      }
+    }
+  ]
+}

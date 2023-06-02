@@ -1,0 +1,382 @@
+{
+    "tables": {
+        "children": {
+            "tableName": "children",
+            "schema": {
+                "name": {
+                    "field": "name",
+                    "seqType": "Sequelize.STRING"
+                },
+                "distinctStepName": {
+                    "field": "distinctStepName",
+                    "seqType": "Sequelize.STRING"
+                },
+                "distinctStepPosition": {
+                    "field": "distinctStepPosition",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "workflowId": {
+                    "primaryKey": true,
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "workflowId",
+                    "seqType": "Sequelize.STRING"
+                },
+                "parentId": {
+                    "primaryKey": true,
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "parentId",
+                    "seqType": "Sequelize.STRING"
+                }
+            },
+            "indexes": []
+        },
+        "implementations": {
+            "tableName": "implementations",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "primaryKey": true,
+                    "autoIncrement": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "language": {
+                    "field": "language",
+                    "seqType": "Sequelize.STRING"
+                },
+                "fileName": {
+                    "field": "fileName",
+                    "seqType": "Sequelize.STRING"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "stepId": {
+                    "allowNull": false,
+                    "references": {
+                        "model": "steps",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "stepId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": {
+                "5aa237f0674f2e7415334f3605b29d4af07cb015": {
+                    "unique": true,
+                    "fields": [
+                        "language",
+                        "stepId"
+                    ],
+                    "options": {
+                        "indicesType": "UNIQUE"
+                    }
+                }
+            }
+        },
+        "inputs": {
+            "tableName": "inputs",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "primaryKey": true,
+                    "autoIncrement": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "doc": {
+                    "field": "doc",
+                    "seqType": "Sequelize.STRING"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "stepId": {
+                    "allowNull": false,
+                    "references": {
+                        "model": "steps",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "stepId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": {
+                "10bc29550498baf7a6ba6f6183cd4755616cda10": {
+                    "unique": true,
+                    "fields": [
+                        "stepId"
+                    ],
+                    "options": {
+                        "indicesType": "UNIQUE"
+                    }
+                }
+            }
+        },
+        "outputs": {
+            "tableName": "outputs",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "primaryKey": true,
+                    "autoIncrement": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "doc": {
+                    "field": "doc",
+                    "seqType": "Sequelize.STRING"
+                },
+                "extension": {
+                    "field": "extension",
+                    "seqType": "Sequelize.STRING"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "stepId": {
+                    "allowNull": false,
+                    "references": {
+                        "model": "steps",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "stepId",
+                    "seqType": "Sequelize.INTEGER"
+                }
+            },
+            "indexes": {
+                "10bc29550498baf7a6ba6f6183cd4755616cda10": {
+                    "unique": true,
+                    "fields": [
+                        "stepId"
+                    ],
+                    "options": {
+                        "indicesType": "UNIQUE"
+                    }
+                }
+            }
+        },
+        "steps": {
+            "tableName": "steps",
+            "schema": {
+                "id": {
+                    "allowNull": false,
+                    "primaryKey": true,
+                    "autoIncrement": true,
+                    "field": "id",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "name": {
+                    "allowNull": false,
+                    "field": "name",
+                    "seqType": "Sequelize.STRING"
+                },
+                "doc": {
+                    "field": "doc",
+                    "seqType": "Sequelize.STRING"
+                },
+                "type": {
+                    "field": "type",
+                    "seqType": "Sequelize.STRING"
+                },
+                "position": {
+                    "allowNull": false,
+                    "field": "position",
+                    "seqType": "Sequelize.INTEGER"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "workflowId": {
+                    "allowNull": false,
+                    "references": {
+                        "model": "workflows",
+                        "key": "id"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "workflowId",
+                    "seqType": "Sequelize.STRING"
+                }
+            },
+            "indexes": {
+                "a8c077bdab379095ef0211df7b7f289cd55ae3bf": {
+                    "unique": true,
+                    "fields": [
+                        "name",
+                        "position",
+                        "workflowId"
+                    ],
+                    "options": {
+                        "indicesType": "UNIQUE"
+                    }
+                },
+                "0ab42c047622ccd7b9dc405225942c62eeae5222": {
+                    "unique": true,
+                    "fields": [
+                        "name",
+                        "workflowId"
+                    ],
+                    "options": {
+                        "indicesType": "UNIQUE"
+                    }
+                },
+                "da51803387e6b69522f756c51817141a13a7699d": {
+                    "unique": true,
+                    "fields": [
+                        "position",
+                        "workflowId"
+                    ],
+                    "options": {
+                        "indicesType": "UNIQUE"
+                    }
+                }
+            }
+        },
+        "users": {
+            "tableName": "users",
+            "schema": {
+                "name": {
+                    "primaryKey": true,
+                    "allowNull": false,
+                    "field": "name",
+                    "seqType": "Sequelize.STRING"
+                },
+                "password": {
+                    "allowNull": false,
+                    "field": "password",
+                    "seqType": "Sequelize.STRING"
+                },
+                "restricted": {
+                    "defaultValue": {
+                        "value": false
+                    },
+                    "field": "restricted",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
+                "verified": {
+                    "field": "verified",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
+                "homepage": {
+                    "field": "homepage",
+                    "seqType": "Sequelize.STRING"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                }
+            },
+            "indexes": []
+        },
+        "workflows": {
+            "tableName": "workflows",
+            "schema": {
+                "id": {
+                    "primaryKey": true,
+                    "allowNull": false,
+                    "field": "id",
+                    "seqType": "Sequelize.STRING"
+                },
+                "name": {
+                    "field": "name",
+                    "seqType": "Sequelize.STRING"
+                },
+                "about": {
+                    "field": "about",
+                    "seqType": "Sequelize.STRING"
+                },
+                "complete": {
+                    "defaultValue": {
+                        "value": false
+                    },
+                    "field": "complete",
+                    "seqType": "Sequelize.BOOLEAN"
+                },
+                "createdAt": {
+                    "allowNull": false,
+                    "field": "createdAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "updatedAt": {
+                    "allowNull": false,
+                    "field": "updatedAt",
+                    "seqType": "Sequelize.DATE"
+                },
+                "userName": {
+                    "allowNull": false,
+                    "references": {
+                        "model": "users",
+                        "key": "name"
+                    },
+                    "onDelete": "CASCADE",
+                    "onUpdate": "CASCADE",
+                    "field": "userName",
+                    "seqType": "Sequelize.STRING"
+                }
+            },
+            "indexes": []
+        }
+    },
+    "revision": 1
+}

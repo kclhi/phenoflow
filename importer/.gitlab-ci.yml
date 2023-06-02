@@ -1,0 +1,24 @@
+stages:
+  - build_web
+  - test_web
+
+cache:
+  paths:
+    - node_modules/
+
+install_node_dependencies:
+  image: node:16
+  stage: build_web
+  script:
+    - npm install
+  artifacts:
+    paths:
+      - node_modules/
+
+test_web:
+  image: node:16
+  stage: test_web
+  script: npm test
+  variables:
+    GHE_ACCESS_TOKEN: "foo"
+    RSA_PRIVATE_KEY_FULL_PATH: "README.md"
