@@ -140,7 +140,7 @@ class Github {
     let octokit;
     const accessToken = config.get("github.ACCESS_TOKEN");
     try {
-      octokit = new Octokit({baseUrl:config.get("github.BASE_URL"), auth:accessToken});
+      octokit = new Octokit({baseUrl:config.get("github.BASE_URL"), auth:accessToken, log:{debug:()=>{}, info:()=>{}, warn: console.warn, error: console.error}});
     } catch(error) {
       logger.error("Error connecting to Github: " + error);
       return false;
@@ -155,7 +155,7 @@ class Github {
     try {
       repos = await octokit.repos.listForOrg({org:org});
     } catch(error) {
-      logger.error("Error enumerating repos: " + error);
+      logger.error("Error enumerating repos for organisation " + org + ": " + error);
       return false;
     }
     return repos;
