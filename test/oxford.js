@@ -22,7 +22,7 @@ describe("oxford importer", () => {
 		it("[OX1] Should be able to add a new user.", async() => {
       const result = await models.user.findOrCreate({
         where: {name:"oxford"},
-        defaults: {name:"oxford", password:config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://orchid.phc.ox.ac.uk/", restricted:true}
+        defaults: {name:"oxford", password:config.get("user.DEFAULT_PASSWORD"), verified:"true", homepage:"https://orchid.phc.ox.ac.uk/", restricted:false}
       });
 			result.should.be.a("Array");
 		}).timeout(0);
