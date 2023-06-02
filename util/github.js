@@ -380,7 +380,7 @@ class Github {
       let sha = await Github.commit(subflow, subflow.workflow.id, subflow.workflow.name, subflow.workflow.about, subflow.workflow.userName, 'main');
       if(!sha) return false;
       let nestedWorkflowId = subflow.workflow.name + '---' + subflow.workflow.id;
-      subModules[subflow.workflow.id] = {'name': nestedWorkflowId, 'url': config.get("github.ORGANISATION_SSH") + '/' + nestedWorkflowId + '.git', 'sha': sha};
+      subModules[subflow.workflow.id] = {'name': nestedWorkflowId, 'url': config.get("github.REPOSITORY_PREFIX") + '/' + nestedWorkflowId + '.git', 'sha': sha};
     }
 
     generatedYAMLWorkflows = [...new Set(parents)].concat(generatedYAMLWorkflows.filter(generatedYAMLWorkflow=>!parents.includes(generatedYAMLWorkflow) && !nested.includes(generatedYAMLWorkflow)));

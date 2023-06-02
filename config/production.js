@@ -22,7 +22,7 @@ module.exports = {
   github: {
     BASE_URL: "https://api.github.com",
     ACCESS_TOKEN: process.env.GITHUB_ACCESS_TOKEN,
-    ORGANISATION_SSH: "git@github.com:phenoflow"
+    REPOSITORY_PREFIX: "https://github.com/phenoflow"
   },
   jwt: {
     RSA_PRIVATE_KEY: raw(fs.readFileSync("/run/secrets/rsa-private-key", "utf-8"))
