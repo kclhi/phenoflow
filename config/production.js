@@ -19,6 +19,11 @@ module.exports = {
   generator: {
     URL: "https://generator-webapp-1:3004"
   },
+  github: {
+    BASE_URL: "https://api.github.com",
+    ACCESS_TOKEN: process.env.GITHUB_ACCESS_TOKEN,
+    ORGANISATION_SSH: "git@github.com:phenoflow"
+  },
   jwt: {
     RSA_PRIVATE_KEY: raw(fs.readFileSync("/run/secrets/rsa-private-key", "utf-8"))
   }

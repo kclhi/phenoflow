@@ -3,7 +3,7 @@ services:
 
   proxy:
     build:
-      context: ./web/proxy
+      context: proxy
     command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
     depends_on:
       - webapp
@@ -19,6 +19,7 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
+      GITHUB_ACCESS_TOKEN: ${GITHUB_ACCESS_TOKEN}
     restart: unless-stopped
     volumes:
       - pf_uploads:/home/node/app/uploads
@@ -63,4 +64,4 @@ networks:
 
 secrets:
   rsa-private-key:
-    file: ${RSA_PRIVATE_KEY_FULL_PATH}
+    file: ${HOST_RSA_PRIVATE_KEY_PATH}${RSA_PRIVATE_KEY}
