@@ -22,7 +22,8 @@ module.exports = {
   github: {
     BASE_URL: "https://api.github.com",
     ACCESS_TOKEN: process.env.GITHUB_ACCESS_TOKEN,
-    REPOSITORY_PREFIX: "https://github.com/phenoflow"
+    REPOSITORY_PREFIX: "https://github.com/phenoflow",
+    ZENODO_WEBHOOK: process.env.GITHUB_ZENODO_WEBHOOK
   },
   jwt: {
     RSA_PRIVATE_KEY: raw(fs.readFileSync("/run/secrets/rsa-private-key", "utf-8"))

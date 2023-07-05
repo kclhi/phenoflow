@@ -177,6 +177,25 @@ class Github {
     return true;
   }
 
+  static async addZenodoWebhook(owner, repo) {
+    let octokit = await Github.getConnection();
+    let hookConfig = {
+      'url': config.get('github.ZENODO_WEBHOOK'),
+      'content_type': 'json',
+      'insecure_ssl': '0'
+    }
+    try {
+      octokit.rest.repos.createWebhook({
+        owner,
+        repo,
+        config:hookConfig,
+        events: ['release']
+      });
+    } catch(error) {
+      logger.error("Unable to add Zenodo webhook to repo: " + error)
+    }
+  }
+
   static async commit(generatedWorkflow, id, name, about, author, connector, submodules=[], restricted=false) {
 
     let workflowRepo = "output/" + id;
@@ -331,7 +350,10 @@ class Github {
     const repo = name + '---' + (parentId?parentId:id);
     let octokit = await Github.getConnection();
     if(!octokit || !repos) return false;
-    if (!repos.data.map((repo) => repo.name).includes(repo)) if(!await createRepo(octokit, 'phenoflow', repo, about, restricted)) return false;
+    if (!repos.data.map((repo) => repo.name).includes(repo)) {
+      if(!await createRepo(octokit, 'phenoflow', repo, about, restricted)) return false;
+      Github.addZenodoWebhook('phenoflow', repo);
+    }
 
     let sha = await uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo, connector, submodules);
     return sha ? sha : false;

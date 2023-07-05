@@ -47,6 +47,9 @@ MYSQL_DATABASE=
 
 `HOST_RSA_PRIVATE_KEY_PATH=`
 
+Note 1: As this is used as a pseudo secret by compose, permissions must be edited.
+Note 2: If running production images locally, this directory must also be created.
+
 5. Add production GitHub credentials:
 
 `GITHUB_ACCESS_TOKEN=`
