@@ -20,7 +20,7 @@ Components of the Phenoflow architecture.
 2. Run [importer/proxy/certs/gen-domain-cert.sh](importer/proxy/certs/gen-domain-cert.sh).
 3. Copy importer/proxy/certs/pf.* to [generator/certs](generator/certs).
 4. Run [generator/certs/gen-domain-cert.sh](generator/certs/gen-domain-cert.sh).
-5. Copy importer/certs/pf.* to [parser/certs](parser/certs).
+5. Copy importer/proxy/certs/pf.* to [parser/certs](parser/certs).
 6. Run [parser/certs/gen-domain-cert.sh](parser/certs/gen-domain-cert.sh).
 
 ## Install, run and deploy
