@@ -153,7 +153,7 @@ class Github {
     if(!octokit) return false;
     let repos;
     try {
-      repos = await octokit.repos.listForOrg({org:org});
+      repos = await octokit.repos.listForOrg({org:org, per_page:10000});
     } catch(error) {
       logger.error("Error enumerating repos for organisation " + org + ": " + error);
       return false;

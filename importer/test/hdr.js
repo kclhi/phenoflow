@@ -72,8 +72,23 @@ describe("hdr", () => {
     }
 
     it("[HDR1] Should be able to import a phenotype from the HDR UK phenotype library API", async () => {
-      let allPhenotypes = await getAllPhenotypesHDR();
+      let allPhenotypes = (await getAllPhenotypesHDR()).filter(phenotype=>phenotype.phenotype_id.includes("PH969"));
       expect(await importPhenotypeHDR(allPhenotypes[0])).to.be.true;
+    }).timeout(0);
+
+    it("[HDR2] Should be able to import a subset of phenotypes from the HDR UK phenotype library API", async () => {
+      let allPhenotypes = await getAllPhenotypesHDR();
+      let allPhenotypesShuffled = allPhenotypes
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value)
+      for(let phenotype = 0; phenotype < Math.min(5, allPhenotypesShuffled.length); phenotype++) {
+        expect(await importPhenotypeHDR(allPhenotypesShuffled[phenotype])).to.be.true;
+      }
+    }).timeout(0);
+
+    it("[HDR3] Should be able to import all phenotypes from the HDR UK phenotype library API", async () => {
+      expect(await importAllPhenotypesHDR()).to.be.true;
     }).timeout(0);
 
   });
