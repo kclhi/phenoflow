@@ -7,11 +7,11 @@ const stemmer = natural.PorterStemmer;
 class Parser {
 
   static primaryCodeKeys() {
-    return ["readcode", "snomedconceptid", "readv2code", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid", "readorsnomedterm"];
+    return ["readcode", "snomedconceptid", "readv2code", "readcodev2", "medcode", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid", "readorsnomedterm", "gprdproductcode", "oxmiscode", "ctv3code", "bnfcode", "prodcode", "nonstandardcode", "mulitlexcode", "ukbiobankcode"];
   }
 
   static secondaryCodeKeys() {
-    return ["icdcode", "icd10code", "icd11code", "opcs4code", "icdcodeuncat", "keyword"];
+    return ["icdcode", "icd9code", "icd10code", "icd11code", "opcs4code", "icdcodeuncat", "keyword"];
   }
 
   static otherCodingSystems() {
@@ -40,17 +40,28 @@ class Parser {
   }
 
   static fullClean(input) {
-    if(!input) return input;
+    if(!input) {
+      logger.warn('No input to clean')
+      return input;
+    }
     return input.toLowerCase().replace(/[^a-z0-9]/g, "");
   }
 
   static clean(input, spaces=false) {
+    if(!input) {
+      logger.warn('No input to clean')
+      return input;
+    }
     input = input.replace(/\//g, "").replace(/(\s)?\(.*\)/g, "").replace(/\,/g, "").replace(/&amp;/g, "and");
     if(!spaces) input = input.replace(/ /g, "-");
     return input;
   }
 
   static lightClean(input) {
+    if(!input) {
+      logger.warn('No input to clean')
+      return input;
+    }
     input = input.replace("(", "").replace(")", "");
     return input;
   }
@@ -85,7 +96,12 @@ class Parser {
     let system = (csvFile.content[0]["codingsystem"]||csvFile.content[0]["codetype"]||csvFile.content[0]["vocabulary"])||
     ((systems = Parser.primaryCodeKeys().concat(Parser.secondaryCodeKeys()).filter(codeKey=>Object.keys(csvFile.content[0]).map(key=>Parser.fullClean(key)).includes(Parser.fullClean(codeKey)))).length?systems[0]:null)||
     Parser.otherCodingSystems().filter((system)=>Parser.fullClean(system)==Parser.fullClean(filename.split("_")[filename.split("_").length-1]))[0];
-    return system.replace('code', '').replace('conceptid', '');
+    if(system) {
+      return system.replace('code', '').replace('conceptid', '');
+    } else {
+      logger.warn("No system information")
+      return null;
+    }
   }
 
   static getDescription(row) {
@@ -95,6 +111,8 @@ class Parser {
     if(description) {
       description = description.replace("[X]", "").replace("[D]", "");
       splitDescription = description.split(Parser.splitExpression());
+    } else {
+      logger.warn("No description")
     }
     // 'Shortness of breath' becomes 'breath shortness', for example, so as not to lose meaning when removing ignored words.
     if(splitDescription.length==3&&splitDescription[1]=="of") splitDescription=[splitDescription[2],splitDescription[0]];
@@ -218,7 +236,9 @@ class Parser {
             }
             // If no common term, pick most representative term from description
             if(!matched) {
-              let keyTerm = getKeyTerm(description, name).replace('-', '');
+              let keyTerm = getKeyTerm(description, name);
+              keyTerm = keyTerm.replace('-', '');
+              if(!keyTerm) logger.warn("No key term");
               let existingKey = Object.keys(categories).filter(key=>key.toLowerCase()==(keyTerm+codingSystemGroup).toLowerCase())[0];
               categories[existingKey]?categories[existingKey].push(codeAndSystem):categories[keyTerm+codingSystemGroup]=[codeAndSystem];
             }
