@@ -3,6 +3,8 @@ const logger = require('../config/winston');
 const config = require('config');
 const path = require('path')
 const { Octokit } = require("@octokit/rest");
+const { throttling } = require("@octokit/plugin-throttling");
+const ThrottledOcto = Octokit.plugin(throttling);
 const glob = require('fast-glob');
 
 const Workflow = require("../util/workflow");
@@ -140,7 +142,30 @@ class Github {
     let octokit;
     const accessToken = config.get("github.ACCESS_TOKEN");
     try {
-      octokit = new Octokit({baseUrl:config.get("github.BASE_URL"), auth:accessToken, log:{debug:()=>{}, info:()=>{}, warn: console.warn, error: console.error}});
+      octokit = new ThrottledOcto({baseUrl:config.get("github.BASE_URL"), auth:accessToken, log:{debug:()=>{}, info:()=>{}, warn: console.warn, error: console.error},
+        throttle: {
+          onRateLimit: (retryAfter, options, octokit) => {
+            octokit.log.warn(
+              `Request quota exhausted for request ${options.method} ${options.url}`,
+            );
+      
+            if(options.request.retryCount <= 2) {
+              logger.info(`Retrying after ${retryAfter} seconds!`);
+              return true;
+            }
+          },
+          onSecondaryRateLimit: (retryAfter, options, octokit) => {
+            octokit.log.warn(
+              `Secondary quota detected for request ${options.method} ${options.url}`,
+            );
+
+            if(options.request.retryCount <= 2) {
+              logger.info(`Retrying after ${retryAfter} seconds!`);
+              return true;
+            }
+          }
+        }
+      });
     } catch(error) {
       logger.error("Error connecting to Github: " + error);
       return false;

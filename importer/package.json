@@ -8,6 +8,7 @@
     "migrate": "sequelize db:migrate"
   },
   "dependencies": {
+    "@octokit/plugin-throttling": "^6.1.0",
     "@octokit/rest": "^19.0.4",
     "adm-zip": "^0.5.9",
     "await-spawn": "^4.0.2",
