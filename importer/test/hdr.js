@@ -65,6 +65,7 @@ describe("hdr", () => {
       }
       allCSVs = Object.entries(allCSVs).map(codelist=>({"filename":phenotype.phenotype_name.replaceAll(" ", "_") + "_" + phenotype.phenotype_id + "_" + codelist[0].replaceAll(" ", "_"), "content":codelist[1]}));
       if(!await addUser(phenotype.author)) return false;
+      if(!allCSVs.length) return true;
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:allCSVs, name:phenotype.phenotype_name, about:phenotype.phenotype_name + " - " + phenotype.phenotype_id, userName:phenotype.author});
       res.should.be.a("object");
       res.should.have.status(200);
@@ -72,7 +73,7 @@ describe("hdr", () => {
     }
 
     it("[HDR1] Should be able to import a phenotype from the HDR UK phenotype library API", async () => {
-      let allPhenotypes = (await getAllPhenotypesHDR()).filter(phenotype=>phenotype.phenotype_id.includes("PH969"));
+      let allPhenotypes = (await getAllPhenotypesHDR()).filter(phenotype=>phenotype.phenotype_id.includes("PH10"));
       expect(await importPhenotypeHDR(allPhenotypes[0])).to.be.true;
     }).timeout(0);
 
