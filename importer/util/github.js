@@ -142,30 +142,34 @@ class Github {
     let octokit;
     const accessToken = config.get("github.ACCESS_TOKEN");
     try {
-      octokit = new ThrottledOcto({baseUrl:config.get("github.BASE_URL"), auth:accessToken, log:{debug:()=>{}, info:()=>{}, warn: console.warn, error: console.error},
-        throttle: {
-          onRateLimit: (retryAfter, options, octokit) => {
-            octokit.log.warn(
-              `Request quota exhausted for request ${options.method} ${options.url}`,
-            );
-      
-            if(options.request.retryCount <= 2) {
-              logger.info(`Retrying after ${retryAfter} seconds!`);
-              return true;
-            }
-          },
-          onSecondaryRateLimit: (retryAfter, options, octokit) => {
-            octokit.log.warn(
-              `Secondary quota detected for request ${options.method} ${options.url}`,
-            );
+      if(config.get("github.BASE_URL").includes("github.com")) {
+        octokit = new ThrottledOcto({baseUrl:config.get("github.BASE_URL"), auth:accessToken, log:{debug:()=>{}, info:()=>{}, warn: console.warn, error: console.error},
+          throttle: {
+            onRateLimit: (retryAfter, options, octokit) => {
+              octokit.log.warn(
+                `Request quota exhausted for request ${options.method} ${options.url}`,
+              );
+        
+              if(options.request.retryCount <= 2) {
+                logger.info(`Retrying after ${retryAfter} seconds!`);
+                return true;
+              }
+            },
+            onSecondaryRateLimit: (retryAfter, options, octokit) => {
+              octokit.log.warn(
+                `Secondary quota detected for request ${options.method} ${options.url}`,
+              );
 
-            if(options.request.retryCount <= 2) {
-              logger.info(`Retrying after ${retryAfter} seconds!`);
-              return true;
+              if(options.request.retryCount <= 2) {
+                logger.info(`Retrying after ${retryAfter} seconds!`);
+                return true;
+              }
             }
           }
-        }
-      });
+        });
+      } else {
+        octokit = new Octokit({baseUrl:config.get("github.BASE_URL"), auth:accessToken, log:{debug:()=>{}, info:()=>{}, warn: console.warn, error: console.error}});
+      }
     } catch(error) {
       logger.error("Error connecting to Github: " + error);
       return false;
@@ -176,30 +180,59 @@ class Github {
   static async getRepos(org='phenoflow') {
     let octokit = await Github.getConnection();
     if(!octokit) return false;
-    let repos;
+    let allRepos = { data: [] }, page = 1, repos = [];
     try {
-      repos = await octokit.repos.listForOrg({org:org, per_page:10000});
+      do {
+        repos = await octokit.repos.listForOrg({org:org, per_page:100, page:page++});
+        allRepos.data = allRepos.data.concat(repos.data);
+        allRepos.headers = repos.headers;
+        allRepos.status = repos.status;
+        allRepos.url = repos.url;
+      } while(repos.data.length)
     } catch(error) {
-      logger.error("Error enumerating repos for organisation " + org + ": " + error);
-      return false;
+      logger.error("Error enumerating repos for organisation (" + (repos?repos:"No repos") + ") " + org + ": " + error);
     }
-    return repos;
+    return allRepos;
   }
 
   static async clearAllRepos(org='phenoflow') {
     let octokit = await Github.getConnection();
     if(!octokit) return false;
     let repos = await Github.getRepos(org);
-    if(!repos) return false;
+    if(!repos.data.length) return false;
     try {
       for(let repo of repos.data) {
-        await octokit.repos.delete({owner:org, repo:repo.name});
+        if(repo?.name.includes('---')) await octokit.repos.delete({owner:org, repo:repo.name});
       }
     } catch(error) {
       logger.error("Error deleting test repos: " + error);
       return false;
     }
     return true;
+  }
+
+  static async deleteRepo(id, org='phenoflow') {
+    let octokit = await Github.getConnection();
+    if(!octokit) return false;
+    let repos = await Github.getRepos(org);
+    if(!repos.data.length) return false;
+    try {
+      let repo = repos.data.filter(repo=>repo.name.includes(id))?.[0];
+      if(repo && repo.name.includes('---')) await octokit.repos.delete({owner:org, repo:repo.name});
+    } catch(error) {
+      logger.error("Error deleting test repo: " + error);
+      return false;
+    }
+    return true;
+  }
+
+  static async getBranches(name, org='phenoflow') {
+    try {
+      return await (await Github.getConnection()).repos.listBranches({owner:org, repo:name});
+    } catch(error) {
+      logger.error("Unable to get branches: " + error);
+      return [];
+    }
   }
 
   static async addZenodoWebhook(owner, repo) {
@@ -219,6 +252,10 @@ class Github {
     } catch(error) {
       logger.error("Unable to add Zenodo webhook to repo: " + error)
     }
+  }
+
+  static createRepoName(name, id) {
+    return name.replaceAll("'", "") + '---' + id; 
   }
 
   static async commit(generatedWorkflow, id, name, about, author, connector, submodules=[], restricted=false) {
@@ -259,7 +296,7 @@ class Github {
     const getFileAsUTF8 = async(filePath) => {
       try {
         return await fsAsync.readFile(filePath, 'utf8');
-      } catch(exception) {
+      } catch(error) {
         logger.error("Error reading utf8 version of file: " + filePath);
         return false;
       }
@@ -269,8 +306,8 @@ class Github {
       let blobData;
       try {
         blobData = await octo.git.createBlob({owner:org, repo, content, encoding:'utf-8'})
-      } catch(exception) {
-        logger.error("Error creating blob: " + exception + ". " + org + " " + repo + " " + content);
+      } catch(error) {
+        logger.error("Error creating blob: " + error + ". " + org + " " + repo + " " + content);
         return false;
       }
       return blobData.data
@@ -281,8 +318,8 @@ class Github {
       if(!content) return false;
       try {
         return await createBlob(octo, org, repo, content);
-      } catch(exception) {
-        logger.error("Error creating blob for file: " + exception + " " + filePath);
+      } catch(error) {
+        logger.error("Error creating blob for file: " + error + " " + filePath);
         return false;
       }
     }
@@ -293,7 +330,7 @@ class Github {
       try {
         var { data } = await octo.git.createTree({owner, repo, tree, base_tree: parentTreeSha});
       } catch(error) {
-        logger.error("Error creating tree: " + exception + ". " + owner + " " + repo + " " + tree + " " + parentTreeSha);
+        logger.error("Error creating tree: " + error + ". " + owner + " " + repo + " " + tree + " " + parentTreeSha);
         return false;
       }
       return data;
@@ -330,8 +367,8 @@ class Github {
       let blobData;
       try {
         return await createBlob(octo, org, repo, content);
-      } catch(exception) {
-        logger.error("Error creating blob: " + exception + ". " + org + " " + repo + " " + JSON.stringify(submodules) + " " + content);
+      } catch(error) {
+        logger.error("Error creating blob: " + error + ". " + org + " " + repo + " " + JSON.stringify(submodules) + " " + content);
         return false;
       }
     }
@@ -372,9 +409,9 @@ class Github {
 
     let repos = await Github.getRepos();
     let parentId = await Workflow.getParent(id);
-    const repo = name + '---' + (parentId?parentId:id);
+    const repo = Github.createRepoName(name, (parentId?parentId:id));
     let octokit = await Github.getConnection();
-    if(!octokit || !repos) return false;
+    if(!octokit || !repos.data.length) return false;
     if (!repos.data.map((repo) => repo.name).includes(repo)) {
       if(!await createRepo(octokit, 'phenoflow', repo, about, restricted)) return false;
       Github.addZenodoWebhook('phenoflow', repo);
@@ -405,7 +442,7 @@ class Github {
         for(let nestedWorkflowInStep of workflowA.generate.body.steps.filter(step=>!step.fileName)) {
           // if nested workflow represented by other passed workflow
           if(nestedWorkflowInStep.content.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')==workflowBContent.replaceAll('\n', '').replace(/outputs:\s*\w*:\s*id:\s*\w*/,'')) {
-            let nestedWorkflowId = workflowB.workflow.name + '---' + workflowB.workflow.id;
+            let nestedWorkflowId = Github.createRepoName(workflowB.workflow.name, workflowB.workflow.id);
             // point parent workflow to subfolder containing nested workflow
             workflowA.generate.body.workflow = workflowA.generate.body.workflow.replace(nestedWorkflowInStep.name + '.cwl', nestedWorkflowId + '/' + workflowB.workflow.name + '.cwl');
             // point parent workflow inputs to nested workflow implementation units
@@ -426,7 +463,7 @@ class Github {
       // assume subflows don't have connectors of their own
       let sha = await Github.commit(subflow, subflow.workflow.id, subflow.workflow.name, subflow.workflow.about, subflow.workflow.userName, 'main');
       if(!sha) return false;
-      let nestedWorkflowId = subflow.workflow.name + '---' + subflow.workflow.id;
+      let nestedWorkflowId = Github.createRepoName(subflow.workflow.name, subflow.workflow.id);
       subModules[subflow.workflow.id] = {'name': nestedWorkflowId, 'url': config.get("github.REPOSITORY_PREFIX") + '/' + nestedWorkflowId + '.git', 'sha': sha};
     }
 

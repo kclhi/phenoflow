@@ -115,15 +115,19 @@ describe("importer", () => {
       if(process.env.NODE_ENV && process.env.NODE_ENV=="test") await Github.clearAllRepos(); 
     })
 
-    async function importCodelist() {
+    async function importJSONCodelist(codelist) {
       // Set up mocks in the order in which they will be called
-      nock(config.get("parser.URL")).post("/phenoflow/parser/parseCodelists").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseCodelists.json", "utf8")));
+      nock(config.get("parser.URL")).post("/phenoflow/parser/parseCodelists").reply(200, codelist);
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-disc.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-i2b2.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-omop.json", "utf8")));
       nock(config.get("generator.URL")).post("/generate").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/generator/generateCodelists-fhir.json", "utf8")));
       let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:Importer.getParsedCSVs(), name:"Imported codelist", about:"Imported codelist", userName:"martinchapman"});
       return res;
+    }
+
+    async function importCodelist() {
+      return await importJSONCodelist(JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseCodelists.json", "utf8"))) 
     }
 
     it("[IM1] Should be able to import a codelist.", async() => {
@@ -237,6 +241,29 @@ describe("importer", () => {
       let workflows;
 			try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
 			expect(workflows).to.have.lengthOf(4);
+    }).timeout(0);
+
+    it("[IM8] Should be able to delete an imported codelist.", async() => {
+      await Importer.addDefaultUser();
+      let res = await importCodelist();
+      res.should.have.status(200);
+      let workflows;
+			try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
+			expect(workflows).to.have.lengthOf(4);
+      res = await chai.request(testServerObject).post("/phenoflow/importer/remove").send({id:workflows[1].id});
+      res.should.have.status(200);
+      try { workflows = await models.workflow.findAll(); } catch(error) { logger.error(error); };
+			expect(workflows).to.have.lengthOf(0);
+    }).timeout(0);
+
+    it("[IM9] Should be able to clear partial imports.", async() => {
+      await Importer.addDefaultUser();
+      let codelist = JSON.parse(await fs.readFile("test/fixtures/importer/parser/parseCodelists.json", "utf8"));
+      codelist = codelist.map(list=>Object.assign({}, list, {name: "Imported-codelist&"}));
+      await importJSONCodelist(codelist);
+      res = await chai.request(testServerObject).post("/phenoflow/importer/cleanup").send({});
+      res.should.have.status(200);
+			expect((await Github.getRepos()).data?.filter(repo=>repo.name.includes("---"))).to.have.lengthOf(0);
     }).timeout(0);
   
   });

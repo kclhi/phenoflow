@@ -403,6 +403,19 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
   res.sendStatus(200);
 });
 
+router.post('/remove', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
+  req.setTimeout(0);
+  if(!req.body.id) res.status(500).send("Missing params.");
+  if(!await Importer.removeWorkflows(req.body.id)) return res.sendStatus(500);
+  res.sendStatus(200);
+});
+
+router.post('/cleanup', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algorithms:['RS256']}), async function(req, res, next) {
+  req.setTimeout(0);
+  if(!await Importer.removePartialImports()) return res.sendStatus(500);
+  res.sendStatus(200);
+});
+
 //
 
 class Importer {
@@ -418,7 +431,7 @@ class Importer {
     }
     let existingWorkflowChanged = await Importer.importChangesExistingWorkflow(existingWorkflowId, steps);
     if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) { 
-      if(existingWorkflowChanged) await Workflow.deleteStepsFromWorkflow(existingWorkflowId);
+      if(existingWorkflowChanged) if(!await Workflow.deleteStepsFromWorkflow(existingWorkflowId)) return false;
       try {
         await Importer.createSteps(workflowId, steps);
       } catch(createStepsError) {
@@ -546,6 +559,72 @@ class Importer {
       logger.debug(error);
       return false;
     }
+  }
+
+  static async removeWorkflow(workflowId) {
+    if(!await Workflow.deleteStepsFromWorkflow(workflowId)) return false;
+    try {
+      await models.workflow.destroy({where:{id:workflowId}});
+    } catch(error) {
+      logger.error("Error deleting workflow: "+error);
+      return false;
+    }
+    try {
+      await fs.rm("output/"+workflowId, {recursive:true});
+    } catch(error) {
+      logger.error("Error removing local repo for " + workflowId + ": " + error);
+      return false;
+    }
+    if(!await Github.deleteRepo(workflowId)) return false;
+    return true;
+  }
+
+  static async removeWorkflows(workflowId) {
+    // if child
+    try {
+      let child = await models.child.findOne({where:{workflowId:workflowId}});
+      if(child) {
+        try {
+          for(let sibling of (await models.child.findAll({where:{parentId:child.parentId}}))) {
+            if(sibling.workflowId == child.workflowId) continue;
+            await Importer.removeWorkflow(sibling.workflowId);
+          } 
+        } catch(error) {
+          console.error("Error removing sibling workflow(s): "+error);
+          return false;
+        }
+        await Importer.removeWorkflow(child.parentId);
+      }
+    } catch(error) {
+      console.error("Error removing parent workflow: "+error);
+      return false;
+    }
+    // if parent
+    try {
+      for(let child of (await models.child.findAll({where:{parentId:workflowId}}))) {
+        await Importer.removeWorkflow(child.workflowId);
+      } 
+    } catch(error) {
+      console.error("Error removing child workflow(s): "+error);
+      return false;
+    }
+
+    await Importer.removeWorkflow(workflowId);
+    return true;
+  }
+
+  static async removePartialImports() {
+    for(let repo of (await Github.getRepos())?.data || []) {
+      try {
+        if((await Github.getBranches(repo.name)).data.length < config.get("github.EXPECTED_BRANCH_COUNT")) {
+          if(repo.name.includes("---") && !await Importer.removeWorkflows(repo.name.slice(repo.name.lastIndexOf("---") + 3, repo.name.length))) return false;
+        }
+      } catch(error) {
+        logger.error("Unable to get branches: " + error);
+        return false;
+      }
+    }
+    return true;
   }
 
 }

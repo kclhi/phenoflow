@@ -50,33 +50,40 @@ class Workflow {
           for(let implementation of implementations) {
             if(implementation.fileName.includes(".")) await fs.unlink("uploads/"+workflowId+"/"+implementation.language+"/"+implementation.fileName);
           } 
-        } catch(exception) {
-          console.error("Error deleting implementation:"+error);
+        } catch(error) {
+          logger.error("Error deleting implementation:"+error);
+          return false;
         }
         try {
           await models.implementation.destroy({where:{stepId:step.id}});
-        } catch(exception) {
-          console.error("Error deleting implementation:"+error);
+        } catch(error) {
+          logger.error("Error deleting implementation:"+error);
+          return false;
         }
         try {
           await models.input.destroy({where:{stepId:step.id}});
-        } catch(exception) {
-          console.error("Error deleting input:"+error);
+        } catch(error) {
+          logger.error("Error deleting input:"+error);
+          return false;
         }
         try {
           await models.output.destroy({where:{stepId:step.id}});
-        } catch(exception) {
-          console.error("Error deleting output:"+error);
+        } catch(error) {
+          logger.error("Error deleting output:"+error);
+          return false;
         }
       }
       try {
         await models.step.destroy({where:{workflowId:workflowId}});
-      } catch(exception) {
-        console.error("Error deleting steps:"+error);
+      } catch(error) {
+        logger.error("Error deleting steps:"+error);
+        return false;
       }
-    } catch(exception) {
-      console.error("Error getting steps to delete:"+error);
+    } catch(error) {
+      logger.error("Error getting steps to delete:"+error);
+      return false;
     }
+    return true;
   }
 
   static async workflowComplete(workflowId) {
@@ -118,8 +125,8 @@ class Workflow {
   static async getFullWorkflow(workflowId, username, language=null, implementationUnits={}) {
     try {
       var workflow = JSON.parse(JSON.stringify(await models.workflow.findOne({where:{id:workflowId}})));
-      if(workflow.userName!=username) throw "User does not own this workflow";
       if(!workflow) throw "Error finding workflow";
+      if(workflow.userName!=username) throw "User does not own this workflow";
       let steps = await models.step.findAll({where:{workflowId:workflow.id}});
       if(!steps) throw "Error finding steps";
       let mergedSteps = [];
