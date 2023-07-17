@@ -7,7 +7,7 @@ const stemmer = natural.PorterStemmer;
 class Parser {
 
   static primaryCodeKeys() {
-    return ["readcode", "snomedconceptid", "readv2code", "readcodev2", "medcode", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid", "readorsnomedterm", "gprdproductcode", "oxmiscode", "ctv3code", "bnfcode", "prodcode", "nonstandardcode", "mulitlexcode", "ukbiobankcode"];
+    return ["readcode", "snomedconceptid", "readv2code", "readcodev2", "medcode", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid", "readorsnomedterm", "gprdproductcode", "oxmiscode", "ctv3code", "bnfcode", "prodcode", "nonstandardcode", "multilexcode", "ukbiobankcode"];
   }
 
   static secondaryCodeKeys() {
