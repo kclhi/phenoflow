@@ -562,6 +562,7 @@ class Importer {
   }
 
   static async removeWorkflow(workflowId) {
+    if(!workflowId) return false;
     if(!await Workflow.deleteStepsFromWorkflow(workflowId)) return false;
     try {
       await models.workflow.destroy({where:{id:workflowId}});

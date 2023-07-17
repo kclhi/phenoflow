@@ -15,12 +15,14 @@ services:
       GHE_ACCESS_TOKEN: ${GHE_ACCESS_TOKEN}
     volumes:
       - pf_uploads:/home/node/app/uploads
+      - pf_output:/home/node/app/output
     secrets:
       - rsa-private-key
     command: ["./bin/wait-for-it.sh", "--timeout=0", "importer-mariadb-1:3306", "--", "npx", "mocha", "-g", "TB1", "--exit"]
 
 volumes:
   pf_uploads:
+  pf_output:
 
 networks:
   default:

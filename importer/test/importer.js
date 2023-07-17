@@ -43,7 +43,7 @@ class Importer {
   }
 
   static async addDefaultUser(restricted=false) {
-    await models.sequelize.sync({force:true});
+    if(process.env.NODE_ENV && process.env.NODE_ENV=="test") await models.sequelize.sync({force:true});
     await models.user.create({name: "martinchapman", password: config.get("user.DEFAULT_PASSWORD"), verified: "true", homepage: "https://martinchapman.co.uk", restricted: restricted});
   };
 
