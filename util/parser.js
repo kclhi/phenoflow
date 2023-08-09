@@ -7,7 +7,7 @@ const stemmer = natural.PorterStemmer;
 class Parser {
 
   static primaryCodeKeys() {
-    return ["readcode", "snomedconceptid", "readv2code", "readcodev2", "medcode", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid", "readorsnomedterm", "gprdproductcode", "oxmiscode", "ctv3code", "bnfcode", "prodcode", "nonstandardcode", "multilexcode", "ukbiobankcode"];
+    return ["readcode", "snomedconceptid", "readv2code", "readcodev2", "medcode", "snomedcode", "snomedctconceptid", "conceptcode", "conceptcd", "snomedctcode", "conceptid", "readorsnomedterm", "gprdproductcode", "oxmiscode", "ctv3code", "bnfcode", "prodcode", "nonstandardcode", "multilexcode", "ukbiobankcode", "icpc2code"];
   }
 
   static secondaryCodeKeys() {
@@ -23,9 +23,9 @@ class Parser {
   }
 
   static termAndName(term, name) {
-    return name.split(" ").map(word=>this.clean(word)).filter(word=>word.includes(term)).length
-        || name.split(" ").map(word=>this.clean(stemmer.stem(word))).filter(word=>word.includes(stemmer.stem(term))).length 
-        || name.split(" ").filter(word=>term.includes(this.clean(word)||stemmer.stem(term).includes(this.clean(stemmer.stem(word))))).length;
+    return name.split(" ").map(word=>this.clean(word)).filter(word=>word.toLowerCase().includes(term.toLowerCase())).length
+        || name.split(" ").map(word=>this.clean(stemmer.stem(word))).filter(word=>word.toLowerCase().includes(stemmer.stem(term.toLowerCase()))).length 
+        || name.split(" ").filter(word=>term.toLowerCase().includes(this.clean(word.toLowerCase())||stemmer.stem(term.toLowerCase()).includes(this.clean(stemmer.stem(word.toLowerCase()))))).length;
   }
 
   static ignoreInStepName(word) {
@@ -112,7 +112,7 @@ class Parser {
       description = description.replace("[X]", "").replace("[D]", "");
       splitDescription = description.split(Parser.splitExpression());
     } else {
-      logger.warn("No description")
+      logger.warn("No description: " + JSON.stringify(row))
     }
     // 'Shortness of breath' becomes 'breath shortness', for example, so as not to lose meaning when removing ignored words.
     if(splitDescription.length==3&&splitDescription[1]=="of") splitDescription=[splitDescription[2],splitDescription[0]];
@@ -160,8 +160,8 @@ class Parser {
   static getCategories(csvFiles, name, valueFunction=this.getValue, descriptionFunction=this.getDescription) {
 
     let categories = {};
-    const primaryCodingSystems = ["read", "snomed", "snomedct"];
-    const secondaryCodingSystems = ["icd9", "icd10", "cpt", "icd10cm", "icd9cm", "icd9diagnosis", "icd10diagnosis"];
+    const primaryCodingSystems = ["read", "snomed", "snomedct", "readv2", "med", "gprdproduct", "oxmis", "ctv3", "bnf", "prod", "multilex", "ukbiobank", "icpc2"];
+    const secondaryCodingSystems = ["icd9", "icd10", "cpt", "icd10cm", "icd9cm", "icd9diagnosis", "icd10diagnosis", "opcs4", "icd11"];
     name = this.lightClean(name);
 
     function getKeyTerm(phrase, name) {
