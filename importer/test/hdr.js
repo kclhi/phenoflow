@@ -58,7 +58,7 @@ describe("hdr", () => {
         return false;
       }
       try {
-        allCSVs = allCSVs.body.reduce((b, a) => { b[a.coding_system] = (b[a.coding_system]??[]).concat([{[a.coding_system.replace("codes", "code")]:a.code, "description":a.description.replace(/\(.*\)/,"")}]); return b; }, {});
+        allCSVs = allCSVs.body.reduce((b, a) => { b[a.coding_system] = (b[a.coding_system]??[]).concat([{[a.coding_system.replace("codes", "code")]:a.code, "description":a.description?a.description.replace(/(?<!^)\(.*\)/,""):phenotype.phenotype_name}]); return b; }, {});
       } catch(formatCodelistError) {
         logger.error("Error formatting codelist: " + formatCodelistError);
         return false;
