@@ -109,7 +109,7 @@ class Parser {
     let description = row[descriptions.filter(description=>Object.keys(row).map(key=>Parser.clean(key)).includes(description))[0]];
     let splitDescription = [];
     if(description) {
-      description = description.replace("[X]", "").replace("[D]", "");
+      description = description.replace("[X]", "").replace("[D]", "").replace("[V]", "");
       splitDescription = description.split(Parser.splitExpression());
     } else {
       logger.warn("No description: " + JSON.stringify(row))
@@ -169,6 +169,7 @@ class Parser {
       if(phrase.split(Parser.splitExpression()).filter(term=>!Parser.termAndName(term, name.toLowerCase())).length) return name;
       let nouns = nlp(phrase).nouns().text().split(Parser.splitExpression()).filter(word=>!Parser.ignoreInStepName(Parser.clean(word)));
       let adjectives = nlp(phrase).adjectives().text().split(" ").filter(word=>!Parser.ignoreInStepName(Parser.clean(word)));
+      if(!nouns.length && !adjectives.length) return name;
       return nouns.length?Parser.clean(nouns[0]):Parser.clean(adjectives[0]);
     }
 
@@ -237,8 +238,10 @@ class Parser {
             // If no common term, pick most representative term from description
             if(!matched) {
               let keyTerm = getKeyTerm(description, name);
+              if(!keyTerm) {
+                logger.warn("No key term");
+              }
               keyTerm = keyTerm.replace('-', '');
-              if(!keyTerm) logger.warn("No key term");
               let existingKey = Object.keys(categories).filter(key=>key.toLowerCase()==(keyTerm+codingSystemGroup).toLowerCase())[0];
               categories[existingKey]?categories[existingKey].push(codeAndSystem):categories[keyTerm+codingSystemGroup]=[codeAndSystem];
             }
