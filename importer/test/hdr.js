@@ -7,6 +7,8 @@ const proxyquire = require('proxyquire');
 const models = require("../models");
 const logger = require("../config/winston");
 const config = require("config");
+const fs = require('fs').promises;
+const nock = require('nock')
 const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
 
 describe("hdr", () => {
@@ -28,17 +30,33 @@ describe("hdr", () => {
     }
 
     async function getAllPhenotypesHDR() {
+      let path;
       try {
-        let phenotypes = await got.get(config.get("importer.HDR_API") + "/public/phenotypes/?format=json", {responseType:"json"});
+        path = config.get("importer.HDR_API") + "/phenotypes/?format=json";
+        // ~MDC 05/24 HDR UK library not able to reliably serve requests for all phenotypes, so use local mock for now
+        nock(config.get("importer.HDR_API")).get("/phenotypes/?format=json").reply(200, JSON.parse(await fs.readFile("test/fixtures/importer/hdr/phenotypes.json", "utf8")));
+        let phenotypes = await got.get(path, {responseType:"json"});
+        nock.restore()
         return phenotypes.body;
       } catch(getAllPhenotypesError) {
-        logger.error("Error getting all phenotypes: " + getAllPhenotypesError);
+        logger.error("Error getting all phenotypes: " + getAllPhenotypesError + " " + path);
         return [];
       }
     }
 
-    async function importAllPhenotypesHDR() {
-      for(let phenotype of await getAllPhenotypesHDR()) {
+    async function getPhenotypeHDR(id) {
+      try {
+        let phenotype = await got.get(config.get("importer.HDR_API") + "/phenotypes/" + id + "/detail/?format=json", {responseType:"json"});
+        return phenotype.body[0];
+      } catch(getPhenotypeError) {
+        logger.error("Error getting phenotype: " + getPhenotypeError);
+        return [];
+      }
+    }
+
+    async function importAllPhenotypesHDR(start=0) {
+      let allPhenotypesHDR = (await getAllPhenotypesHDR()).slice(start);
+      for(let phenotype of allPhenotypesHDR) {
         try {
           await importPhenotypeHDR(phenotype);
         } catch(importPhenotypeError) {
@@ -50,31 +68,31 @@ describe("hdr", () => {
     }
 
     async function importPhenotypeHDR(phenotype) {
-      let allCSVs;
+      let allCSVs, path;
       try {
-        allCSVs = await got.get(config.get("importer.HDR_API") + "/public/phenotypes/" + phenotype.phenotype_id + "/export/codes/?format=json", {responseType:"json"});
+        path = config.get("importer.HDR_API") + "/phenotypes/" + phenotype.phenotype_id + "/export/codes/?format=json";
+        allCSVs = await got.get(path, {responseType:"json"});
       } catch(getCodelistsError) {
-        logger.error("Error getting codelist from phenotype: " + getCodelistsError);
+        logger.error("Error getting codelist from phenotype: " + getCodelistsError + " " + path);
         return false;
       }
       try {
-        allCSVs = allCSVs.body.reduce((b, a) => { b[a.coding_system] = (b[a.coding_system]??[]).concat([{[a.coding_system.replace("codes", "code")]:a.code, "description":a.description?a.description.replace(/(?<!^)\(.*\)/,""):phenotype.phenotype_name}]); return b; }, {});
+        allCSVs = allCSVs.body.reduce((b, a) => { b[a.coding_system] = (b[a.coding_system]??[]).concat([{[a.coding_system.name.replace("codes", "code")]:a.code, "description":a.description?a.description.replace(/(?<!^)\(.*\)/,""):phenotype.name}]); return b; }, {});
       } catch(formatCodelistError) {
-        logger.error("Error formatting codelist: " + formatCodelistError);
+        logger.error("Error formatting codelist: " + formatCodelistError + " " + path);
         return false;
       }
-      allCSVs = Object.entries(allCSVs).map(codelist=>({"filename":phenotype.phenotype_name.replaceAll(" ", "_") + "_" + phenotype.phenotype_id + "_" + codelist[0].replaceAll(" ", "_"), "content":codelist[1]}));
+      allCSVs = Object.entries(allCSVs).map(codelist=>({"filename":phenotype.name.replaceAll(" ", "_") + "_" + phenotype.phenotype_id + "_" + codelist[0].replaceAll(" ", "_"), "content":codelist[1]}));
       if(!await addUser(phenotype.author)) return false;
       if(!allCSVs.length) return true;
-      let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:allCSVs, name:phenotype.phenotype_name, about:phenotype.phenotype_name + " - " + phenotype.phenotype_id, userName:phenotype.author});
+      let res = await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:allCSVs, name:phenotype.name, about:phenotype.name + " - " + phenotype.phenotype_id, userName:phenotype.author});
       res.should.be.a("object");
       res.should.have.status(200);
       return true;
     }
 
     it("[HDR1] Should be able to import a phenotype from the HDR UK phenotype library API", async () => {
-      let allPhenotypes = (await getAllPhenotypesHDR()).filter(phenotype=>phenotype.phenotype_id.includes("PH10"));
-      expect(await importPhenotypeHDR(allPhenotypes[0])).to.be.true;
+      expect(await importPhenotypeHDR(await getPhenotypeHDR("PH10"))).to.be.true;
     }).timeout(0);
 
     it("[HDR2] Should be able to import a subset of phenotypes from the HDR UK phenotype library API", async () => {
