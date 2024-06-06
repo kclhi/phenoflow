@@ -66,7 +66,7 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
       generatedWorkflows = await got.post(config.get('parser.URL')+'/phenoflow/parser/parseCodelists', {body:form, responseType:'json'});
       generatedWorkflows = generatedWorkflows.body;
     } catch(parseWorkflowError) {
-      logger.error('Error parsing workflow: '+parseWorkflowError);
+      logger.error('Error parsing workflow: ' + parseWorkflowError);
       return res.sendStatus(500);
     }
   } else if(req.body.csvs) {
@@ -74,14 +74,14 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
       generatedWorkflows = await got.post(config.get('parser.URL')+'/phenoflow/parser/parseCodelists', {json:{'csvs':req.body.csvs, 'name':req.body.name, 'about':req.body.about, 'userName':req.body.userName}, responseType:'json'});
       generatedWorkflows = generatedWorkflows.body;
     } catch(parseWorkflowError) {
-      logger.error(parseWorkflowError);
+      logger.error('Error parsing workflow: ' + parseWorkflowError);
       return res.sendStatus(500);
     }
   }
   try {
     let parent;
     for(let workflow of generatedWorkflows) {
-      if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) continue;
+      if(!(workflow.id=await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps))) continue;
       if(workflow.steps[0].stepType=="load"||workflow.steps[0].stepType=="external") {
         try {
           let child = await models.workflow.findOne({where:{id:workflow.id}});
@@ -92,7 +92,7 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
             await child.addParent(parent, {through:{name:parent.name, distinctStepName:workflow.steps[0].stepName, distinctStepPosition:0}});
           }
         } catch(setParentError) {
-          logger.error(setParentError);
+          logger.error('Error setting parent: ' + setParentError);
           return res.sendStatus(500);
         }
       }
@@ -101,13 +101,13 @@ router.post('/importCodelists', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), a
         let user = await models.user.findOne({where:{name:req.body.userName}});
         restricted = user.restricted;
       } catch(getUserError) {
-        logger.error("Error getting user restricted status: " + getUserError);
+        logger.error('Error getting user restricted status: ' + getUserError);
       }
       await Github.generateAndCommit(workflow.id, workflow.name, workflow.about, workflow.steps[0].stepName, req.body.userName, restricted);
     }
     return res.sendStatus(200);
   } catch(importListsError) {
-    logger.error("Error importing list: " + importListsError);
+    logger.error('Error importing list: ' + importListsError);
     return res.sendStatus(500);
   }
 });
@@ -161,7 +161,7 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
       generatedWorkflows = await got.post(config.get('parser.URL')+'/phenoflow/parser/parseKeywordList', {body:form, responseType:'json'});
       generatedWorkflows = generatedWorkflows.body;
     } catch(parseWorkflowError) {
-      logger.error('Error parsing workflow: '+parseWorkflowError);
+      logger.error('Error parsing workflow: ' + parseWorkflowError);
       return res.sendStatus(500);
     }
   } else if(req.body.keywords) {
@@ -169,14 +169,14 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
       generatedWorkflows = await got.post(config.get('parser.URL')+'/phenoflow/parser/parseKeywordList', {json:{'keywords':req.body.keywords, 'name':req.body.name, 'about':req.body.about, 'userName':req.body.userName}, responseType:'json'});
       generatedWorkflows = generatedWorkflows.body;
     } catch(parseWorkflowError) {
-      logger.error(parseWorkflowError);
+      logger.error('Error parsing workflow: ' + parseWorkflowError);
       return res.sendStatus(500);
     }
   }
   try {
     let parent;
     for(let workflow of generatedWorkflows) {
-      if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) continue;
+      if(!(workflow.id=await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps))) continue;
       if(workflow.steps[0].stepType=="load"||workflow.steps[0].stepType=="external") {
         try {
           let child = await models.workflow.findOne({where:{id:workflow.id}});
@@ -187,7 +187,7 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
             await child.addParent(parent, {through:{name:parent.name, distinctStepName:workflow.steps[0].stepName, distinctStepPosition:0}});
           }
         } catch(setParentError) {
-          logger.error(setParentError);
+          logger.error('Error setting parent: ' + setParentError);
           return res.sendStatus(500);
         }
       }
@@ -196,13 +196,13 @@ router.post('/importKeywordList', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"),
         let user = await models.user.findOne({where:{name:req.body.userName}});
         restricted = user.restricted;
       } catch(getUserError) {
-        logger.error("Error getting user restricted status: " + getUserError);
+        logger.error('Error getting user restricted status: ' + getUserError);
       }
       await Github.generateAndCommit(workflow.id, workflow.name, workflow.about, workflow.steps[0].stepName, req.body.userName, restricted);
     }
     return res.sendStatus(200);
   } catch(importListsError) {
-    logger.error(importListsError);
+    logger.error('Error importing list: ' + importListsError);
     return res.sendStatus(500);
   }
 });
@@ -261,7 +261,7 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
       generatedWorkflows = await got.post(config.get('parser.URL')+'/phenoflow/parser/parseSteplist', {body:form, responseType:'json'});
       generatedWorkflows = generatedWorkflows.body;
     } catch(parseWorkflowError) {
-      logger.error('Error parsing workflow: '+parseWorkflowError);
+      logger.error('Error parsing workflow: ' + parseWorkflowError);
       return res.sendStatus(500);
     }
   } else if(req.body.steplist&&req.body.csvs) {
@@ -269,14 +269,14 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
       generatedWorkflows = await got.post(config.get('parser.URL')+'/phenoflow/parser/parseSteplist', {json:{'steplist':req.body.steplist, 'csvs':req.body.csvs, 'name':req.body.name, 'about':req.body.about, 'userName':req.body.userName}, responseType:'json'});
       generatedWorkflows = generatedWorkflows.body;
     } catch(parseWorkflowError) {
-      logger.error(parseWorkflowError);
+      logger.error('Error parsing workflow: ' + parseWorkflowError);
       return res.sendStatus(500);
     }
   }
   try {
     let importedWorkflows = [], parent;
     for(let workflow of generatedWorkflows) {
-      if(!await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps)) continue;
+      if(!(workflow.id=await Importer.importPhenotype(workflow.id, workflow.name, workflow.about, workflow.userName, workflow.steps))) continue;
       importedWorkflows.push(workflow);
       if(workflow.steps[0].stepType!="load"&&workflow.steps[0].stepType!="external") continue;
       try {
@@ -288,7 +288,7 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
           await child.addParent(parent, {through:{name:parent.name, distinctStepName:workflow.steps[0].stepName, distinctStepPosition:0}});
         }
       } catch(setParentError) {
-        logger.error(setParentError);
+        logger.error('Error setting parent: ' + setParentError);
         return res.sendStatus(500);
       }
     }
@@ -297,12 +297,12 @@ router.post('/importSteplist', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), al
       let user = await models.user.findOne({where:{name:req.body.userName}});
       restricted = user.restricted;
     } catch(getUserError) {
-      logger.error("Error getting user restricted status: " + getUserError);
+      logger.error('Error getting user restricted status: ' + getUserError);
     }
     await Github.generateAndCommitAll(importedWorkflows, restricted);
     return res.sendStatus(200);
   } catch(importListsError) {
-    logger.error(importListsError);
+    logger.error('Error importing list: ' + importListsError);
     return res.sendStatus(500);
   }
 });
@@ -364,7 +364,7 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
           let path = source+"/"+step.implementations[implementation].fileName.replace(/\//g, "");
           sourceFile = await fs.readFile(path, "utf8");
         } catch(error) {
-          logger.error("Unable to read file: " + error + " " + path);
+          logger.error('Unable to read file: ' + error + ' ' + path);
           res.sendStatus(500);
         }
         step.implementations[implementation].implementationTemplate = sourceFile;
@@ -375,7 +375,7 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
       existingWorkflow.steps[0] = await got.post(config.get('parser.URL')+'/phenoflow/parser/parseStep', {json:{"name":"read-potential-cases-"+ImporterUtils.clean(req.body.dataSource), "doc":"Read potential cases from "+req.body.dataSource, "type":"external", "position":1, "inputDoc":existingWorkflow.steps[0].inputDoc, "outputDoc":"Initial potential cases, read from "+req.body.dataSource, "outputExtensions":OUTPUT_EXTENSION, "implementations":[{"fileName":implementationTemplate.name, "language":req.body.language, "implementationTemplate":implementationTemplate.data.toString(), "substitutions":{"PHENOTYPE":ImporterUtils.clean(existingWorkflow.name.toLowerCase())}}]}, responseType:'json'});
       existingWorkflow.steps[0] = existingWorkflow.steps[0].body;
     } catch(parseStepError) {
-      logger.error(parseStepError);
+      logger.error('Error parsing step: ' + parseStepError);
       return res.sendStatus(500);
     }
     
@@ -388,7 +388,7 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
       let child = await models.workflow.findOne({where:{id:duplicatedWorkflowId}});
       await child.addParent(parent, {through:{name:parent.name, distinctStepName:existingWorkflow.steps[0].stepName, distinctStepPosition:0}});
     } catch(setParentError) {
-      logger.error(setParentError);
+      logger.error('Error setting parent: ' + setParentError);
       return res.sendStatus(500);
     }
     let restricted = false;
@@ -396,7 +396,7 @@ router.post('/addConnector', jwt({secret:config.get("jwt.RSA_PRIVATE_KEY"), algo
       let user = await models.user.findOne({where:{name:existingWorkflow.userName}});
       restricted = user.restricted;
     } catch(getUserError) {
-      logger.error("Error getting user restricted status: " + getUserError);
+      logger.error('Error getting user restricted status: ' + getUserError);
     }
     await Github.generateAndCommit(duplicatedWorkflowId, existingWorkflow.name, existingWorkflow.about, existingWorkflow.steps[0].stepName, existingWorkflow.userName, restricted);
   }
@@ -426,8 +426,8 @@ class Importer {
     try {
       workflowId = (existingWorkflowId||await Importer.createWorkflow(generatedWorkflowId, name, about, userName));
     } catch(createWorkflowError) {
-      logger.error('Error creating workflow: '+createWorkflowError);
-      return false;
+      logger.error('Error creating workflow: ' + createWorkflowError);
+      return null;
     }
     let existingWorkflowChanged = await Importer.importChangesExistingWorkflow(existingWorkflowId, steps);
     if(!existingWorkflowId||(existingWorkflowId&&existingWorkflowChanged)) { 
@@ -435,13 +435,13 @@ class Importer {
       try {
         await Importer.createSteps(workflowId, steps);
       } catch(createStepsError) {
-        logger.error('Error creating steps: '+createStepsError);
-        return false;
+        logger.error('Error creating steps: ' + createStepsError);
+        return null;
       }
       await Workflow.workflowComplete(workflowId);
-      return true;
+      return workflowId;
     }
-    return false;
+    return null;
   }
 
   static async importChangesExistingWorkflow(workflowId, steps) {
@@ -486,12 +486,12 @@ class Importer {
               return workflow.id;
             }
           } catch(error) {
-            logger.error("Unable to check for existing steps:"+error);
+            logger.error('Unable to check for existing steps: ' + error);
           }
         }
       }
     } catch(error) {
-      logger.error("Unable to check for existing workflow: "+error);
+      logger.error('Unable to check for existing workflow: ' + error);
     }
     return false;
   }
@@ -567,13 +567,13 @@ class Importer {
     try {
       await models.workflow.destroy({where:{id:workflowId}});
     } catch(error) {
-      logger.error("Error deleting workflow: "+error);
+      logger.error('Error deleting workflow: ' + error);
       return false;
     }
     try {
       await fs.rm("output/"+workflowId, {recursive:true});
     } catch(error) {
-      logger.error("Error removing local repo for " + workflowId + ": " + error);
+      logger.error('Error removing local repo for ' + workflowId + ': ' + error);
       return false;
     }
     if(!await Github.deleteRepo(workflowId)) return false;
@@ -621,7 +621,7 @@ class Importer {
           if(repo.name.includes("---") && !await Importer.removeWorkflows(repo.name.slice(repo.name.lastIndexOf("---") + 3, repo.name.length))) return false;
         }
       } catch(error) {
-        logger.error("Unable to get branches: " + error);
+        logger.error('Unable to get branches: ' + error);
         return false;
       }
     }
