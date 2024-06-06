@@ -1,6 +1,6 @@
 <img src="logo.png" alt="phenoflow" width="150">
 
-Portable, workflow-based phenotype definitions.
+Standardise and share computable disease definitions.
 
 [https://kclhi.org/phenoflow](https://kclhi.org/phenoflow)
 
@@ -10,7 +10,7 @@ ___
 
 Components of the Phenoflow architecture.
 
-[![StackShare](http://img.shields.io/badge/tech-stack-0690fa.svg?style=flat)](https://stackshare.io/martinchapman/phenoflow)
+[![StackShare](http://img.shields.io/badge/tech-stack-0690fa.svg?style=flat)](https://stackshare.io/kclhi/phenoflow)
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ Components of the Phenoflow architecture.
 
 ## Install, run and deploy
 
-Follow steps in [generator](generator#readme), [parser](parser#readme), [importer](importer#readme) and [visualiser](visualiser#readme).
+Follow steps in [generator](generator#readme), [parser](parser#readme) and [importer](importer#readme). Set up [cwlviewer](https://github.com/phenoflow/cwlviewer).
 
 ## Contributing
 
@@ -45,5 +45,5 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* [python-cwlgen](https://github.com/kclhi/python-cwlgen)
-* [cwlviewer](https://github.com/kclhi/cwlviewer)
+* [python-cwlgen](https://github.com/phenoflow/python-cwlgen)
+* [cwlviewer](https://github.com/phenoflow/cwlviewer)
