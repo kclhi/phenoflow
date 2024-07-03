@@ -16,6 +16,7 @@ module.exports = {
     URL: "https://localhost:3005"
   },
   importer: {
+    BASE_FOLDER: "fixtures/importer",
     PHENOTYPE_FOLDER: "fixtures/importer/caliber",
     CODELIST_FOLDER: "fixtures/importer/phekb",
     KEYWORD_LIST_FOLDER: "fixtures/importer/kclhi",
