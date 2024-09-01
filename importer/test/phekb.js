@@ -2,6 +2,7 @@ const Importer = require("./importer");
 const chai = require("chai");
 chai.use(require("chai-http"));
 const fs = require("fs").promises;
+const nock = require('nock')
 const config = require("config");
 const models = require('../models');
 const proxyquire = require('proxyquire');
@@ -13,6 +14,7 @@ async function importPhekbCodelists(path, files) {
   let csvs=[];
   for(let file of files) csvs.push({"filename":file, "content":await ImporterUtils.openCSV(path, file)});
   let id = await ImporterUtils.hash(csvs.map(csv=>csv.content));
+  nock.restore();
   return await chai.request(testServerObject).post("/phenoflow/importer/importCodelists").send({csvs:csvs, name:ImporterUtils.getName(files[0]), about:id+" - "+ImporterUtils.getName(files[0]), userName:"phekb"});
 }
 
@@ -28,6 +30,7 @@ async function testPhekbCodelist(file) {
 async function testPhekbSteplist(file) {
   const PATH = "test/"+config.get("importer.CODELIST_FOLDER")+"/_data/codelists/";
   try { await fs.stat(PATH) } catch(error) { return true; }
+  nock.restore();
   let res = await Importer.processAndImportSteplist(PATH, file, "phekb");
   res.body.should.be.a("object");
   res.should.have.status(200);
@@ -54,12 +57,17 @@ describe("phekb importer", () => {
       // Can't perform test if file doesn't exist.
       try { await fs.stat(PATH) } catch(error) { return true; }
       let phenotypeFiles = await fs.readdir(PATH);
-      for(let phenotypeFile of phenotypeFiles) {
-        console.log(phenotypeFile);
-        if(phenotypeFile.includes("_rx") || phenotypeFile.includes("_lab") || phenotypeFile.includes("_key")) continue;
-        let res = await importPhekbCodelists(PATH, [phenotypeFile]);
-        res.body.should.be.a("object");
-        res.should.have.status(200);
+      for(let [phenotype, phenotypeFileGroup] of Object.entries(phenotypeFiles.reduce((acc, cur) => { 
+        (acc[cur.split('.')[0].split('_')[0]] = acc[cur.split('.')[0].split('_')[0]] || []).push(cur); 
+        return acc 
+      }, {}))) {
+        phenotypeFileGroup = phenotypeFileGroup.filter(phenotypeFile => !phenotypeFile.includes("_rx") && !phenotypeFile.includes("_lab") && !phenotypeFile.includes("_key"));
+        if(phenotypeFileGroup.length) {
+          console.log(phenotypeFileGroup)
+          let res = await importPhekbCodelists(PATH, phenotypeFileGroup);
+          res.body.should.be.a("object");
+          res.should.have.status(200);
+        }
       }
     }).timeout(0);
 

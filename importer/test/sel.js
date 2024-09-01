@@ -28,6 +28,8 @@ describe("SEL Long COVID Programme (Lambeth Data Workstream) importer", () => {
     });
     
     it("[SE2] Should be able to import a phenotype CSV.", async() => {
+      const PATH = "test/"+config.get("importer.BASE_FOLDER")+"/sel/"
+      try { await fs.stat(PATH) } catch(error) { return true; }
       await importSELPhenotype("anx.csv", "Anxiety Disorders");
       await importSELPhenotype("covid.csv", "Covid");
       await importSELPhenotype("dep.csv", "Depression");
