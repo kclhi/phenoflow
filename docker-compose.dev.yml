@@ -10,6 +10,24 @@ services:
     ports:
       - 3003:80
 
+  gitea:
+    image: docker.gitea.com/gitea:latest
+    container_name: gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__server__ROOT_URL=http://localhost:3003/git/
+    restart: unless-stopped
+    volumes:
+      - gitea_data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 222:22
+
+volumes:
+  gitea_data:
+
 networks:
   default:
     name: hi_default # For proxy.
