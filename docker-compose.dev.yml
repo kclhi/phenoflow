@@ -1,0 +1,16 @@
+services:
+
+  proxy:
+    build:
+      context: proxy
+    container_name: phenoflow-proxy-1
+    image: phenoflow-proxy-1
+    restart: unless-stopped
+    command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
+    ports:
+      - 3003:80
+
+networks:
+  default:
+    name: hi_default # For proxy.
+    external: true
