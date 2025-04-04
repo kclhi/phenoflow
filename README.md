@@ -44,13 +44,13 @@ docker context use [machine-name]
 2. From the root directory, build container:
 
 ```
-docker-compose build
+docker compose build
 ```
 
 3. Run container:
 
 ```
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Tests
