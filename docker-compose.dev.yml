@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
     ports:
-      - 3003:80
+      - 3003:443
 
   gitea:
     image: docker.gitea.com/gitea:latest
@@ -16,7 +16,7 @@ services:
     environment:
       - USER_UID=1000
       - USER_GID=1000
-      - GITEA__server__ROOT_URL=http://localhost:3003/gitea/
+      - GITEA__server__ROOT_URL=https://localhost:3003/gitea/
     restart: unless-stopped
     volumes:
       - gitea_data:/data
