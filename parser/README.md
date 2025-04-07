@@ -41,16 +41,32 @@ npm start
 docker context use [machine-name]
 ```
 
-2. From the root directory, build container:
+### Staging 
+
+1. From the root directory, build container:
 
 ```
-docker-compose build
+docker compose -f docker-compose.dev.yml build
 ```
 
-3. Run container:
+2. Run container:
 
 ```
-docker-compose up -d
+docker compose -f docker-compose.dev.yml up -d
+```
+
+### Production 
+
+1. From the root directory, build container:
+
+```
+docker compose build
+```
+
+2. Run container:
+
+```
+docker compose up -d
 ```
 
 ## Tests
