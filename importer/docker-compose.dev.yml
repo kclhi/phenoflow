@@ -1,14 +1,4 @@
-version: "3.7"
 services:
-
-  proxy:
-    build:
-      context: proxy
-    command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
-    depends_on:
-      - webapp
-    ports:
-      - 3003:443
 
   webapp:
     build: .
@@ -18,8 +8,8 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
-      GHE_ACCESS_TOKEN: ${GHE_ACCESS_TOKEN}
+      GITHUB_ACCESS_TOKEN: ${GITHUB_ACCESS_TOKEN}
+      GITHUB_ZENODO_WEBHOOK: ${GITHUB_ZENODO_WEBHOOK}
     restart: unless-stopped
     volumes:
       - pf_uploads:/home/node/app/uploads
@@ -28,6 +18,8 @@ services:
       - rsa-private-key
     depends_on:
       - mariadb
+    ports:
+      - 3003:3003
 
   mariadb:
     build: db
@@ -46,7 +38,6 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
     secrets:
       - rsa-private-key
     command: ["./bin/wait-for-it.sh", "--timeout=0", "mariadb:3306", "--", "npm", "run", "migrate"]

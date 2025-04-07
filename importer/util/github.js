@@ -236,6 +236,7 @@ class Github {
   }
 
   static async addZenodoWebhook(owner, repo) {
+    if(!config.get('github.ZENODO_WEBHOOK')) return 
     let octokit = await Github.getConnection();
     let hookConfig = {
       'url': config.get('github.ZENODO_WEBHOOK'),
@@ -258,49 +259,65 @@ class Github {
     return name.replaceAll("'", "") + '---' + id; 
   }
 
-  static async commit(generatedWorkflow, id, name, about, author, connector, submodules=[], restricted=false) {
+  static async createBranch(octo, org, repo, commitSha, branch) {
+    try {
+      // Create branch if doesn't exit (swallow exception if it does)
+      await octo.git.createRef({owner:org, repo, ref:'refs/heads/'+branch, sha:commitSha});
+    } catch(error) {
+      logger.error(error)
+    }
+    return true;
+  }
 
-    let workflowRepo = "output/" + id;
-    if(!await Github.createRepositoryContent(workflowRepo, name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, about, author)) {
-      logger.error('Unable to create repository content.');
+  static async getCurrentCommit(octo, org, repo, branch='main') {
+    let refData, commitSha;
+    try {
+      // Exception swallowed if branch does not yet exist
+      ({ data:refData } = await octo.request("GET /repos/{owner}/{repo}/git/refs/{ref}", {owner:org, repo, ref:'heads/'+branch}));
+      commitSha = refData.object.sha;
+    } catch(error) {
+      try {
+        // If branch does not yet exist, use base branch as commit reference
+        ({ data:refData } = await octo.git.getRef({owner:org, repo, ref:'heads/main'}));
+        commitSha = refData.object.sha;
+      } catch(error) {
+        logger.error("Error getting existing commit reference: " + error + ". " + JSON.stringify(refData) + " " + repo + " " + branch);
+        return false;
+      }
+    }
+    let commitData, treeSha;
+    try {
+      ({ data:commitData } = await octo.git.getCommit({owner:org, repo, commit_sha:commitSha}));
+      treeSha = commitData.tree.sha;
+    } catch(error) {
+      logger.error("Error getting existing commit: " + error + ". " + JSON.stringify(commitData) + " " + org + " " + repo + " " + commitSha);
       return false;
     }
-    
-    //
-
-    const getCurrentCommit = async (octo, org, repo, branch='main') => {
-      let refData;
-      try {
-        // Exception swallowed if branch does not yet exist
-        ({ data:refData } = await octo.git.getRef({owner:org, repo, ref:'heads/'+branch}));
-      } catch(error) {
-        try {
-          // If branch does not yet exist, use base branch as commit reference
-          ({ data:refData } = await octo.git.getRef({owner:org, repo, ref:'heads/main'}));
-        } catch(error) {
-          logger.error("Error getting existing commit reference: " + error + ". " + repo + " " + branch);
-          return false;
-        }
-      }
-      const commitSha = refData.object.sha;
-      let commitData;
-      try {
-        ({ data:commitData } = await octo.git.getCommit({owner:org, repo, commit_sha:commitSha}));
-      } catch(error) {
-        logger.error("Error getting existing commit: " + error + ". " + org + " " + repo + " " + commitSha);
-        return false;
-      }
-      return {commitSha, treeSha:commitData.tree.sha}
+    return {commitSha, treeSha:treeSha}
+  }
+  
+  static async getFileAsUTF8(filePath) {
+    try {
+      return await fsAsync.readFile(filePath, 'utf8');
+    } catch(error) {
+      logger.error("Error reading utf8 version of file: " + filePath);
+      return false;
     }
+  }
 
-    const getFileAsUTF8 = async(filePath) => {
-      try {
-        return await fsAsync.readFile(filePath, 'utf8');
-      } catch(error) {
-        logger.error("Error reading utf8 version of file: " + filePath);
-        return false;
-      }
+  static async updateDefaultBranch(octo, org, repo, branch) {
+    try {
+      await octo.repos.update({owner:org, repo:repo, default_branch:branch});
+    } catch(setDefaultBranchError) {
+      logger.error("Error setting default branch: " + setDefaultBranchError);
+      return false;
     }
+  }
+
+  static async uploadToRepo(octo, coursePath, org, repo, branch='main', submodules=[]) {
+    const currentCommit = await this.getCurrentCommit(octo, org, repo, branch);
+    if(!currentCommit) return false;
+    const filesPaths = await glob(coursePath+'/**/*');
 
     const createBlob = async(octo, org, repo, content) => {
       let blobData;
@@ -312,9 +329,9 @@ class Github {
       }
       return blobData.data
     }
-
+    
     const createBlobForFile = (octo, org, repo) => async(filePath) => {
-      const content = await getFileAsUTF8(filePath)
+      const content = await this.getFileAsUTF8(filePath)
       if(!content) return false;
       try {
         return await createBlob(octo, org, repo, content);
@@ -323,44 +340,9 @@ class Github {
         return false;
       }
     }
-    
-    const createNewTree = async (octo, owner, repo, blobs, paths, parentTreeSha, submodules=[]) => {
-      let tree = blobs.map(({ sha }, index) => ({path:paths[index], mode:'100644', type:'blob', sha}));
-      if(submodules.length) tree = tree.concat(submodules.map(submodule=>({path:submodule.name, mode:'160000', type:'commit', sha:submodule.sha})));
-      try {
-        var { data } = await octo.git.createTree({owner, repo, tree, base_tree: parentTreeSha});
-      } catch(error) {
-        logger.error("Error creating tree: " + error + ". " + owner + " " + repo + " " + tree + " " + parentTreeSha);
-        return false;
-      }
-      return data;
-    }
 
-    const createNewCommit = async(octo, org, repo, message, currentTreeSha, currentCommitSha) => {
-      let newCommit;
-      try {
-        newCommit = await octo.git.createCommit({owner: org, repo, message, tree:currentTreeSha, parents:[currentCommitSha]});
-      } catch(error) {
-        logger.error("Unable to create commit: " + error + ". " + org + " " + repo + " " + message + " " + currentTreeSha + " " + currentCommitSha);
-        return false;
-      }
-      return newCommit.data;
-    } 
-
-    const setBranchToCommit = async(octo, org, repo, commitSha, branch='main') => {
-      try {
-        // Create branch if doesn't exit (swallow exception if it does)
-        await octo.git.createRef({owner:org, repo, ref:'refs/heads/'+branch, sha:commitSha});
-      } catch(error) {
-        try {
-          await octo.git.updateRef({owner:org, repo, ref:'heads/'+branch, sha:commitSha});
-        } catch(error) {
-          logger.error("Unable to commit to branch: " + error + ". " + org + " " + repo + " " + branch + " " + commitSha);
-          return false;
-        }
-      }
-      return true;
-    };
+    const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(octo, org, repo)));
+    if(!filesBlobs) return false;
 
     const createGitModulesBlob = async(octo, org, repo, submodules) => {
       let content = submodules.map(submodule=>'[submodule "'+submodule.name+'"]\n\tpath = '+submodule.name+'\n\turl = '+submodule.url).join('\n');
@@ -373,28 +355,65 @@ class Github {
       }
     }
 
-    const uploadToRepo = async (octo, coursePath, org, repo, branch='main', submodules=[]) => {
-      const currentCommit = await getCurrentCommit(octo, org, repo, branch);
-      if(!currentCommit) return false;
-      const filesPaths = await glob(coursePath+'/**/*');
-      const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(octo, org, repo)));
-      if(!filesBlobs) return false;
-      if(submodules.length) filesBlobs.push(await createGitModulesBlob(octo, org, repo, submodules));
-      const pathsForBlobs = filesPaths.map(fullPath => path.relative(coursePath, fullPath));
-      if(submodules.length) pathsForBlobs.push('.gitmodules');
-      const newTree = await createNewTree(octo, org, repo, filesBlobs, pathsForBlobs, currentCommit.treeSha, submodules);
-      if(!newTree) return false;
-      const commitMessage = 'Update made by Phenoflow';
-      const newCommit = await createNewCommit(octo, org, repo, commitMessage, newTree.sha, currentCommit.commitSha);
-      if(!newCommit) return false;
-      if(!await setBranchToCommit(octo, org, repo, newCommit.sha, branch)) return false;
+    if(submodules.length) filesBlobs.push(await createGitModulesBlob(octo, org, repo, submodules));
+    const pathsForBlobs = filesPaths.map(fullPath => path.relative(coursePath, fullPath));
+    if(submodules.length) pathsForBlobs.push('.gitmodules');
+
+    const createNewTree = async (octo, owner, repo, blobs, paths, parentTreeSha, submodules=[]) => {
+      let tree = blobs.map(({ sha }, index) => ({path:paths[index], mode:'100644', type:'blob', sha}));
+      if(submodules.length) tree = tree.concat(submodules.map(submodule=>({path:submodule.name, mode:'160000', type:'commit', sha:submodule.sha})));
       try {
-        await octokit.repos.update({owner:org, repo:repo, default_branch:branch});
-      } catch(setDefaultBranchError) {
-        logger.error("Error setting default branch: " + setDefaultBranchError);
+        var { data } = await octo.git.createTree({owner, repo, tree, base_tree: parentTreeSha});
+      } catch(error) {
+        logger.error("Error creating tree: " + error + ". " + owner + " " + repo + " " + tree + " " + parentTreeSha);
         return false;
       }
-      return newCommit.sha;
+      return data;
+    }
+
+    const newTree = await createNewTree(octo, org, repo, filesBlobs, pathsForBlobs, currentCommit.treeSha, submodules);
+    if(!newTree) return false;
+    const commitMessage = 'Update made by Phenoflow';
+
+    const createNewCommit = async(octo, org, repo, message, currentTreeSha, currentCommitSha) => {
+      let newCommit;
+      try {
+        newCommit = await octo.git.createCommit({owner: org, repo, message, tree:currentTreeSha, parents:[currentCommitSha]});
+      } catch(error) {
+        logger.error("Unable to create commit: " + error + ". " + org + " " + repo + " " + message + " " + currentTreeSha + " " + currentCommitSha);
+        return false;
+      }
+      return newCommit.data;
+    } 
+
+    const newCommit = await createNewCommit(octo, org, repo, commitMessage, newTree.sha, currentCommit.commitSha);
+    if(!newCommit) return false;
+
+    const setBranchToCommit = async(octo, org, repo, commitSha, branch='main') => {
+      try {
+        await this.createBranch(octo, org, repo, commitSha, branch)
+      } catch(error) {
+        try {
+          await octo.git.updateRef({owner:org, repo, ref:'heads/'+branch, sha:commitSha});
+        } catch(error) {
+          logger.error("Unable to commit to branch: " + error + ". " + org + " " + repo + " " + branch + " " + commitSha);
+          return false;
+        }
+      }
+      return true;
+    };
+
+    if(!await setBranchToCommit(octo, org, repo, newCommit.sha, branch)) return false;
+    await this.updateDefaultBranch(octo, org, repo, branch);
+    return newCommit.sha;
+  }
+
+  static async commit(generatedWorkflow, id, name, about, author, connector, submodules=[], restricted=false) {
+
+    let workflowRepo = "output/" + id;
+    if(!await Github.createRepositoryContent(workflowRepo, name, generatedWorkflow.generate.body.workflow, generatedWorkflow.generate.body.workflowInputs, generatedWorkflow.implementationUnits, generatedWorkflow.generate.body.steps, about, author)) {
+      logger.error('Unable to create repository content.');
+      return false;
     }
 
     const createRepo = async(octo, org, name, description, restricted=false) => { 
@@ -417,7 +436,7 @@ class Github {
       Github.addZenodoWebhook('phenoflow', repo);
     }
 
-    let sha = await uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo, connector, submodules);
+    let sha = await this.uploadToRepo(octokit, 'output/'+id, 'phenoflow', repo, connector, submodules);
     return sha ? sha : false;
 
   }

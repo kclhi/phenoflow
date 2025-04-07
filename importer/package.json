@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "NODE_EXTRA_CA_CERTS=certs/pf.pem node ./bin/www",
+    "start": "NODE_EXTRA_CA_CERTS=certs/phenoflow.pem node ./bin/www",
     "test": "NODE_ENV=test mocha --g 'basic|covid19|importer|otitis|t2dm|validation' --exit",
     "migrate": "sequelize db:migrate"
   },

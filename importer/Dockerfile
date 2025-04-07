@@ -8,4 +8,4 @@ ENV NODE_ENV production
 RUN npm ci --only=production --loglevel=silly
 COPY --chown=$user:$user . .
 EXPOSE 3003
-CMD ["node", "./bin/www"]
+CMD ["npm", "start"]

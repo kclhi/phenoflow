@@ -25,6 +25,10 @@ const swaggerDefinition = {
       description: 'Secure development server',
     },
     {
+      url: 'https://localhost:3000',
+      description: 'Secure proxy server',
+    },
+    {
       url: 'https://kclhi.org',
       description: 'Live server',
     }

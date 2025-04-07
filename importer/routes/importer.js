@@ -14,7 +14,7 @@ const { v1: uuidv1 } = require("uuid");
 const config = require("config");
 const ImporterUtils = require("../util/importer");
 const Workflow = require('../util/workflow');
-const Github = require('../util/github');
+const Github = config.get('github.BASE_URL').includes('github') ? require('../util/github') : require('../util/gitea');
 const { workflow } = require('../util/workflow');
 
 /**

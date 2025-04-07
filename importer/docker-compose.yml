@@ -1,14 +1,4 @@
-version: "3.7"
 services:
-
-  proxy:
-    build:
-      context: proxy
-    command: ["./wait-for-it.sh", "--timeout=0", "webapp:3003", "--", "nginx", "-g", "daemon off;"]
-    depends_on:
-      - webapp
-    restart: "no"
-    entrypoint: ["echo", "Service proxy disabled"]
     
   webapp:
     build: .
