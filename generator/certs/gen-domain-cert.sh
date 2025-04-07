@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
-name=pf
-org=pf-ca
+name=phenoflow
+org=phenoflow-ca
 domain=generator-webapp-1
 openssl genpkey -algorithm RSA -out "$domain".key -pkeyopt rsa_keygen_bits:4096
 openssl req -new -key "$domain".key -out "$domain".csr -subj "/CN=$domain/O=$org"
