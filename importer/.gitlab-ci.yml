@@ -7,7 +7,7 @@ cache:
     - node_modules/
 
 install_node_dependencies:
-  image: node:16
+  image: node:18
   stage: build_web
   script:
     - npm install
@@ -16,7 +16,7 @@ install_node_dependencies:
       - node_modules/
 
 test_web:
-  image: node:16
+  image: node:18
   stage: test_web
   script: npm test
   variables:

@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:18
 ENV user node
 WORKDIR /home/$user/app
 RUN chown $user -R /home/$user/app

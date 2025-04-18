@@ -9,7 +9,7 @@ const logger = require("../config/winston");
 const config = require("config");
 const fs = require('fs').promises;
 const nock = require('nock')
-const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
+const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt': { expressjwt(...args) {return (req, res, next)=>{return next();}}}})});
 
 describe("hdr", () => {
 

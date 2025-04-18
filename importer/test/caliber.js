@@ -8,7 +8,7 @@ const parse = require('neat-csv');
 const models = require("../models");
 const config = require("config");
 const proxyquire = require('proxyquire');
-const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt':(...args)=>{return (req, res, next)=>{return next();}}})});
+const testServerObject = proxyquire('../app', {'./routes/importer':proxyquire('../routes/importer', {'express-jwt': { expressjwt(...args) {return (req, res, next)=>{return next();}}}})});
 
 async function importCaliberPhenotypes(phenotypeFiles) {
   let allCSVs=[];

@@ -142,7 +142,7 @@ class Workflow {
 
 	static async implementation(stepId, language, path, filename, userName="martinchapman") {
 
-		const server = proxyquire('../app', {'./routes/implementation':proxyquire('../routes/implementation', {'express-jwt':(...args)=>{return (req, res, next)=>{req.user={}; req.user.sub=userName; return next();}}})});
+		const server = proxyquire('../app', {'./routes/implementation':proxyquire('../routes/implementation', {'express-jwt': { expressjwt(...args) {return (req, res, next)=>{req.user={}; req.user.sub=userName; return next();}}}})});
 		let res = await chai.request(server).post("/phenoflow/implementation/" + stepId + "/" + language).attach("implementation", path + filename, "../uploads/" + filename);
 		res.should.have.status(200);
 		res.body.should.be.a("object");
