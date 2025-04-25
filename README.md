@@ -25,6 +25,16 @@ Note that regardless of VCS, the existence of an organisation called *Phenoflow*
 
 Note: An example [reverse proxy](proxy) is available to demonstrate how to front Phenoflow's services, and assumes the presence of the importer, generator and a [Gitea instance](docker-compose.dev.yml).
 
+### macOS / Linux
+
+If you are running on macOS or Linux, you may need to explicitly convert scripts to use `\n` (UNIX) line endings instead of `\r\n` (Windows).
+
+From the root `phenoflow` directory, run:
+
+```
+find . -type f -name "*.sh" -print0 | xargs -0 dos2unix
+```
+
 ### Certificate generation
 
 Run the following steps from the `phenoflow` root folder:
