@@ -2,7 +2,7 @@
 
 Standardise and share computable disease definitions.
 
-[Live site](https://kclhi.org/phenoflow) | [Wiki](../../wiki) | [API](https://kclhi.org/phenoflow/docs/)
+[Demo](https://youtu.be/l_SoEsgiXS8) | [Wiki](../../wiki)
 
 Cite as _[Phenoflow: A Microservice Architecture for Portable Workflow-based Phenotype Definitions](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8378606/). Chapman, Martin et al. AMIA Summits on Translational Science. 2021._
 
