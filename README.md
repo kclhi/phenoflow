@@ -25,16 +25,32 @@ Note that regardless of VCS, the existence of an organisation called *Phenoflow*
 
 Note: An example [reverse proxy](proxy) is available to demonstrate how to front Phenoflow's services, and assumes the presence of the importer, generator and a [Gitea instance](docker-compose.dev.yml).
 
+### macOS / Linux
+
+If you are running on macOS or Linux, you may need to explicitly convert scripts to use `\n` (UNIX) line endings instead of `\r\n` (Windows).
+
+From the root `phenoflow` directory, run:
+
+```
+find . -type f -name "*.sh" -print0 | xargs -0 dos2unix
+```
+
 ### Certificate generation
 
-1. Run [proxy/certs/gen-ca-cert.sh](proxy/certs/gen-ca-cert.sh).
-2. Run [proxy/certs/gen-domain-cert.sh](proxy/certs/gen-domain-cert.sh).
-3. Copy proxy/certs/phenoflow.* to [importer/certs](importer/certs).
-4. Run [importer/certs/gen-domain-cert.sh](importer/certs/gen-domain-cert.sh).
-5. Copy proxy/certs/phenoflow.* to [generator/certs](generator/certs).
-6. Run [generator/certs/gen-domain-cert.sh](generator/certs/gen-domain-cert.sh).
-7. Copy proxy/certs/phenoflow.* to [parser/certs](parser/certs).
-8. Run [parser/certs/gen-domain-cert.sh](parser/certs/gen-domain-cert.sh).
+Run the following steps from the `phenoflow` root folder:
+
+1. Change to the `proxy/certs/` directory
+2. Run [proxy/certs/gen-ca-cert.sh](proxy/certs/gen-ca-cert.sh).
+3. Run [proxy/certs/gen-domain-cert.sh](proxy/certs/gen-domain-cert.sh).
+4. Change to the `importer/certs/` direcctory
+5. Copy proxy/certs/phenoflow.* to [importer/certs](importer/certs).
+6. Run [importer/certs/gen-domain-cert.sh](importer/certs/gen-domain-cert.sh).
+7. Change to the `generator/certs` directory
+8. Copy proxy/certs/phenoflow.* to [generator/certs](generator/certs).
+9. Run [generator/certs/gen-domain-cert.sh](generator/certs/gen-domain-cert.sh).
+10. Change to the `parser/certs` directory
+11. Copy proxy/certs/phenoflow.* to [parser/certs](parser/certs).
+12. Run [parser/certs/gen-domain-cert.sh](parser/certs/gen-domain-cert.sh).
 
 ## Install, run and deploy
 
