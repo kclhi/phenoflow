@@ -60,7 +60,7 @@ Full tech stack [here](/techstack.md)
 # Tech Stack File
 ![](https://img.stackshare.io/repo.svg "repo") [kclhi/phenoflow](https://github.com/kclhi/phenoflow)![](https://img.stackshare.io/public_badge.svg "public")
 <br/><br/>
-|89<br/>Tools used|02/11/24 <br/>Report generated|
+|89<br/>Tools used|02/29/24 <br/>Report generated|
 |------|------|
 </div>
 
@@ -314,7 +314,7 @@ Full tech stack [here](/techstack.md)
 |[cffi](https://pypi.org/project/cffi)|v1.15.1|04/20/23|Martin Chapman |MIT|N/A|
 |[chardet](https://pypi.org/project/chardet)|v5.1.0|04/20/23|Martin Chapman |LGPL-2.1|N/A|
 |[click](https://pypi.org/project/click)|v8.1.3|04/20/23|Martin Chapman |BSD-3-Clause|N/A|
-|[cryptography](https://pypi.org/project/cryptography)|v40.0.2|04/20/23|Martin Chapman |BSD-3-Clause,Apache-2.0|[CVE-2023-38325](https://github.com/advisories/GHSA-cf7p-gm2m-833m) (High)<br/>[CVE-2023-49083](https://github.com/advisories/GHSA-jfhm-5ghh-2f97) (Moderate)<br/>[CVE-2023-50782](https://github.com/advisories/GHSA-3ww4-gg4f-jr7f) (Moderate)<br/>[](https://github.com/advisories/GHSA-5cpq-8wj7-hf2v) (Low)<br/>[](https://github.com/advisories/GHSA-jm77-qphf-c4w8) (Low)<br/>[](https://github.com/advisories/GHSA-v8gr-m533-ghj9) (Low)|
+|[cryptography](https://pypi.org/project/cryptography)|v40.0.2|04/20/23|Martin Chapman |BSD-3-Clause,Apache-2.0|[CVE-2024-26130](https://github.com/advisories/GHSA-6vqw-3v5j-54x4) (High)<br/>[CVE-2023-38325](https://github.com/advisories/GHSA-cf7p-gm2m-833m) (High)<br/>[CVE-2023-50782](https://github.com/advisories/GHSA-3ww4-gg4f-jr7f) (High)<br/>[CVE-2023-49083](https://github.com/advisories/GHSA-jfhm-5ghh-2f97) (Moderate)<br/>[CVE-2024-0727](https://github.com/advisories/GHSA-9v9h-cgj8-h64p) (Moderate)<br/>[](https://github.com/advisories/GHSA-v8gr-m533-ghj9) (Low)<br/>[](https://github.com/advisories/GHSA-5cpq-8wj7-hf2v) (Low)<br/>[](https://github.com/advisories/GHSA-jm77-qphf-c4w8) (Low)|
 |[docutils](https://pypi.org/project/docutils)|v0.19|04/20/23|Martin Chapman |Unlicense,Python-2.0,BSD-2-Clause,CNRI-Python-GPL-Compatible|N/A|
 |[gitdb](https://pypi.org/project/gitdb)|v4.0.10|04/20/23|Martin Chapman |BSD-3-Clause|N/A|
 |[h11](https://pypi.org/project/h11)|v0.14.0|04/20/23|Martin Chapman |MIT|N/A|
@@ -332,7 +332,7 @@ Full tech stack [here](/techstack.md)
 |[requests-toolbelt](https://pypi.org/project/requests-toolbelt)|v0.10.1|04/20/23|Martin Chapman |Apache-2.0|N/A|
 |[ruamel.yaml](https://pypi.org/project/ruamel.yaml)|v0.16.5|04/20/23|Martin Chapman |MIT|N/A|
 |[six](https://pypi.org/project/six)|v1.16.0|04/20/23|Martin Chapman |MIT|N/A|
-|[starlette](https://pypi.org/project/starlette)|v0.26.1|04/20/23|Martin Chapman |BSD-3-Clause|[](https://github.com/advisories/GHSA-93gm-qmq6-w238) (High)<br/>[](https://github.com/advisories/GHSA-qj8w-rv5x-2v9h) (High)<br/>[CVE-2023-29159](https://github.com/advisories/GHSA-v5gw-mw7f-84px) (Low)|
+|[starlette](https://pypi.org/project/starlette)|v0.26.1|04/20/23|Martin Chapman |BSD-3-Clause|[CVE-2024-24762](https://github.com/advisories/GHSA-2jv5-9r88-3w3p) (High)<br/>[](https://github.com/advisories/GHSA-93gm-qmq6-w238) (High)<br/>[](https://github.com/advisories/GHSA-qj8w-rv5x-2v9h) (High)<br/>[CVE-2023-29159](https://github.com/advisories/GHSA-v5gw-mw7f-84px) (Low)|
 |[tqdm](https://pypi.org/project/tqdm)|v4.65.0|04/20/23|Martin Chapman |MPL-2.0,MIT|N/A|
 |[twine](https://pypi.org/project/twine)|v4.0.2|04/20/23|Martin Chapman |Apache-2.0|N/A|
 |[urllib3](https://pypi.org/project/urllib3)|v1.26.15|04/20/23|Martin Chapman |MIT|[CVE-2023-45803](https://github.com/advisories/GHSA-g4mx-q9vg-27p4) (Moderate)<br/>[CVE-2023-43804](https://github.com/advisories/GHSA-v845-jxx5-vc9f) (Moderate)|
